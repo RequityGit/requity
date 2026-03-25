@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { SOPAdminClient } from "./sop-admin-client";
 
 export default async function SOPAdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

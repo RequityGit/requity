@@ -51,6 +51,7 @@ import {
   Trash2,
   Send,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -65,8 +66,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
-import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
-import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
+import { EmptyState } from "@/components/shared/EmptyState";
+
 import { useDocumentsTabData } from "@/components/pipeline/tabs/DocumentsTab/useDocumentsTabData";
 import { useCommercialUwData } from "@/components/pipeline/tabs/useCommercialUwData";
 import { useDealNavigation } from "@/hooks/useDealNavigation";
@@ -100,6 +101,7 @@ import {
   regressStageAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
+import { ApprovalBanner } from "@/components/pipeline/ApprovalBanner";
 import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
@@ -189,6 +191,14 @@ interface DealDetailPageProps {
   currentUserId: string;
   currentUserName: string;
   isSuperAdmin?: boolean;
+  approvalInfo?: {
+    approvalId: string | null;
+    status: string | null;
+    submittedBy: string | null;
+    submitterName: string | null;
+    decisionNotes: string | null;
+    submissionNotes: string | null;
+  } | null;
 }
 
 // ─── Main Component ───
@@ -211,6 +221,7 @@ function DealDetailPageInner({
   currentUserId,
   currentUserName,
   isSuperAdmin = false,
+  approvalInfo,
 }: DealDetailPageProps) {
   const showFundraisingTab = deal.stage === "execution" || deal.stage === "closed";
   const hasAssetClass = !!deal.asset_class;
@@ -502,6 +513,17 @@ function DealDetailPageInner({
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
+        {/* Approval Banner */}
+        <ApprovalBanner
+          dealId={deal.id}
+          dealName={deal.name}
+          stage={deal.stage}
+          approvalStatus={deal.approval_status ?? null}
+          isSuperAdmin={isSuperAdmin}
+          decisionNotes={approvalInfo?.decisionNotes}
+          submitterName={approvalInfo?.submitterName}
+        />
+
         {/* Tab Content */}
         <div className="flex-1 min-h-0 overflow-hidden">
           <div className={cn(
@@ -567,7 +589,6 @@ function DealDetailPageInner({
                 <Suspense fallback={<TabLoadingFallback />}>
                   <UnderwritingContent
                     deal={deal}
-                    visibilityContext={visibilityContext}
                   />
                 </Suspense>
               </SectionErrorBoundary>
@@ -1847,11 +1868,10 @@ function DealHeader({
 
 function UnderwritingContent({
   deal,
-  visibilityContext,
 }: {
   deal: UnifiedDeal;
-  visibilityContext: VisibilityContext;
 }) {
+  const router = useRouter();
   const isCommercial = isCommercialDeal(deal);
   const sheetUrl =
     deal.google_sheet_url ??
@@ -1865,11 +1885,14 @@ function UnderwritingContent({
     );
   }
   return (
-    <UnderwritingPanel
-      dealId={deal.id}
-      uwData={deal.uw_data}
-      visibilityContext={visibilityContext}
-    />
+    <div className="rq-tab-content">
+      <EmptyState
+        icon={AlertTriangle}
+        title="Could not load underwriting model"
+        description="The underwriting record could not be initialized. Try refreshing the page."
+        action={{ label: "Refresh", onClick: () => router.refresh() }}
+      />
+    </div>
   );
 }
 
@@ -1906,7 +1929,8 @@ function DocumentsTabWithData({
   currentUserId: string;
   currentUserName: string;
 }) {
-  const { documents, conditions, loading } = useDocumentsTabData(deal.id);
+  const googleDriveFolderId = (deal as unknown as Record<string, unknown>).google_drive_folder_id as string | null;
+  const { documents, conditions, loading } = useDocumentsTabData(deal.id, googleDriveFolderId);
 
   if (loading) {
     return (
@@ -1922,8 +1946,8 @@ function DocumentsTabWithData({
       conditions={conditions}
       dealId={deal.id}
       dealName={(deal as { name?: string }).name ?? undefined}
-      dealStage={deal.stage}
       googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
+      googleDriveFolderId={googleDriveFolderId}
       currentUserId={currentUserId}
       currentUserName={currentUserName}
       dealDocData={{

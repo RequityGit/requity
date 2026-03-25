@@ -129,7 +129,7 @@ export const LOAN_STAGES = [
 export type LoanStage = (typeof LOAN_STAGES)[number];
 
 export const LOAN_STAGE_LABELS: Record<string, string> = {
-  lead: "Lead",
+  lead: "Intake",
   application: "Application",
   processing: "Processing",
   underwriting: "Underwriting",
@@ -441,7 +441,7 @@ export type ConditionCategory = (typeof CONDITION_CATEGORY_VALUES)[number];
 
 /** DB enum: condition_stage (aligned with deal stages) */
 export const CONDITION_STAGES = [
-  { value: "lead", label: "Lead" },
+  { value: "lead", label: "Intake" },
   { value: "analysis", label: "Analysis" },
   { value: "negotiation", label: "Negotiation" },
   { value: "execution", label: "Execution" },
@@ -752,15 +752,6 @@ export const OPS_PROJECT_STATUSES = [
 ] as const;
 export type OpsProjectStatus = (typeof OPS_PROJECT_STATUSES)[number];
 
-/** Constraint: ops_projects_priority_check */
-export const OPS_PROJECT_PRIORITIES = [
-  "Critical",
-  "High",
-  "Medium",
-  "Low",
-] as const;
-export type OpsProjectPriority = (typeof OPS_PROJECT_PRIORITIES)[number];
-
 /** Constraint: ops_projects_category_check */
 export const OPS_PROJECT_CATEGORIES = [
   "Engineering",
@@ -808,15 +799,6 @@ export const OPS_TASK_CATEGORIES = [
   "Compliance",
 ] as const;
 export type OpsTaskCategory = (typeof OPS_TASK_CATEGORIES)[number];
-
-/** Constraint: ops_tasks_priority_check */
-export const OPS_TASK_PRIORITIES = [
-  "Critical",
-  "High",
-  "Medium",
-  "Low",
-] as const;
-export type OpsTaskPriority = (typeof OPS_TASK_PRIORITIES)[number];
 
 // ============================================
 // Entity types (borrower_entities / investing_entities)

@@ -280,7 +280,7 @@ function Section({ title, children, noPadding }: { title: string; children: Reac
   return (
     <div className="rounded-xl border bg-card">
       <div className={noPadding ? "px-5 pt-5" : "p-5"}>
-        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{title}</h3>
+        <h3 className="rq-micro-label mb-3">{title}</h3>
       </div>
       <div className={noPadding ? "" : "px-5 pb-5"}>{children}</div>
     </div>
@@ -487,10 +487,10 @@ function ReturnsContent({
           <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr className="bg-muted/50">
-                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2" />
-                <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2">Year 0</th>
+                <th className="text-left rq-micro-label px-3 py-2" />
+                <th className="text-right rq-micro-label px-3 py-2">Year 0</th>
                 {Array.from({ length: holdYears }, (_, i) => (
-                  <th key={i} className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2">
+                  <th key={i} className="text-right rq-micro-label px-3 py-2">
                     Year {i + 1}{i + 1 === holdYears ? " (Exit)" : ""}
                   </th>
                 ))}
@@ -568,17 +568,17 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
     <table className="w-full text-sm min-w-[700px]">
       <thead>
         <tr className="bg-muted/50">
-          <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2 sticky left-0 z-10 bg-muted/50">&nbsp;</th>
+          <th className="text-left rq-micro-label px-3 py-2 sticky left-0 z-10 bg-muted/50">&nbsp;</th>
           {colHeaders.map((h, i) => (
             <th key={i} className={cn(
-              "text-right text-xs font-medium uppercase tracking-wider px-3 py-2",
+              "text-right rq-micro-label px-3 py-2",
               h === "Stabilized" ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
             )}>{h}</th>
           ))}
         </tr>
       </thead>
       <tbody>
-        <tr><td colSpan={colHeaders.length + 1} className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-1.5 bg-card">Income</td></tr>
+        <tr><td colSpan={colHeaders.length + 1} className="rq-micro-label px-3 py-1.5 bg-card">Income</td></tr>
         {incomeLabels.map((label) => {
           const isDeduction = firstYear.incomeRows.find((r) => r.label === label)?.isDeduction;
           return (
@@ -596,7 +596,7 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
           <td className="px-3 py-1.5 font-semibold sticky left-0 z-10 bg-card">Net Revenue</td>
           {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-1.5 font-semibold num", pf.year === 99 && "bg-green-500/5")}>{fC(pf.netRevenue)}</td>)}
         </tr>
-        <tr><td colSpan={colHeaders.length + 1} className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-1.5 bg-card">Expenses</td></tr>
+        <tr><td colSpan={colHeaders.length + 1} className="rq-micro-label px-3 py-1.5 bg-card">Expenses</td></tr>
         {expenseLabels.map((label) => (
           <tr key={label} className="border-b border-border/30">
             <td className="px-3 py-1.5 sticky left-0 z-10 bg-card">{label}</td>
@@ -626,7 +626,7 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
             ))}
           </tr>
         )}
-        <tr><td colSpan={colHeaders.length + 1} className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-1.5 bg-card">Debt Service</td></tr>
+        <tr><td colSpan={colHeaders.length + 1} className="rq-micro-label px-3 py-1.5 bg-card">Debt Service</td></tr>
         <tr className="border-b border-border">
           <td className="px-3 py-1.5 sticky left-0 z-10 bg-card">Annual Debt Service</td>
           {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-1.5 num", pf.year === 99 && "bg-green-500/5")}>{pf.year === 0 || pf.year === 99 ? "\u2014" : fC(pf.debtService)}</td>)}

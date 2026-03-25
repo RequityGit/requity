@@ -32,9 +32,9 @@ export function CollapsibleSection({
     <Collapsible open={open} onOpenChange={setOpen}>
       <div className="rounded-xl border bg-card">
         <CollapsibleTrigger asChild>
-          <button className="flex w-full items-center gap-3 px-5 py-4 text-left cursor-pointer hover:bg-muted/30 transition-colors rounded-t-xl">
+          <button className="flex w-full items-center gap-3 px-5 py-3.5 text-left cursor-pointer hover:bg-muted/30 rq-transition rounded-t-xl">
             <Icon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-            <span className="text-sm font-semibold text-foreground">{title}</span>
+            <span className="rq-section-title">{title}</span>
             {count != null && (
               <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                 {count}
@@ -51,7 +51,7 @@ export function CollapsibleSection({
             )}
             <ChevronRight
               className={cn(
-                "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                "h-4 w-4 shrink-0 text-muted-foreground rq-transition-transform",
                 open && "rotate-90"
               )}
               strokeWidth={1.5}
@@ -59,7 +59,7 @@ export function CollapsibleSection({
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="border-t px-5 py-4">{children}</div>
+          <div className="border-t p-5">{children}</div>
         </CollapsibleContent>
       </div>
     </Collapsible>

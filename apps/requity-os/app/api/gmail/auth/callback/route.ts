@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Verify the authenticated user matches the state
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

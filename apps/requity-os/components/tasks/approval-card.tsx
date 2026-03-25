@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/lib/format";
 import { Calendar, Check, AlertTriangle } from "lucide-react";
-import { PriorityDot } from "./priority-dot";
 import { CategoryPill } from "./category-pill";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import {
@@ -50,7 +49,6 @@ export function ApprovalCard({ task, profiles, onClick }: ApprovalCardProps) {
 
         {/* Title row */}
         <div className="flex items-start gap-1.5 mb-1.5">
-          <PriorityDot priority={task.priority} className="mt-1.5" />
           <span className="text-sm font-medium leading-snug flex-1">
             {task.title}
           </span>

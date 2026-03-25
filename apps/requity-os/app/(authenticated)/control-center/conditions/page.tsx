@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ConditionsClient } from "@/components/control-center/conditions-client";
 
 export default async function ControlCenterConditionsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: templates } = await supabase
     .from("loan_condition_templates")

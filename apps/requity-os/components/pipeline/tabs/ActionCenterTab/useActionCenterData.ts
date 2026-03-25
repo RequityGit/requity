@@ -76,6 +76,9 @@ export interface StreamItem {
   docTemplateName?: string;
   docFileName?: string;
   docId?: string;
+  // Field update details (old/new values from metadata)
+  fieldOldValue?: string;
+  fieldNewValue?: string;
 }
 
 export interface StreamFilterCounts {
@@ -383,6 +386,9 @@ export function useActionCenterData({
 
         // Collect all user IDs for batch profile fetch (accent colors + names)
         const allUserIds = new Set<string>();
+        for (const da of timelineResult.dealActivities as unknown as DealActivity[]) {
+          if (da.created_by) allUserIds.add(da.created_by);
+        }
         for (const n of (notesData ?? []) as unknown as NoteData[]) {
           if (n.author_id) allUserIds.add(n.author_id);
           for (const l of n.note_likes ?? []) {
@@ -532,19 +538,24 @@ export function useActionCenterData({
     for (const da of dealActivities) {
       if (SYSTEM_ACTIVITY_TYPES.has(da.activity_type) || crmActivities.length === 0) {
         const type = mapActivityType(da.activity_type);
+        const resolvedName = da.created_by ? genDocProfiles[da.created_by] : undefined;
+        const meta = da.metadata as Record<string, unknown> | null;
         result.push({
           id: `deal-${da.id}`,
           type,
           timestamp: da.created_at,
           author: {
             id: da.created_by ?? undefined,
-            name: "System",
-            initials: "SY",
+            name: resolvedName ?? "System",
+            initials: resolvedName ? getInitials(resolvedName) : "SY",
+            accent_color: da.created_by ? profileColors[da.created_by] ?? null : null,
           },
           title: da.title,
           description: da.description ?? undefined,
-          fromStage: type === "stage_change" ? ((da.metadata as Record<string, string>)?.from_stage ?? undefined) : undefined,
-          toStage: type === "stage_change" ? ((da.metadata as Record<string, string>)?.to_stage ?? undefined) : undefined,
+          fromStage: type === "stage_change" ? ((meta as Record<string, string>)?.from_stage ?? undefined) : undefined,
+          toStage: type === "stage_change" ? ((meta as Record<string, string>)?.to_stage ?? undefined) : undefined,
+          fieldOldValue: meta?.old_value != null ? String(meta.old_value) : undefined,
+          fieldNewValue: meta?.value != null ? String(meta.value) : undefined,
           dealActivity: da,
         });
       }

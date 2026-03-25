@@ -34,7 +34,6 @@ import { LinkedEntitySelect } from "@/app/(authenticated)/(admin)/tasks/linked-e
 import type { OpsTask, Profile, TaskApproval } from "@/lib/tasks";
 import {
   TASK_STATUSES,
-  TASK_PRIORITIES,
   TASK_CATEGORIES,
 } from "@/lib/tasks";
 import {
@@ -89,7 +88,6 @@ export function TaskSheet({
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("To Do");
-  const [priority, setPriority] = useState("Medium");
   const [category, setCategory] = useState("");
   const [linkedEntityType, setLinkedEntityType] = useState("");
   const [linkedEntityId, setLinkedEntityId] = useState("");
@@ -134,7 +132,6 @@ export function TaskSheet({
       setAssignedTo(task.assigned_to ?? "");
       setDueDate(task.due_date ?? "");
       setStatus(task.status);
-      setPriority(task.priority);
       setCategory(task.category ?? "");
       setLinkedEntityType(task.linked_entity_type ?? "");
       setLinkedEntityId(task.linked_entity_id ?? "");
@@ -164,7 +161,6 @@ export function TaskSheet({
       setAssignedTo("");
       setDueDate("");
       setStatus("To Do");
-      setPriority("Medium");
       setCategory("");
       setLinkedEntityType(defaultLinkedEntity?.type ?? "");
       setLinkedEntityId(defaultLinkedEntity?.id ?? "");
@@ -460,7 +456,6 @@ export function TaskSheet({
       assigned_to_name: assigneeProfile?.full_name || null,
       due_date: dueDate || null,
       status,
-      priority,
       category: category || null,
       linked_entity_type: linkedEntityType || null,
       linked_entity_id: linkedEntityId || null,
@@ -580,7 +575,6 @@ export function TaskSheet({
 
     lines.push(`# Task: ${task.title}`);
     if (task.category) lines.push(`Category: ${task.category}`);
-    if (task.priority) lines.push(`Priority: ${task.priority}`);
     if (task.linked_entity_label) lines.push(`Linked to: ${task.linked_entity_label} (${task.linked_entity_type})`);
     lines.push("");
     if (task.description) {
@@ -932,24 +926,6 @@ export function TaskSheet({
                     {availableStatuses.map((s) => (
                       <SelectItem key={s} value={s}>
                         {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-foreground">
-                  Priority
-                </Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TASK_PRIORITIES.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
                       </SelectItem>
                     ))}
                   </SelectContent>

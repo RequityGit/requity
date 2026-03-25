@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     // 1. Find tasks due tomorrow (not complete, has assignee)
     const { data: dueSoonTasks } = await supabase
       .from("ops_tasks" as never)
-      .select("id, title, assigned_to, created_by, priority" as never)
+      .select("id, title, assigned_to, created_by" as never)
       .eq("due_date" as never, tomorrowStr as never)
       .neq("status" as never, "Complete" as never)
       .not("assigned_to" as never, "is" as never, null as never);
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     // 2. Find overdue tasks (due_date < today, not complete)
     const { data: overdueTasks } = await supabase
       .from("ops_tasks" as never)
-      .select("id, title, assigned_to, created_by, priority, due_date" as never)
+      .select("id, title, assigned_to, created_by, due_date" as never)
       .lt("due_date" as never, todayStr as never)
       .neq("status" as never, "Complete" as never)
       .not("assigned_to" as never, "is" as never, null as never);
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       existing.add(`${e.notification_slug}:${e.entity_id}`);
     });
 
-    type DueSoonTask = { id: string; title: string; assigned_to: string; created_by: string | null; priority: string };
+    type DueSoonTask = { id: string; title: string; assigned_to: string; created_by: string | null };
     type OverdueTask = DueSoonTask & { due_date: string };
 
     const inserts: Record<string, unknown>[] = [];
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         notification_slug: "task_due_soon",
         title: `"${task.title.slice(0, 60)}" is due tomorrow`,
         body: "This task is due tomorrow. Make sure it is on track.",
-        priority: task.priority === "High" ? "high" : "normal",
+        priority: "normal",
         entity_type: "task",
         entity_id: task.id,
         entity_label: task.title,

@@ -226,7 +226,7 @@ function EditSourcesUsesDialog({
           {/* Sources */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sources</span>
+              <span className="rq-micro-label">Sources</span>
               <Button variant="outline" size="sm" className="h-6 gap-1 text-[11px]" onClick={() => setRows((prev) => [...prev, { type: "source", line_item: "", amount: 0, sort_order: prev.length }])}>
                 <Plus className="h-2.5 w-2.5" /> Add Source
               </Button>
@@ -248,7 +248,7 @@ function EditSourcesUsesDialog({
           {/* Uses */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Uses</span>
+              <span className="rq-micro-label">Uses</span>
               <Button variant="outline" size="sm" className="h-6 gap-1 text-[11px]" onClick={() => setRows((prev) => [...prev, { type: "use", line_item: "", amount: 0, sort_order: prev.length }])}>
                 <Plus className="h-2.5 w-2.5" /> Add Use
               </Button>

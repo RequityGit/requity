@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Verify authentication
   const {

@@ -2,7 +2,7 @@
 
 import React, { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, FolderOpen, ClipboardCheck, Loader2 } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   updateConditionDocumentApproval,
@@ -13,7 +13,6 @@ import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { FormsSection } from "./FormsSection";
 import { DocumentsSection } from "./DocumentsSection";
-import { ConditionsSection } from "./ConditionsSection";
 import { DocPreviewModal } from "./DocPreviewModal";
 import { CollapsibleSection } from "./CollapsibleSection";
 import type { DealDocument, DocumentsTabProps } from "./types";
@@ -36,8 +35,8 @@ export function DocumentsTab({
   conditions,
   dealId,
   dealName,
-  dealStage,
   googleDriveFolderUrl,
+  googleDriveFolderId,
   currentUserId,
   currentUserName,
   dealDocData,
@@ -102,53 +101,19 @@ export function DocumentsTab({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Forms & Applications */}
-      <CollapsibleSection
-        icon={FileText}
-        title="Forms & Applications"
-        defaultOpen={true}
-      >
-        <FormsSection dealId={dealId} />
-      </CollapsibleSection>
-
-      {/* Documents */}
-      <CollapsibleSection
-        icon={FolderOpen}
-        title="Documents"
-        defaultOpen={true}
-      >
-        <DocumentsSection
-          documents={documents}
-          conditions={conditions}
-          dealId={dealId}
-          dealName={dealName}
-          googleDriveFolderUrl={googleDriveFolderUrl}
-          onPreviewDoc={handlePreviewDoc}
-          onUploadComplete={() => router.refresh()}
-          currentUserId={currentUserId}
-          currentUserName={currentUserName}
-        />
-      </CollapsibleSection>
-
-      {/* Conditions */}
-      <CollapsibleSection
-        icon={ClipboardCheck}
-        title="Conditions"
-        defaultOpen={true}
-      >
-        <ConditionsSection
-          conditions={conditions}
-          documents={documents}
-          dealId={dealId}
-          dealStage={dealStage}
-          onPreviewDoc={(doc) => {
-            setPreviewDoc(doc);
-            setPreviewOpen(true);
-          }}
-          onApprovalChange={handleApprovalChange}
-          onUnlinkDoc={unlinkDoc}
-        />
-      </CollapsibleSection>
+      {/* Documents (renders its own header — no collapsible wrapper needed) */}
+      <DocumentsSection
+        documents={documents}
+        conditions={conditions}
+        dealId={dealId}
+        dealName={dealName}
+        googleDriveFolderUrl={googleDriveFolderUrl}
+        googleDriveFolderId={googleDriveFolderId}
+        onPreviewDoc={handlePreviewDoc}
+        onUploadComplete={() => router.refresh()}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+      />
 
       {/* Document Generation: Credit Memo & Investor Summary */}
       {dealDocData && (
@@ -158,6 +123,15 @@ export function DocumentsTab({
           </Suspense>
         </SectionErrorBoundary>
       )}
+
+      {/* Forms & Applications */}
+      <CollapsibleSection
+        icon={FileText}
+        title="Forms & Applications"
+        defaultOpen={true}
+      >
+        <FormsSection dealId={dealId} />
+      </CollapsibleSection>
 
       {/* Preview modal */}
       <DocPreviewModal

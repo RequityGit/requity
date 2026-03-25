@@ -7,7 +7,7 @@ export interface OpsTask {
   title: string;
   description: string | null;
   status: string;
-  priority: string;
+
   assigned_to: string | null;
   assigned_to_name: string | null;
   project_id: string | null;
@@ -80,9 +80,6 @@ export interface Profile {
 
 export const TASK_STATUSES = ["To Do", "In Progress", "Pending Approval", "Complete", "Parking Lot"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
-
-export const TASK_PRIORITIES = ["High", "Medium", "Low"] as const;
-export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
 export const TASK_CATEGORIES = [
   "Approval",
@@ -202,12 +199,6 @@ export const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
     bg: "bg-rose-100 dark:bg-rose-950/30",
     text: "text-rose-700 dark:text-rose-400",
   },
-};
-
-export const PRIORITY_COLORS: Record<string, string> = {
-  High: "bg-destructive",
-  Medium: "bg-amber-500",
-  Low: "bg-muted-foreground/40",
 };
 
 // ── Queries ────────────────────────────────────────────────────────────────

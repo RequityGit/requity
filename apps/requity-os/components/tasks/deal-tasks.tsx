@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
-import { PriorityDot } from "./priority-dot";
 import { AnimatedTask } from "./animated-task";
 import { TaskSplitPanel } from "./task-split-panel";
 import { relativeTime } from "@/lib/comment-utils";
@@ -74,8 +73,6 @@ function DealTaskRow({ task, profiles, onComplete, onClick }: DealTaskRowProps) 
           )}
         </button>
 
-        <PriorityDot priority={task.priority} />
-
         <span
           className={cn(
             "text-sm font-medium flex-1 line-clamp-2",
@@ -132,11 +129,6 @@ export function DealTasks({
   const openTasks = tasks
     .filter((t) => t.status !== "Complete")
     .sort((a, b) => {
-      const prio = { High: 0, Medium: 1, Low: 2 };
-      const prioCmp =
-        (prio[a.priority as keyof typeof prio] ?? 1) -
-        (prio[b.priority as keyof typeof prio] ?? 1);
-      if (prioCmp !== 0) return prioCmp;
       if (a.due_date && !b.due_date) return -1;
       if (!a.due_date && b.due_date) return 1;
       if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);

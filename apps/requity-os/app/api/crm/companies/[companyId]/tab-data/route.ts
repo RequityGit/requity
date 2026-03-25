@@ -10,7 +10,7 @@ const SCOPES = new Set([
   "overview",
 ]);
 
-async function assertCrmAccess(supabase: ReturnType<typeof createClient>) {
+async function assertCrmAccess(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -129,7 +129,7 @@ export async function GET(
       const { data: rows } = await admin
         .from("ops_tasks")
         .select(
-          "id, title, description, category, priority, status, due_date, assigned_to, completed_at, created_at"
+          "id, title, description, category, status, due_date, assigned_to, completed_at, created_at"
         )
         .eq("linked_entity_type", "company")
         .eq("linked_entity_id", companyId)
@@ -140,7 +140,6 @@ export async function GET(
         subject: (t.title as string) || "",
         description: t.description as string | null,
         task_type: (t.category as string) || "other",
-        priority: (t.priority as string) || "Medium",
         status: t.status === "Complete" ? "completed" : t.status === "In Progress" ? "in_progress" : "not_started",
         due_date: t.due_date as string | null,
         assigned_to: t.assigned_to as string | null,

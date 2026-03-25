@@ -361,6 +361,7 @@ function getLoanStageVariant(stage: string): "success" | "warning" | "destructiv
 }
 
 function formatStageLabel(stage: string): string {
+  if (stage === "lead") return "Intake";
   return stage
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());

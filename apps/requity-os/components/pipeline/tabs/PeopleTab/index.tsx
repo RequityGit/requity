@@ -214,7 +214,7 @@ export default function PeopleTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* 1. Borrowing Entity */}
       <BorrowingEntitySection
         dealId={dealId}
@@ -243,29 +243,29 @@ export default function PeopleTab({
         onStructuralChange={() => load(true)}
       />
 
-      {/* 3. Broker */}
-      <BrokerSection
-        dealId={dealId}
-        broker={data.broker}
-        brokerExtra={data.brokerExtra}
-        onBrokerChanged={() => load(true)}
-      />
-
-      {/* 4. Third Parties */}
-      <ThirdPartiesSection
-        dealId={dealId}
-        initialContacts={data.thirdParties}
-        onStructuralChange={() => load(true)}
-      />
-
-      {/* 5. Deal Team (Internal) */}
-      <DealTeamInternalSection
-        dealId={dealId}
-        dealTeamMembers={localDealTeamMembers}
-        teamMembers={teamMembers}
-        onAddMember={handleAddTeamMember}
-        onRemoveMember={handleRemoveTeamMember}
-      />
+      {/* 3-5. Broker, Third Parties, Deal Team — two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="space-y-3">
+          <BrokerSection
+            dealId={dealId}
+            broker={data.broker}
+            brokerExtra={data.brokerExtra}
+            onBrokerChanged={() => load(true)}
+          />
+          <DealTeamInternalSection
+            dealId={dealId}
+            dealTeamMembers={localDealTeamMembers}
+            teamMembers={teamMembers}
+            onAddMember={handleAddTeamMember}
+            onRemoveMember={handleRemoveTeamMember}
+          />
+        </div>
+        <ThirdPartiesSection
+          dealId={dealId}
+          initialContacts={data.thirdParties}
+          onStructuralChange={() => load(true)}
+        />
+      </div>
     </div>
   );
 }

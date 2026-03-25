@@ -31,21 +31,18 @@ import type { OpsProject } from "./ProjectCard";
 import type { TeamMember } from "./OperationsView";
 import {
   OPS_TASK_STATUSES,
-  OPS_TASK_PRIORITIES,
   OPS_TASK_CATEGORIES,
 } from "@/lib/constants/db-enums";
 import { RecurrencePanel } from "@/app/(authenticated)/(admin)/tasks/recurrence-panel";
 import { composeRecurrencePattern } from "@/lib/recurrence-utils";
 
 const STATUSES = OPS_TASK_STATUSES;
-const PRIORITIES = OPS_TASK_PRIORITIES;
 const CATEGORIES = OPS_TASK_CATEGORIES;
 
 const INITIAL_FORM = {
   title: "",
   description: "",
   status: "To Do",
-  priority: "Medium",
   project_id: "",
   assigned_to_name: "",
   due_date: "",
@@ -196,7 +193,6 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         title: form.title.trim(),
         description: form.description.trim() || null,
         status: form.status,
-        priority: form.priority,
         project_id: form.project_id || null,
         assigned_to_name: form.assigned_to_name.trim() || null,
         assigned_to: selectedAssigneeId || null,
@@ -296,7 +292,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6">
           <div className="space-y-3 py-2">
-          {/* Status & Priority pill selectors */}
+          {/* Status pill selector */}
           <div className="flex items-center gap-2">
             <Select
               value={form.status}
@@ -309,22 +305,6 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                 {STATUSES.filter((s) => s !== "Pending Approval").map((s) => (
                   <SelectItem key={s} value={s}>
                     {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={form.priority}
-              onValueChange={(v) => setForm({ ...form, priority: v })}
-            >
-              <SelectTrigger className="inline-field w-auto gap-1.5 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
                   </SelectItem>
                 ))}
               </SelectContent>

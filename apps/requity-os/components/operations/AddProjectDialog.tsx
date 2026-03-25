@@ -28,12 +28,10 @@ import { PlusCircle, Loader2 } from "lucide-react";
 import type { TeamMember } from "./OperationsView";
 import {
   OPS_PROJECT_STATUSES,
-  OPS_PROJECT_PRIORITIES,
   OPS_PROJECT_CATEGORIES,
 } from "@/lib/constants/db-enums";
 
 const STATUSES = OPS_PROJECT_STATUSES;
-const PRIORITIES = OPS_PROJECT_PRIORITIES;
 const CATEGORIES = OPS_PROJECT_CATEGORIES;
 
 const INITIAL_FORM = {
@@ -41,7 +39,6 @@ const INITIAL_FORM = {
   category: "",
   owner: "",
   status: "Not Started",
-  priority: "Medium",
   description: "",
   due_date: "",
 };
@@ -85,7 +82,6 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
         category: form.category.trim() || "General",
         owner: form.owner.trim() || "unassigned",
         status: form.status,
-        priority: form.priority,
         description: form.description.trim() || null,
         due_date: form.due_date || null,
         created_by: user.id,
@@ -157,24 +153,6 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={form.priority}
-                onValueChange={(v) => setForm({ ...form, priority: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

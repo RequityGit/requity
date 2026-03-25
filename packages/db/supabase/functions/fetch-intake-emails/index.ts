@@ -266,6 +266,51 @@ async function uploadAttachmentToStorage(
 }
 
 // ---------------------------------------------------------------------------
+// Attachment download + upload helper (reused for new inserts and backfills)
+// ---------------------------------------------------------------------------
+
+async function downloadAndUploadAttachments(
+  admin: ReturnType<typeof createClient>,
+  accessToken: string,
+  gmailMessageId: string,
+  queueId: string,
+  rawAttachments: AttachmentMeta[]
+): Promise<{ processed: AttachmentMeta[]; uploadedCount: number }> {
+  const processed: AttachmentMeta[] = [];
+  let uploadedCount = 0;
+
+  for (const att of rawAttachments) {
+    if (!att.attachment_id) {
+      processed.push({ ...att, extraction_status: "no_attachment_id" });
+      continue;
+    }
+    if (att.size_bytes > MAX_ATTACHMENT_BYTES) {
+      processed.push({ ...att, extraction_status: "skipped_too_large" });
+      continue;
+    }
+
+    try {
+      const fileData = await downloadAttachment(accessToken, gmailMessageId, att.attachment_id);
+      const storagePath = await uploadAttachmentToStorage(
+        admin, queueId, att.filename, att.mime_type, fileData
+      );
+      processed.push({
+        ...att,
+        storage_path: storagePath,
+        extraction_status: "uploaded",
+      });
+      uploadedCount++;
+    } catch (attErr) {
+      const errMsg = attErr instanceof Error ? attErr.message : String(attErr);
+      console.error(`Attachment upload failed for ${att.filename}:`, errMsg);
+      processed.push({ ...att, extraction_status: `upload_failed: ${errMsg.slice(0, 200)}` });
+    }
+  }
+
+  return { processed, uploadedCount };
+}
+
+// ---------------------------------------------------------------------------
 // Internal user lookup
 // ---------------------------------------------------------------------------
 
@@ -604,11 +649,100 @@ Deno.serve(async (req: Request) => {
       try {
         const { data: existing } = await admin
           .from("email_intake_queue")
-          .select("id")
+          .select("id, attachments")
           .eq("gmail_message_id", stub.id)
           .maybeSingle();
 
         if (existing) {
+          // Check if this record needs attachment backfill (Make.com webhook race condition:
+          // webhook inserts with attachments=[] before Gmail poller can download them)
+          const existingAttachments = (existing.attachments || []) as AttachmentMeta[];
+          const hasUploadedAttachments = existingAttachments.some((a: AttachmentMeta) => a.storage_path);
+
+          if (!hasUploadedAttachments) {
+            try {
+              const msg = await getMessage(accessToken, stub.id);
+              const rawAttachments = collectAttachments(msg.payload);
+
+              if (rawAttachments.length > 0) {
+                const { processed, uploadedCount } = await downloadAndUploadAttachments(
+                  admin, accessToken, stub.id, existing.id, rawAttachments
+                );
+
+                if (processed.length > 0) {
+                  await admin
+                    .from("email_intake_queue")
+                    .update({ attachments: processed })
+                    .eq("id", existing.id);
+                }
+                results.attachments_uploaded += uploadedCount;
+                console.log(`Backfilled ${uploadedCount} attachments for existing queue item ${existing.id}`);
+              }
+
+              // Also run extraction + process-intake-email if no intake_item exists yet
+              const { data: hasIntake } = await admin
+                .from("intake_items")
+                .select("id")
+                .eq("email_intake_queue_id", existing.id)
+                .maybeSingle();
+
+              if (!hasIntake) {
+                // Backfill extraction if missing (webhook path only has basic fields)
+                const headers = msg.payload.headers;
+                const fromRaw = getHeader(headers, "From");
+                const subject = getHeader(headers, "Subject") || "(no subject)";
+                const { email: fromEmail, name: fromName } = parseFromHeader(fromRaw);
+                const bodyText = extractTextBody(msg.payload);
+                const rawAtts = collectAttachments(msg.payload);
+                const forwardInfo = detectForwardedEmail(subject, bodyText);
+
+                const extraction = await extractWithClaude(
+                  subject, bodyText, fromEmail, fromName, forwardInfo, rawAtts.map(a => a.filename)
+                );
+
+                const internalSenderId = await lookupInternalUserId(admin, fromEmail);
+                if (internalSenderId) {
+                  extraction.deal_fields["_internal_sender_user_id"] = { value: internalSenderId, confidence: 1, source: "auth_lookup" };
+                }
+                if (forwardInfo.is_forwarded) {
+                  extraction.deal_fields["_is_forwarded"] = { value: true, confidence: 1, source: "header_detection" };
+                  if (forwardInfo.original_from_email) {
+                    extraction.deal_fields["_original_sender_email"] = { value: forwardInfo.original_from_email, confidence: 0.95, source: "forwarded_header" };
+                  }
+                  if (forwardInfo.original_from_name) {
+                    extraction.deal_fields["_original_sender_name"] = { value: forwardInfo.original_from_name, confidence: 0.95, source: "forwarded_header" };
+                  }
+                }
+
+                await admin
+                  .from("email_intake_queue")
+                  .update({
+                    body_preview: bodyText.slice(0, 5000),
+                    extraction_summary: extraction.summary,
+                    extracted_deal_fields: extraction.deal_fields,
+                    status: "ready",
+                  })
+                  .eq("id", existing.id);
+
+                // Invoke process-intake-email to create the intake_items record
+                const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+                const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+                const fnUrl = `${supabaseUrl}/functions/v1/process-intake-email`;
+                try {
+                  await fetch(fnUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+                    body: JSON.stringify({ email_intake_queue_id: existing.id }),
+                  });
+                } catch (invokeErr) {
+                  console.error(`process-intake-email backfill invoke error for ${existing.id}:`, invokeErr);
+                }
+              }
+            } catch (backfillErr) {
+              console.error(`Attachment backfill failed for ${existing.id}:`, backfillErr);
+            }
+          }
+
           results.skipped_duplicate++;
           continue;
         }
@@ -709,34 +843,10 @@ Deno.serve(async (req: Request) => {
 
         results.inserted++;
 
-        const processedAttachments: AttachmentMeta[] = [];
-        for (const att of rawAttachments) {
-          if (!att.attachment_id) {
-            processedAttachments.push({ ...att, extraction_status: "no_attachment_id" });
-            continue;
-          }
-          if (att.size_bytes > MAX_ATTACHMENT_BYTES) {
-            processedAttachments.push({ ...att, extraction_status: "skipped_too_large" });
-            continue;
-          }
-
-          try {
-            const fileData = await downloadAttachment(accessToken, stub.id, att.attachment_id);
-            const storagePath = await uploadAttachmentToStorage(
-              admin, queued.id, att.filename, att.mime_type, fileData
-            );
-            processedAttachments.push({
-              ...att,
-              storage_path: storagePath,
-              extraction_status: "uploaded",
-            });
-            results.attachments_uploaded++;
-          } catch (attErr) {
-            const errMsg = attErr instanceof Error ? attErr.message : String(attErr);
-            console.error(`Attachment upload failed for ${att.filename}:`, errMsg);
-            processedAttachments.push({ ...att, extraction_status: `upload_failed: ${errMsg.slice(0, 200)}` });
-          }
-        }
+        const { processed: processedAttachments, uploadedCount } = await downloadAndUploadAttachments(
+          admin, accessToken, stub.id, queued.id, rawAttachments
+        );
+        results.attachments_uploaded += uploadedCount;
 
         if (processedAttachments.length > 0) {
           await admin

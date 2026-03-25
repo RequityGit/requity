@@ -22,7 +22,7 @@ import {
 import Link from "next/link";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Helper to extract investor name from the nested join chain,
@@ -54,7 +54,7 @@ function getInvestorName(
 }
 
 export default async function AdminFundDetailPage({ params }: PageProps) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

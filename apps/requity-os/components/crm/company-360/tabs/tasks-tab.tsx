@@ -7,13 +7,12 @@ import { showSuccess, showError } from "@/lib/toast";
 import { Plus, Check, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DotPill } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
 import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import { completeTask, completeRecurringTask } from "@/lib/tasks";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import type { CompanyTaskData } from "../types";
-import { PRIORITY_CONFIG, TASK_STATUS_CONFIG } from "@/components/crm/contact-360/types";
+import { TASK_STATUS_CONFIG } from "@/components/crm/contact-360/types";
 
 interface TasksTabProps {
   tasks: CompanyTaskData[];
@@ -49,7 +48,6 @@ export function CompanyTasksTab({
       title: task.subject,
       description: task.description,
       status: task.status === "completed" ? "Complete" : task.status === "in_progress" ? "In Progress" : "To Do",
-      priority: task.priority,
       assigned_to: task.assigned_to,
       assigned_to_name: task.assigned_to_name,
       project_id: null,
@@ -205,9 +203,6 @@ export function CompanyTasksTab({
             !isCompleted &&
             t.due_date &&
             new Date(t.due_date) < new Date();
-          const priorityColor =
-            PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.normal;
-
           return (
             <div
               key={t.id}
@@ -221,11 +216,8 @@ export function CompanyTasksTab({
                   e.stopPropagation();
                   handleQuickComplete(t);
                 }}
-                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors"
+                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${isCompleted ? "" : "border-2 border-border"}`}
                 style={{
-                  border: isCompleted
-                    ? "none"
-                    : `2px solid ${priorityColor}`,
                   background: isCompleted ? "#22A861" : "transparent",
                 }}
               >
@@ -267,8 +259,6 @@ export function CompanyTasksTab({
                 </div>
               </div>
 
-              {/* Priority */}
-              <DotPill color={priorityColor} label={t.priority} small />
             </div>
           );
         })

@@ -25,7 +25,7 @@ export default async function PipelinePage() {
   const session = await getSessionData();
   if (!session) redirect("/login");
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const admin = createAdminClient();
 
   const [
@@ -180,7 +180,10 @@ export default async function PipelinePage() {
 
   return (
     <div className="space-y-6">
-      <PipelineHeader intakeCount={intakeItems.length} />
+      <PipelineHeader
+        intakeCount={intakeItems.length}
+        approvalCount={deals.filter((d: UnifiedDeal) => d.approval_status === "pending").length}
+      />
       <PipelineProvider
         deals={deals}
         stageConfigs={stageConfigs}

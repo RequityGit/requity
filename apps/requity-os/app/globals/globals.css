@@ -131,8 +131,14 @@
   * {
     @apply border-border;
   }
+  html {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
 }
 
@@ -868,6 +874,21 @@
 }
 .rq-animate-pulse-once {
   animation: rq-pulse-once var(--duration-slow) var(--ease-in-out) 1;
+}
+
+/* ─── Urgent deal glow (pipeline cards) ─── */
+.rq-urgent-glow {
+  animation: rq-urgent-pulse 2s ease-in-out infinite;
+}
+@keyframes rq-urgent-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+  50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rq-urgent-glow {
+    animation: none;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+  }
 }
 
 /* ─── Like button animations ─── */

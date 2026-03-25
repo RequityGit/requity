@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useEffect, useTransition, useRef, useCallback } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Building2,
   User,
-  Plus,
   X,
-  Search,
   Loader2,
   Shield,
 } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
 import Link from "next/link";
 import { updateUwDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import type {
@@ -24,16 +21,10 @@ import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { useDebounce } from "@/hooks/useDebounce";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
+import { RelationshipPicker } from "@/components/shared/RelationshipPicker";
+import type { ContactSearchResult } from "@/lib/actions/relationship-actions";
 import {
   fetchDealContacts,
-  searchContactsForDeal,
   addDealContact,
   removeDealContact,
   updateDealContact,
@@ -57,201 +48,11 @@ interface ContactsTabProps {
   visibilityContext?: VisibilityContext | null;
 }
 
-interface SearchResult {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  phone: string | null;
-  company_name: string | null;
-}
-
 function contactDisplayName(c: {
   first_name?: string | null;
   last_name?: string | null;
 }): string {
   return [c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown";
-}
-
-// ─── Contact Search Combobox ───
-
-function ContactSearchCombobox({
-  dealId,
-  existingContactIds,
-  onAdded,
-  disabled,
-}: {
-  dealId: string;
-  existingContactIds: Set<string>;
-  onAdded: () => void;
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [adding, setAdding] = useState<string | null>(null);
-  const [highlightIndex, setHighlightIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const debouncedQuery = useDebounce(query, 250);
-
-  useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-
-    let cancelled = false;
-    async function search() {
-      setSearching(true);
-      const { contacts } = await searchContactsForDeal(debouncedQuery);
-      if (!cancelled) {
-        setResults(contacts as SearchResult[]);
-        setHighlightIndex(-1);
-        setSearching(false);
-      }
-    }
-    search();
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedQuery]);
-
-  const handleSelect = useCallback(
-    async (contact: SearchResult) => {
-      if (existingContactIds.has(contact.id)) return;
-      setAdding(contact.id);
-      const result = await addDealContact(dealId, contact.id, "co_borrower");
-      setAdding(null);
-      if (result.error) {
-        showError("Could not add contact", result.error);
-      } else {
-        showSuccess(`Added ${contactDisplayName(contact)}`);
-        setQuery("");
-        setResults([]);
-        setOpen(false);
-        onAdded();
-      }
-    },
-    [dealId, existingContactIds, onAdded]
-  );
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    const filtered = results.filter((r) => !existingContactIds.has(r.id));
-    if (filtered.length === 0) return;
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlightIndex((prev) =>
-        prev < filtered.length - 1 ? prev + 1 : 0
-      );
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlightIndex((prev) =>
-        prev > 0 ? prev - 1 : filtered.length - 1
-      );
-    } else if (e.key === "Enter" && highlightIndex >= 0) {
-      e.preventDefault();
-      handleSelect(filtered[highlightIndex]);
-    } else if (e.key === "Escape") {
-      setOpen(false);
-    }
-  }
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          disabled={disabled}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground cursor-pointer",
-            disabled && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-          Add Contact
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-80 p-0"
-        align="start"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-          inputRef.current?.focus();
-        }}
-      >
-        <div className="flex items-center gap-2 border-b px-3 py-2">
-          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <Input
-            ref={inputRef}
-            placeholder="Search contacts by name or email..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="h-7 border-0 p-0 text-sm shadow-none focus-visible:ring-0"
-            autoComplete="off"
-          />
-          {searching && (
-            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
-          )}
-        </div>
-        <div className="max-h-[220px] overflow-y-auto p-1">
-          {results.length === 0 && query.length >= 2 && !searching && (
-            <EmptyState icon={Search} title="No contacts found" compact />
-          )}
-          {results.length === 0 && query.length < 2 && (
-            <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-              Type at least 2 characters to search
-            </div>
-          )}
-          {results.map((contact, index) => {
-            const alreadyLinked = existingContactIds.has(contact.id);
-            return (
-              <button
-                key={contact.id}
-                type="button"
-                disabled={alreadyLinked || adding === contact.id}
-                className={cn(
-                  "relative flex w-full select-none items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-                  alreadyLinked
-                    ? "opacity-40 cursor-not-allowed"
-                    : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
-                  highlightIndex === index &&
-                    !alreadyLinked &&
-                    "bg-accent text-accent-foreground"
-                )}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => !alreadyLinked && handleSelect(contact)}
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
-                  {adding === contact.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                  ) : (
-                    <User className="h-3.5 w-3.5 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex flex-col items-start overflow-hidden">
-                  <span className="truncate font-medium">
-                    {contactDisplayName(contact)}
-                    {alreadyLinked && (
-                      <span className="ml-1.5 text-[10px] text-muted-foreground">
-                        (already linked)
-                      </span>
-                    )}
-                  </span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {contact.email}
-                    {contact.company_name && ` - ${contact.company_name}`}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
 }
 
 // ─── Contact Card ───
@@ -453,7 +254,7 @@ export function ContactsTab({
 
     return (
       <div className="rounded-xl border bg-card p-5">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+        <h4 className="rq-micro-label mb-4">
           {title}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
@@ -494,7 +295,7 @@ export function ContactsTab({
       {/* Linked Contacts */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <h3 className="rq-micro-label">
             Borrowers / Signers
             {dealContacts.length > 0 && (
               <span className="ml-1.5 text-muted-foreground/60 num">
@@ -502,11 +303,33 @@ export function ContactsTab({
               </span>
             )}
           </h3>
-          <ContactSearchCombobox
-            dealId={dealId}
-            existingContactIds={existingContactIds}
-            onAdded={loadContacts}
+          <RelationshipPicker
+            entityType="contact"
+            excludeIds={Array.from(existingContactIds)}
+            placeholder="Search contacts..."
             disabled={atMax}
+            onSelect={async (entity) => {
+              const contact = entity as ContactSearchResult;
+              const result = await addDealContact(dealId, contact.id, "co_borrower");
+              if (result.error) {
+                showError("Could not add contact", result.error);
+              } else {
+                const name = contactDisplayName(contact);
+                showSuccess(`Added ${name}`);
+                loadContacts();
+              }
+            }}
+            onCreate={async (entity) => {
+              const contact = entity as ContactSearchResult;
+              const result = await addDealContact(dealId, contact.id, "co_borrower");
+              if (result.error) {
+                showError("Could not add contact", result.error);
+              } else {
+                const name = contactDisplayName(contact);
+                showSuccess(`Added ${name}`);
+                loadContacts();
+              }
+            }}
           />
         </div>
 

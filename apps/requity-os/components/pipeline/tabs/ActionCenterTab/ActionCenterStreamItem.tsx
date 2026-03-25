@@ -449,10 +449,18 @@ function MessageItem({ item }: { item: StreamItem }) {
   );
 }
 
+// ── Truncate a display value for compact inline display ──
+
+function truncateValue(val: string, max = 30): string {
+  if (!val || val === "null" || val === "undefined") return "";
+  return val.length > max ? val.slice(0, max) + "..." : val;
+}
+
 // ── System group (multiple updates collapsed, expandable) ──
 
 function SystemGroupItem({ item }: { item: StreamItem }) {
   const [expanded, setExpanded] = useState(false);
+  const authorName = item.author?.name && item.author.name !== "System" ? item.author.name : null;
 
   return (
     <div className="border-b border-border/20">
@@ -470,21 +478,49 @@ function SystemGroupItem({ item }: { item: StreamItem }) {
         <Zap className="h-3 w-3 shrink-0 text-muted-foreground/60" />
         <span className="truncate text-left">
           <span className="font-medium text-foreground">{item.groupCount}</span> field updates
+          {authorName && <span className="text-muted-foreground"> by {authorName}</span>}
         </span>
         <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(item.timestamp)}</span>
       </button>
 
       {expanded && item.groupedItems && (
         <div className="pl-10 pr-4 pb-1.5">
-          {item.groupedItems.map((child) => (
-            <div
-              key={child.id}
-              className="flex items-center gap-2 py-0.5 text-[11px] text-muted-foreground"
-            >
-              <span className="truncate">{child.title}</span>
-              <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(child.timestamp)}</span>
-            </div>
-          ))}
+          {item.groupedItems.map((child) => {
+            const hasValues = child.fieldOldValue != null || child.fieldNewValue != null;
+            const oldDisplay = child.fieldOldValue ? truncateValue(child.fieldOldValue) : null;
+            const newDisplay = child.fieldNewValue ? truncateValue(child.fieldNewValue) : null;
+            const childAuthorName = child.author?.name && child.author.name !== "System" ? child.author.name : null;
+
+            return (
+              <div
+                key={child.id}
+                className="flex items-center gap-2 py-0.5 text-[11px] text-muted-foreground"
+              >
+                <span className="truncate">
+                  {child.title}
+                  {hasValues && (
+                    <>
+                      {oldDisplay && (
+                        <>
+                          {": "}
+                          <span className="line-through opacity-60">{oldDisplay}</span>
+                          {newDisplay && " \u2192 "}
+                        </>
+                      )}
+                      {newDisplay && !oldDisplay && ": "}
+                      {newDisplay && (
+                        <span className="text-foreground">{newDisplay}</span>
+                      )}
+                    </>
+                  )}
+                </span>
+                {childAuthorName && childAuthorName !== authorName && (
+                  <span className="shrink-0 text-[10px] font-medium">{child.author.initials}</span>
+                )}
+                <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(child.timestamp)}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
