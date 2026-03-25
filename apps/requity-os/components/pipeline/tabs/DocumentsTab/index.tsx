@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, lazy, Suspense } from "react";
-import { useRouter } from "next/navigation";
 import { FileText, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 import {
@@ -40,8 +39,8 @@ export function DocumentsTab({
   currentUserId,
   currentUserName,
   dealDocData,
+  onUploadComplete,
 }: DocumentsTabProps) {
-  const router = useRouter();
   const [previewDoc, setPreviewDoc] = useState<DealDocument | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
@@ -58,7 +57,7 @@ export function DocumentsTab({
       showSuccess(
         status === "approved" ? "Document approved" : "Document denied"
       );
-      router.refresh();
+      onUploadComplete?.();
     }
   }
 
@@ -68,7 +67,7 @@ export function DocumentsTab({
       showError("Could not request revision", result.error);
     } else {
       showSuccess("Revision requested - borrower will see feedback on their upload portal");
-      router.refresh();
+      onUploadComplete?.();
     }
   }
 
@@ -82,7 +81,7 @@ export function DocumentsTab({
       showError("Could not unlink document", error.message);
     } else {
       showSuccess("Document unlinked");
-      router.refresh();
+      onUploadComplete?.();
     }
   }
 
@@ -110,7 +109,7 @@ export function DocumentsTab({
         googleDriveFolderUrl={googleDriveFolderUrl}
         googleDriveFolderId={googleDriveFolderId}
         onPreviewDoc={handlePreviewDoc}
-        onUploadComplete={() => router.refresh()}
+        onUploadComplete={onUploadComplete}
         currentUserId={currentUserId}
         currentUserName={currentUserName}
       />
