@@ -14,7 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import {
-  PriorityBadge,
   OpsStatusBadge,
   OwnerBadge,
   DueDateLabel,
@@ -27,7 +26,6 @@ export interface OpsTask {
   title: string;
   description: string | null;
   status: string;
-  priority: string;
   assigned_to: string | null;
   assigned_to_name: string | null;
   project_id: string | null;
@@ -59,7 +57,6 @@ export interface OpsProject {
   category: string | null;
   owner: string | null;
   status: string | null;
-  priority: string | null;
   description: string | null;
   latest_update: string | null;
   due_date: string | null;
@@ -86,13 +83,6 @@ interface ProjectCardProps {
   onOpenTask: (task: OpsTask) => void;
 }
 
-const priorityOrder: Record<string, number> = {
-  Critical: 0,
-  High: 1,
-  Medium: 2,
-  Low: 3,
-};
-
 export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, onDeleteTask, onDeleteProject, commentCount, currentUserId, isSuperAdmin, taskCommentCounts, onOpenTask }: ProjectCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -100,9 +90,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
   const totalCount = tasks.length;
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
-  const sortedTasks = [...tasks].sort(
-    (a, b) => (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
-  );
+  const sortedTasks = [...tasks];
 
   return (
     <Card className="transition-shadow hover:shadow-md">
@@ -125,7 +113,6 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                 <h3 className="text-sm font-semibold text-foreground">
                   {project.project_name}
                 </h3>
-                <PriorityBadge priority={project.priority} />
                 <OpsStatusBadge status={project.status} />
               </div>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -225,7 +212,6 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                           {taskCommentCounts[task.id]}
                         </span>
                       )}
-                      <PriorityBadge priority={task.priority} />
                       {task.is_recurring && (
                         <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
                       )}

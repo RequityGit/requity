@@ -4,26 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/lib/format";
 
-// --- Priority Badge ---
-const priorityConfig: Record<string, { className: string }> = {
-  Critical: { className: "bg-red-100 text-red-800 border-red-200" },
-  High: { className: "bg-orange-100 text-orange-800 border-orange-200" },
-  Medium: { className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  Low: { className: "bg-green-100 text-green-800 border-green-200" },
-};
-
-export function PriorityBadge({ priority }: { priority: string | null }) {
-  if (!priority) return null;
-  const config = priorityConfig[priority] ?? {
-    className: "bg-muted text-muted-foreground border-border",
-  };
-  return (
-    <Badge variant="outline" className={cn("text-xs", config.className)}>
-      {priority}
-    </Badge>
-  );
-}
-
 // --- Status Badge ---
 // Map legacy lowercase DB values to canonical display labels
 const statusDisplayMap: Record<string, string> = {

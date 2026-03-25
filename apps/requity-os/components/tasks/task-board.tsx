@@ -63,7 +63,6 @@ export function TaskBoard({
   // Filters
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<TaskTypeFilter>("all");
   const [myApprovalsFilter, setMyApprovalsFilter] = useState(false);
   const [showParkingLot, setShowParkingLot] = useState(false);
@@ -161,10 +160,9 @@ export function TaskBoard({
       if (typeFilter === "task" && (t.type !== "task" || t.requires_approval)) return false;
       if (assigneeFilter !== "all" && t.assigned_to !== assigneeFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
-      if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
       return true;
     });
-  }, [tasks, typeFilter, assigneeFilter, categoryFilter, priorityFilter, myApprovalsFilter, currentUserId]);
+  }, [tasks, typeFilter, assigneeFilter, categoryFilter, myApprovalsFilter, currentUserId]);
 
   // Complete handler
   const handleComplete = useCallback(
@@ -435,8 +433,6 @@ export function TaskBoard({
             onAssigneeChange={setAssigneeFilter}
             categoryFilter={categoryFilter}
             onCategoryChange={setCategoryFilter}
-            priorityFilter={priorityFilter}
-            onPriorityChange={setPriorityFilter}
             typeFilter={typeFilter}
             onTypeFilterChange={setTypeFilter}
           />
@@ -526,13 +522,6 @@ export function TaskBoard({
                 className="flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors cursor-pointer"
                 onClick={() => handleTaskClick(t)}
               >
-                <span
-                  className="h-2 w-2 rounded-full shrink-0"
-                  style={{
-                    backgroundColor:
-                      t.priority === "High" ? "#E5453D" : t.priority === "Medium" ? "#E5930E" : "#8B8B8B",
-                  }}
-                />
                 <span className="text-[13px] font-medium text-foreground flex-1 truncate">{t.title}</span>
                 {t.category && (
                   <span className="text-[11px] text-muted-foreground shrink-0">{t.category}</span>

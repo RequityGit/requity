@@ -136,7 +136,7 @@ export async function GET(
     if (scope === "tasks") {
       const { data: raw } = await admin
         .from("ops_tasks")
-        .select("id, title, description, status, priority, assigned_to, assigned_to_name, project_id, due_date, completed_at, category, linked_entity_type, linked_entity_id, linked_entity_label, is_recurring, is_active_recurrence, recurrence_pattern, recurrence_repeat_interval, recurrence_days_of_week, recurrence_day_of_month, recurrence_monthly_when, recurrence_start_date, recurrence_end_date, next_recurrence_date, recurring_template_id, recurrence_period, previous_incomplete, recurring_series_id, source_task_id, parent_task_id, created_by, sort_order, updated_at, created_at, type, approval_status, active_party, requestor_user_id, requestor_name, amount, decision_note, approved_at, rejected_at, resubmitted_at, revision_count, requires_approval, approver_id, approval_instructions")
+        .select("id, title, description, status, assigned_to, assigned_to_name, project_id, due_date, completed_at, category, linked_entity_type, linked_entity_id, linked_entity_label, is_recurring, is_active_recurrence, recurrence_pattern, recurrence_repeat_interval, recurrence_days_of_week, recurrence_day_of_month, recurrence_monthly_when, recurrence_start_date, recurrence_end_date, next_recurrence_date, recurring_template_id, recurrence_period, previous_incomplete, recurring_series_id, source_task_id, parent_task_id, created_by, sort_order, updated_at, created_at, type, approval_status, active_party, requestor_user_id, requestor_name, amount, decision_note, approved_at, rejected_at, resubmitted_at, revision_count, requires_approval, approver_id, approval_instructions")
         .eq("linked_entity_type", "contact")
         .eq("linked_entity_id", contactId)
         .order("created_at", { ascending: false })
@@ -147,7 +147,6 @@ export async function GET(
         title: t.title as string,
         description: t.description as string | null,
         status: t.status as string,
-        priority: t.priority as string,
         assigned_to: t.assigned_to as string | null,
         assigned_to_name: t.assigned_to_name as string | null,
         project_id: t.project_id as string | null,

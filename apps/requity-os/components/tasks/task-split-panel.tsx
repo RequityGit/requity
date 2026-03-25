@@ -36,7 +36,6 @@ import {
   Image,
   Download,
   Copy,
-  BarChart3,
   Clock,
   CircleDot,
   Terminal,
@@ -50,10 +49,8 @@ import { LinkedEntitySelect } from "@/app/(authenticated)/(admin)/tasks/linked-e
 import type { OpsTask, Profile, TaskApproval } from "@/lib/tasks";
 import {
   TASK_STATUSES,
-  TASK_PRIORITIES,
   TASK_CATEGORIES,
   CATEGORY_COLORS,
-  PRIORITY_COLORS,
 } from "@/lib/tasks";
 import {
   approveTask,
@@ -107,7 +104,6 @@ export function TaskSplitPanel({
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("To Do");
-  const [priority, setPriority] = useState("Medium");
   const [category, setCategory] = useState("");
   const [linkedEntityType, setLinkedEntityType] = useState("");
   const [linkedEntityId, setLinkedEntityId] = useState("");
@@ -152,7 +148,6 @@ export function TaskSplitPanel({
       setAssignedTo(task.assigned_to ?? "");
       setDueDate(task.due_date ?? "");
       setStatus(task.status);
-      setPriority(task.priority);
       setCategory(task.category ?? "");
       setLinkedEntityType(task.linked_entity_type ?? "");
       setLinkedEntityId(task.linked_entity_id ?? "");
@@ -181,7 +176,6 @@ export function TaskSplitPanel({
       setAssignedTo("");
       setDueDate("");
       setStatus("To Do");
-      setPriority("Medium");
       setCategory("");
       setLinkedEntityType(defaultLinkedEntity?.type ?? "");
       setLinkedEntityId(defaultLinkedEntity?.id ?? "");
@@ -402,7 +396,6 @@ export function TaskSplitPanel({
       assigned_to_name: assigneeProfile?.full_name || null,
       due_date: dueDate || null,
       status,
-      priority,
       category: category || null,
       linked_entity_type: linkedEntityType || null,
       linked_entity_id: linkedEntityId || null,
@@ -520,7 +513,6 @@ export function TaskSplitPanel({
 
     lines.push(`# Task: ${task.title}`);
     if (task.category) lines.push(`Category: ${task.category}`);
-    if (task.priority) lines.push(`Priority: ${task.priority}`);
     if (task.linked_entity_label) lines.push(`Linked to: ${task.linked_entity_label} (${task.linked_entity_type})`);
     lines.push("");
     if (task.description) {
@@ -694,11 +686,6 @@ export function TaskSplitPanel({
       default:
         return <CircleDot className="h-3 w-3" />;
     }
-  };
-
-  const priorityIcon = () => {
-    const color = priority === "High" ? "text-red-500" : priority === "Medium" ? "text-amber-500" : "text-muted-foreground";
-    return <BarChart3 className={cn("h-3 w-3", color)} />;
   };
 
   return (
@@ -913,18 +900,6 @@ export function TaskSplitPanel({
                       <SelectContent>
                         {availableStatuses.map((s) => (
                           <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger className="h-7 w-auto gap-1.5 px-2.5 text-xs font-medium rounded-full border-border bg-muted/50 hover:bg-muted transition-colors [&>svg]:h-3 [&>svg]:w-3">
-                        {priorityIcon()}
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TASK_PRIORITIES.map((p) => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

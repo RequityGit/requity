@@ -25,7 +25,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Repeat2, Zap, CalendarDays, Minus, Plus } from "lucide-react";
 import type { Profile } from "@/lib/tasks";
-import { TASK_CATEGORIES, TASK_PRIORITIES } from "@/lib/tasks";
+import { TASK_CATEGORIES } from "@/lib/tasks";
 import type {
   RecurringTaskTemplate,
   RecurrenceType,
@@ -64,7 +64,6 @@ export function TemplateSheet({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [priority, setPriority] = useState("Medium");
   const [assignedTo, setAssignedTo] = useState("");
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>("monthly");
   const [monthlyMode, setMonthlyMode] = useState<MonthlyMode>("date");
@@ -82,7 +81,6 @@ export function TemplateSheet({
       setTitle(template.title);
       setDescription(template.description ?? "");
       setCategory(template.category);
-      setPriority(template.priority);
       setAssignedTo(template.assigned_to ?? "");
       setRecurrenceType(template.recurrence_type);
       setMonthlyMode(template.monthly_mode ?? "date");
@@ -100,7 +98,6 @@ export function TemplateSheet({
       setTitle("");
       setDescription("");
       setCategory("");
-      setPriority("Medium");
       setAssignedTo("");
       setRecurrenceType("monthly");
       setMonthlyMode("date");
@@ -185,7 +182,6 @@ export function TemplateSheet({
       title: title.trim(),
       description: description.trim() || null,
       category,
-      priority,
       assigned_to: assignedTo || null,
       recurrence_type: recurrenceType,
       monthly_mode:
@@ -273,39 +269,22 @@ export function TemplateSheet({
               />
             </div>
 
-            {/* Category + Priority */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="rq-micro-label">
-                  Category
-                </Label>
-                <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Select category</SelectItem>
-                    {TASK_CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="rq-micro-label">
-                  Priority
-                </Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TASK_PRIORITIES.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Category */}
+            <div className="space-y-1.5">
+              <Label className="rq-micro-label">
+                Category
+              </Label>
+              <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Select category</SelectItem>
+                  {TASK_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Assign To */}
