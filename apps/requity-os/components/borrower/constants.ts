@@ -15,12 +15,6 @@ export const BORROWER_ROLES: BorrowerRole[] = [
   "Manager",
   "Member",
   "Managing Member",
-  "Principal",
-  "Trustee",
-  "General Partner",
-  "Limited Partner",
-  "Officer",
-  "Authorized Signer",
 ];
 
 export const US_STATES = [

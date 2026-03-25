@@ -76,13 +76,7 @@ export type EntityType =
 export type BorrowerRole =
   | "Manager"
   | "Member"
-  | "Managing Member"
-  | "Principal"
-  | "Trustee"
-  | "General Partner"
-  | "Limited Partner"
-  | "Officer"
-  | "Authorized Signer";
+  | "Managing Member";
 
 export interface BorrowerRollups {
   combined_liquidity: number;

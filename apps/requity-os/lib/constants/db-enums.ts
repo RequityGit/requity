@@ -1272,6 +1272,4 @@ export const ENTITY_OWNER_TITLES = [
   { value: "member", label: "Member" },
   { value: "manager", label: "Manager" },
   { value: "managing_member", label: "Managing Member" },
-  { value: "authorized_signer", label: "Authorized Signer" },
-  { value: "officer", label: "Officer" },
 ] as const;
