@@ -337,12 +337,6 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                     value={uwNum("purchase_price")}
                     onSave={(v) => saveField("purchase_price", v)}
                   />
-                  <InlineField
-                    label="Earnest money deposit"
-                    type="currency"
-                    value={uwNum("earnest_money_deposit")}
-                    onSave={(v) => saveField("earnest_money_deposit", v)}
-                  />
                 </>
               )}
 
