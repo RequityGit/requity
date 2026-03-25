@@ -60,6 +60,7 @@ export interface StreamItem {
   // System group
   groupedFields?: string[];
   groupCount?: number;
+  groupedItems?: StreamItem[];
   // Message-specific
   messageSenderType?: "admin" | "borrower" | "system";
   messageSource?: "portal" | "email" | "sms";
@@ -191,6 +192,8 @@ function getInitials(name: string | null | undefined): string {
 
 // ── Group rapid system events ──
 
+const SYSTEM_GROUP_WINDOW_MS = 3600000; // 1 hour
+
 function groupSystemEvents(items: StreamItem[]): StreamItem[] {
   const result: StreamItem[] = [];
   let i = 0;
@@ -209,7 +212,7 @@ function groupSystemEvents(items: StreamItem[]): StreamItem[] {
           next.type === "system" &&
           next.dealActivity &&
           next.author.id === item.author.id &&
-          Math.abs(new Date(next.timestamp).getTime() - new Date(item.timestamp).getTime()) < 60000
+          Math.abs(new Date(next.timestamp).getTime() - new Date(item.timestamp).getTime()) < SYSTEM_GROUP_WINDOW_MS
         ) {
           group.push(next);
           j++;
@@ -228,6 +231,7 @@ function groupSystemEvents(items: StreamItem[]): StreamItem[] {
           description: titles.join(", "),
           groupedFields: titles as string[],
           groupCount: group.length,
+          groupedItems: group,
           timestamp: group[group.length - 1].timestamp,
         });
       } else {
@@ -621,8 +625,11 @@ export function useActionCenterData({
       });
     }
 
-    // Form submission events
+    // Form submission events (only completed submissions)
     for (const sub of formSubmissions) {
+      const status = sub.status as string;
+      if (status === "partial" || status === "pending_borrower") continue;
+
       const fd = sub.form_definitions as { name?: string } | null;
       const d = sub.data as Record<string, unknown> | null;
       const submitterName = (() => {

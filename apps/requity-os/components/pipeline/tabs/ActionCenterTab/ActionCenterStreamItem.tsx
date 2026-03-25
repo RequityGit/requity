@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Mail,
   MailOpen,
@@ -16,6 +17,7 @@ import {
   Send,
   Eye,
   MessageCircle,
+  ChevronRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -138,42 +140,15 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
     );
   }
 
-  // Form submission: card-style row with status badge
+  // Form submission: compact one-liner (only completed forms shown)
   if (item.type === "form_submission") {
     const cfg = TYPE_CONFIG[item.type];
     const Icon = cfg.icon;
-    const statusColors: Record<string, string> = {
-      partial: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-      submitted: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      pending_borrower: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    };
-    const statusLabels: Record<string, string> = {
-      partial: "In Progress",
-      submitted: "Submitted",
-      pending_borrower: "Pending",
-      reviewed: "Reviewed",
-      processed: "Processed",
-    };
-
     return (
-      <div className="flex items-start gap-3 px-3 py-2.5">
-        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/30">
-          <Icon className={cn("h-3.5 w-3.5", cfg.color)} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm">{item.title}</p>
-          {item.formStatus && (
-            <Badge
-              variant="secondary"
-              className={cn("mt-1 text-[10px] px-1.5 py-0", statusColors[item.formStatus])}
-            >
-              {statusLabels[item.formStatus] ?? item.formStatus}
-            </Badge>
-          )}
-        </div>
-        <span className="shrink-0 text-[10px] text-muted-foreground mt-0.5">
-          {timeAgo(item.timestamp)}
-        </span>
+      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+        <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
+        <span className="truncate">{item.title}</span>
+        <span className="ml-auto shrink-0 text-[10px]">{timeAgo(item.timestamp)}</span>
       </div>
     );
   }
@@ -474,19 +449,44 @@ function MessageItem({ item }: { item: StreamItem }) {
   );
 }
 
-// ── System group (multiple updates collapsed) ──
+// ── System group (multiple updates collapsed, expandable) ──
 
 function SystemGroupItem({ item }: { item: StreamItem }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div className="flex items-center gap-2 px-4 py-1 text-xs text-muted-foreground border-b border-border/20">
-      <Zap className="h-3 w-3 shrink-0 text-muted-foreground/60" />
-      <span className="truncate">
-        <span className="font-medium text-foreground">{item.groupCount}</span> field updates
-        {item.groupedFields && item.groupedFields.length > 0 && (
-          <span className="ml-1 text-muted-foreground/60">{item.groupedFields.slice(0, 4).join(", ")}{item.groupedFields.length > 4 ? "..." : ""}</span>
-        )}
-      </span>
-      <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(item.timestamp)}</span>
+    <div className="border-b border-border/20">
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="flex w-full items-center gap-2 px-4 py-1.5 text-xs text-muted-foreground hover:bg-muted/30 rq-transition"
+      >
+        <ChevronRight
+          className={cn(
+            "h-3 w-3 shrink-0 text-muted-foreground/60 rq-transition-transform",
+            expanded && "rotate-90"
+          )}
+        />
+        <Zap className="h-3 w-3 shrink-0 text-muted-foreground/60" />
+        <span className="truncate text-left">
+          <span className="font-medium text-foreground">{item.groupCount}</span> field updates
+        </span>
+        <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(item.timestamp)}</span>
+      </button>
+
+      {expanded && item.groupedItems && (
+        <div className="pl-10 pr-4 pb-1.5">
+          {item.groupedItems.map((child) => (
+            <div
+              key={child.id}
+              className="flex items-center gap-2 py-0.5 text-[11px] text-muted-foreground"
+            >
+              <span className="truncate">{child.title}</span>
+              <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(child.timestamp)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
