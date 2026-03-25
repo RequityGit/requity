@@ -88,7 +88,7 @@ export async function fetchDealPreview(dealId: string): Promise<DealPreviewData>
       supabase
         .from("deal_team_contacts" as never)
         .select(
-          "*, contact:crm_contacts!deal_team_contacts_contact_id_fkey(id, first_name, last_name, email, phone, company_name)" as never
+          "*, contact:crm_contacts!deal_team_contacts_contact_id_fkey(id, first_name, last_name, email, phone, company_name), company:companies!deal_team_contacts_company_id_fkey(id, name)" as never
         )
         .eq("deal_id" as never, dealId as never)
         .order("sort_order" as never, { ascending: true }),
