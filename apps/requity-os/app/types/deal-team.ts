@@ -2,6 +2,7 @@ export interface DealTeamContact {
   id: string;
   deal_id: string;
   contact_id: string | null;
+  company_id: string | null;
   manual_name: string;
   manual_company: string;
   manual_phone: string;
@@ -18,6 +19,10 @@ export interface DealTeamContact {
     email: string | null;
     phone: string | null;
     company_name: string | null;
+  } | null;
+  company?: {
+    id: string;
+    name: string;
   } | null;
 }
 
@@ -52,14 +57,14 @@ export function getDealTeamContactDisplay(dtc: DealTeamContact) {
       .trim();
     return {
       name: name || "Unknown",
-      company: dtc.contact.company_name ?? "",
+      company: dtc.company?.name ?? dtc.contact.company_name ?? "",
       phone: dtc.contact.phone ?? "",
       email: dtc.contact.email ?? "",
     };
   }
   return {
     name: dtc.manual_name,
-    company: dtc.manual_company,
+    company: dtc.company?.name ?? dtc.manual_company,
     phone: dtc.manual_phone,
     email: dtc.manual_email,
   };

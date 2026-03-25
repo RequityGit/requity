@@ -1718,6 +1718,7 @@ export async function addDealTeamContactAction(
   entry: {
     role: string;
     contact_id?: string | null;
+    company_id?: string | null;
     manual_name?: string;
     manual_company?: string;
     manual_phone?: string;
@@ -1749,6 +1750,7 @@ export async function updateDealTeamContactAction(
       DealTeamContact,
       | "role"
       | "contact_id"
+      | "company_id"
       | "manual_name"
       | "manual_company"
       | "manual_phone"
