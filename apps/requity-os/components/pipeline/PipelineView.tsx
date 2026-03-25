@@ -64,7 +64,11 @@ function sortDeals(a: UnifiedDeal, b: UnifiedDeal): number {
   return (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
 }
 
-export function PipelineView() {
+interface PipelineViewProps {
+  showingLostDeals?: boolean;
+}
+
+export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
 
@@ -86,7 +90,7 @@ export function PipelineView() {
     view: "kanban",
   });
 
-  const effectiveView = isMobile ? "table" : filters.view;
+  const effectiveView = isMobile || showingLostDeals ? "table" : filters.view;
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [reviewItem, setReviewItem] = useState<IntakeItem | null>(null);
 
@@ -201,6 +205,14 @@ export function PipelineView() {
     setReviewItem(item);
   }, []);
 
+  const handleToggleLostDeals = useCallback(() => {
+    if (showingLostDeals) {
+      router.push("/pipeline");
+    } else {
+      router.push("/pipeline?status=lost");
+    }
+  }, [showingLostDeals, router]);
+
   return (
     <div className="space-y-4">
       <DealFilters
@@ -208,6 +220,8 @@ export function PipelineView() {
         onChange={setFilters}
         onNewDeal={handleOpenNewDeal}
         searchInputRef={searchInputRef}
+        showingLostDeals={showingLostDeals}
+        onToggleLostDeals={handleToggleLostDeals}
       />
 
       {isMobile ? (
@@ -234,6 +248,7 @@ export function PipelineView() {
           deals={filteredDeals}
           stageConfigs={stageConfigs}
           onDealClick={handleDealClick}
+          showLossReason={showingLostDeals}
         />
       )}
 

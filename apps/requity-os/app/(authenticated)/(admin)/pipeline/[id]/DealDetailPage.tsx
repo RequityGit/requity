@@ -52,6 +52,8 @@ import {
   Send,
   FileText,
   AlertTriangle,
+  XCircle,
+  RotateCcw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -99,6 +101,7 @@ import {
 import {
   advanceStageAction,
   regressStageAction,
+  updateDealStatusAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
 import { ApprovalBanner } from "@/components/pipeline/ApprovalBanner";
@@ -524,6 +527,19 @@ function DealDetailPageInner({
           submitterName={approvalInfo?.submitterName}
         />
 
+        {/* Closed Lost Banner */}
+        {deal.status === "lost" && (
+          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 dark:border-red-800 dark:bg-red-950/50">
+            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-medium text-red-700 dark:text-red-400">Closed Lost</span>
+              {deal.loss_reason && (
+                <p className="text-sm text-red-600/80 dark:text-red-400/70 mt-0.5 line-clamp-2">{deal.loss_reason}</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tab Content */}
         <div className="flex-1 min-h-0 overflow-hidden">
           <div className={cn(
@@ -730,6 +746,11 @@ function DealHeader({
   const [creatingDrive, setCreatingDrive] = useState(false);
   const [deleteDealOpen, setDeleteDealOpen] = useState(false);
   const [deleteDealLoading, setDeleteDealLoading] = useState(false);
+
+  // Closed Lost dialog state
+  const [closedLostOpen, setClosedLostOpen] = useState(false);
+  const [lossDescription, setLossDescription] = useState("");
+  const [isClosingLost, setIsClosingLost] = useState(false);
 
   // Send Form dialog state
   const [sendFormOpen, setSendFormOpen] = useState(false);
@@ -1159,11 +1180,19 @@ function DealHeader({
             >
               {shortLabel}
             </Badge>
+            {deal.status === "lost" && (
+              <Badge
+                variant="outline"
+                className="text-[9.5px] px-2 py-0 uppercase tracking-wide shrink-0 bg-red-100 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800"
+              >
+                Closed Lost
+              </Badge>
+            )}
           </div>
         </div>
 
         {/* C. Stage dots */}
-        <div className="flex items-center gap-1 px-4 shrink-0">
+        <div className={cn("flex items-center gap-1 px-4 shrink-0", deal.status === "lost" && "opacity-40")}>
           {STAGES.map((stage, i) => (
             <div
               key={stage.key}
@@ -1654,6 +1683,31 @@ function DealHeader({
                   </DropdownMenuItem>
                 }
               />
+              <DropdownMenuSeparator />
+              {deal.status === "lost" ? (
+                <DropdownMenuItem
+                  onClick={async () => {
+                    const res = await updateDealStatusAction(deal.id, "active");
+                    if (res.error) {
+                      showError("Could not reopen deal", res.error);
+                    } else {
+                      showSuccess("Deal reopened");
+                      router.refresh();
+                    }
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reopen Deal
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                  onClick={() => setClosedLostOpen(true)}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Mark as Closed Lost
+                </DropdownMenuItem>
+              )}
               {isSuperAdmin && (
                 <>
                   <DropdownMenuSeparator />
@@ -1691,6 +1745,56 @@ function DealHeader({
             <Button variant="destructive" onClick={handleConfirmDeleteDeal} disabled={deleteDealLoading}>
               {deleteDealLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
               Delete deal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Closed Lost */}
+      <Dialog open={closedLostOpen} onOpenChange={(open) => {
+        if (!open) { setClosedLostOpen(false); setLossDescription(""); }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark Deal as Closed Lost</DialogTitle>
+            <DialogDescription>
+              This deal will be removed from the active pipeline. All records will be preserved.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <label className="text-sm font-medium">Why was this deal lost? *</label>
+            <Textarea
+              className="mt-2"
+              placeholder="Describe why this deal was lost..."
+              value={lossDescription}
+              onChange={(e) => setLossDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setClosedLostOpen(false); setLossDescription(""); }} disabled={isClosingLost}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!lossDescription.trim() || isClosingLost}
+              onClick={async () => {
+                setIsClosingLost(true);
+                const res = await updateDealStatusAction(deal.id, "lost", lossDescription.trim());
+                if (res.error) {
+                  showError("Could not mark deal as lost", res.error);
+                  setIsClosingLost(false);
+                } else {
+                  showSuccess("Deal marked as Closed Lost");
+                  setClosedLostOpen(false);
+                  setLossDescription("");
+                  setIsClosingLost(false);
+                  router.push("/pipeline");
+                }
+              }}
+            >
+              {isClosingLost && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+              Mark as Closed Lost
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, LayoutGrid, List, Plus, Search } from "lucide-react";
+import { Calendar, LayoutGrid, List, Plus, Search, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateAddedFilter } from "@/components/ui/date-added-filter";
 import { ACTIVE_ASSET_CLASS_OPTIONS, type CapitalSide } from "./pipeline-types";
@@ -32,6 +32,8 @@ interface DealFiltersProps {
   onChange: (filters: FilterState) => void;
   onNewDeal: () => void;
   searchInputRef?: React.RefObject<HTMLInputElement | null>;
+  showingLostDeals?: boolean;
+  onToggleLostDeals?: () => void;
 }
 
 export function DealFilters({
@@ -39,6 +41,8 @@ export function DealFilters({
   onChange,
   onNewDeal,
   searchInputRef,
+  showingLostDeals,
+  onToggleLostDeals,
 }: DealFiltersProps) {
   function update(partial: Partial<FilterState>) {
     onChange({ ...filters, ...partial });
@@ -49,6 +53,35 @@ export function DealFilters({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-1 items-center gap-2 flex-wrap">
+        {/* Status toggle */}
+        {onToggleLostDeals && (
+          <div className="flex rounded-md border">
+            <button
+              onClick={() => showingLostDeals && onToggleLostDeals()}
+              className={cn(
+                "px-3 py-2 md:py-1.5 text-xs font-medium transition-colors min-h-[36px]",
+                !showingLostDeals
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => !showingLostDeals && onToggleLostDeals()}
+              className={cn(
+                "px-3 py-2 md:py-1.5 text-xs font-medium transition-colors min-h-[36px] flex items-center gap-1",
+                showingLostDeals
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <XCircle className="h-3 w-3" />
+              Closed Lost
+            </button>
+          </div>
+        )}
+
         {/* Search */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

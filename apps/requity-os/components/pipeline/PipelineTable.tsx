@@ -27,12 +27,14 @@ interface PipelineTableProps {
   deals: UnifiedDeal[];
   stageConfigs: StageConfig[];
   onDealClick: (deal: UnifiedDeal) => void;
+  showLossReason?: boolean;
 }
 
 export function PipelineTable({
   deals,
   stageConfigs,
   onDealClick,
+  showLossReason,
 }: PipelineTableProps) {
   const router = useRouter();
   const stageConfigMap = new Map(stageConfigs.map((sc) => [sc.stage, sc]));
@@ -47,13 +49,14 @@ export function PipelineTable({
             <TableHead>Asset</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Stage</TableHead>
+            {showLossReason && <TableHead>Loss Reason</TableHead>}
             <TableHead className="text-right">Days</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {deals.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={showLossReason ? 7 : 6} className="text-center text-muted-foreground py-8">
                 No deals found
               </TableCell>
             </TableRow>
@@ -106,6 +109,13 @@ export function PipelineTable({
                   <TableCell>
                     <span className="text-xs capitalize">{deal.stage}</span>
                   </TableCell>
+                  {showLossReason && (
+                    <TableCell className="max-w-[300px]">
+                      <span className="text-xs text-muted-foreground line-clamp-2">
+                        {deal.loss_reason || "—"}
+                      </span>
+                    </TableCell>
+                  )}
                   <TableCell
                     className={cn(
                       "text-right text-sm num",
