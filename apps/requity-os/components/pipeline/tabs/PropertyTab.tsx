@@ -8,9 +8,10 @@ import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import { useDealLayout } from "@/hooks/useDealLayout";
 import type { LayoutSection } from "@/hooks/useDealLayout";
 import type { VisibilityContext } from "@/lib/visibility-engine";
-import { showSuccess, showError } from "@/lib/toast";
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, ChevronRight } from "lucide-react";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { useOptionalInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
 import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
 import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
@@ -86,6 +87,7 @@ function PropertyDetailsContent({
 }) {
   const { byObject, fieldMap: uwFieldMap, loading: fieldsLoading, error: fieldsError } = useUwFieldConfigs(visibilityContext);
   const layout = useDealLayout();
+  const confirm = useConfirm();
 
   const [localData, setLocalData] = useState<Record<string, unknown>>(propertyData);
   const [pending, startTransition] = useTransition();
@@ -188,6 +190,15 @@ function PropertyDetailsContent({
     });
   }
 
+  // Build a human-readable list of enrichable field labels
+  const enrichableFieldLabels = useMemo(() => {
+    const labels: string[] = [];
+    enrichFieldMap.forEach((def) => {
+      labels.push(def.label);
+    });
+    return labels;
+  }, [enrichFieldMap]);
+
   async function enrichFromAddress() {
     const address = localData.property_address ?? localData.address_line1;
     const state = localData.property_state ?? localData.state;
@@ -216,21 +227,73 @@ function PropertyDetailsContent({
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error ?? "Failed to enrich property");
+        const errMsg = data.error ?? "Failed to enrich property";
+        const searchedAddr = `${String(address).trim()}, ${String(state).trim()}`;
+
+        showError(
+          "Could not enrich property",
+          `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+        );
+        showInfo(
+          "Fields you can fill manually",
+          enrichableFieldLabels.slice(0, 15).join(", ") +
+            (enrichableFieldLabels.length > 15 ? `, and ${enrichableFieldLabels.length - 15} more` : "")
+        );
+        return;
       }
 
       const data = await response.json();
       const enriched = data.enriched as Record<string, unknown>;
 
-      const updatedData = { ...localData };
-      const savePromises: Promise<unknown>[] = [];
-
+      // Determine which enrichable fields already have values
+      const fieldsWithValues: string[] = [];
+      const fieldsToFill: string[] = [];
       for (const [key, value] of Object.entries(enriched)) {
         if (value === null || value === undefined || value === "") continue;
         if (!enrichFieldMap.has(key)) continue;
-        if (updatedData[key] !== null && updatedData[key] !== undefined && updatedData[key] !== "") continue;
+        const hasExisting = localData[key] !== null && localData[key] !== undefined && localData[key] !== "";
+        if (hasExisting) {
+          fieldsWithValues.push(enrichFieldMap.get(key)?.label ?? key);
+        } else {
+          fieldsToFill.push(key);
+        }
+      }
+
+      // If some fields already have data, ask whether to overwrite
+      let overwrite = false;
+      if (fieldsWithValues.length > 0) {
+        overwrite = await confirm({
+          title: "Overwrite existing data?",
+          description: `${fieldsWithValues.length} field${fieldsWithValues.length === 1 ? " already has" : "s already have"} a value (${fieldsWithValues.slice(0, 5).join(", ")}${fieldsWithValues.length > 5 ? "..." : ""}). Overwrite with enrichment data?`,
+          confirmLabel: "Overwrite",
+          destructive: true,
+        });
+      }
+
+      const updatedData = { ...localData };
+      const savePromises: Promise<unknown>[] = [];
+      let savedCount = 0;
+
+      for (const [key, value] of Object.entries(enriched)) {
+        if (value === null || value === undefined || value === "") continue;
+
+        // Always save non-field-config data (arrays, fips codes) to property_data
+        if (!enrichFieldMap.has(key)) {
+          savePromises.push(
+            updatePropertyDataAction(dealId, key, value).then((result) => {
+              if (result.error) console.error(`Failed to save ${key}:`, result.error);
+            })
+          );
+          updatedData[key] = value;
+          continue;
+        }
+
+        // For field-config fields, check if we should skip existing values
+        const hasExisting = localData[key] !== null && localData[key] !== undefined && localData[key] !== "";
+        if (hasExisting && !overwrite) continue;
 
         updatedData[key] = value;
+        savedCount++;
         savePromises.push(
           updatePropertyDataAction(dealId, key, value).then((result) => {
             if (result.error) console.error(`Failed to save ${key}:`, result.error);
@@ -241,7 +304,7 @@ function PropertyDetailsContent({
       setLocalData(updatedData);
       await Promise.all(savePromises);
 
-      showSuccess(`Enriched ${data.field_count ?? 0} fields: ${data.summary ?? ""}`);
+      showSuccess(`Enriched ${savedCount} fields: ${data.summary ?? ""}`);
     } catch (err) {
       console.warn("Property enrichment failed:", err);
       showError("Could not enrich property", err instanceof Error ? err.message : undefined);

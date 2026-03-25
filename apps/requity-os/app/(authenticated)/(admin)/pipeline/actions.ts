@@ -57,6 +57,7 @@ export async function createUnifiedDealAction(data: {
       const pd = data.property_data;
       const propertyInsert: Record<string, unknown> = {};
 
+      // Maps property_data JSONB keys → properties table column names
       const PROPERTY_TABLE_FIELDS: Record<string, string> = {
         address_line1: "address_line1",
         city: "city",
@@ -66,10 +67,10 @@ export async function createUnifiedDealAction(data: {
         parcel_id: "parcel_id",
         zoning: "zoning",
         year_built: "year_built",
-        gross_building_area_sqft: "gross_building_area_sqft",
+        total_sf: "gross_building_area_sqft",
         lot_size_acres: "lot_size_acres",
-        number_of_stories: "number_of_stories",
-        number_of_buildings: "number_of_buildings",
+        stories: "number_of_stories",
+        building_count: "number_of_buildings",
       };
 
       for (const [pdKey, col] of Object.entries(PROPERTY_TABLE_FIELDS)) {
