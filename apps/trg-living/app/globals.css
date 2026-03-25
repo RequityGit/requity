@@ -17,4 +17,13 @@
     --border: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
   }
+
+  html {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+  body {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
 }
