@@ -39,7 +39,7 @@ import {
   addTab,
   updateTab,
   deleteTab,
-} from "@/app/(authenticated)/control-center/object-manager/actions";
+} from "@/lib/actions/layout-actions";
 import type { DealLayoutTab } from "@/hooks/useDealLayout";
 
 const TAB_ICONS: { key: string; icon: LucideIcon; label: string }[] = [

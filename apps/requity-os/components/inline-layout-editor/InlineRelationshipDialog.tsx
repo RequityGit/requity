@@ -34,10 +34,10 @@ import {
   createRelationship,
   updateRelationship,
   deleteRelationship,
-} from "@/app/(authenticated)/control-center/object-manager/actions";
+} from "@/lib/actions/layout-actions";
 import type {
   ObjectRelationship,
-} from "@/app/(authenticated)/control-center/object-manager/actions";
+} from "@/lib/actions/layout-actions";
 
 // ---------------------------------------------------------------------------
 // Constants

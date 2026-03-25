@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Plus, X } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
-import { createField } from "@/app/(authenticated)/control-center/object-manager/actions";
+import { createField } from "@/lib/actions/layout-actions";
 import { useInlineLayout } from "./InlineLayoutContext";
 
 const FIELD_TYPES = [
