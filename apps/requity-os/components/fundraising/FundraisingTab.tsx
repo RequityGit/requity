@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { FundraiseDropZone } from "./FundraiseDropZone";
 import { HeroCropModal } from "./HeroCropModal";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPhoneNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/lib/toast";
 import type { SoftCommitment, CommitmentStatus } from "@/lib/fundraising/types";
@@ -556,6 +556,21 @@ function FundraiseDashboard({
           content
         );
       },
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      cell: (row) =>
+        row.phone ? (
+          <a
+            href={`tel:${row.phone}`}
+            className="text-sm text-muted-foreground hover:text-foreground rq-transition"
+          >
+            {formatPhoneNumber(row.phone)}
+          </a>
+        ) : (
+          <span className="text-sm text-muted-foreground">&mdash;</span>
+        ),
     },
     {
       key: "amount",
