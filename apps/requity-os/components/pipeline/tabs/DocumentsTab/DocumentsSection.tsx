@@ -168,6 +168,9 @@ export function DocumentsSection({
     });
   }, [docsByPerson]);
 
+  const catLabel = (cat: string) =>
+    cat === "general" ? "General" : cat.charAt(0).toUpperCase() + cat.slice(1);
+
   // Determine which groups to render based on groupBy mode
   const groupEntries = groupBy === "category"
     ? categoryOrder.map((cat) => ({ key: cat, label: catLabel(cat), docs: docsByCategory[cat] }))
@@ -353,9 +356,6 @@ export function DocumentsSection({
       showSuccess(next === "external" ? "Marked as shared" : "Marked as internal");
     }
   }
-
-  const catLabel = (cat: string) =>
-    cat === "general" ? "General" : cat.charAt(0).toUpperCase() + cat.slice(1);
 
   return (
     <div

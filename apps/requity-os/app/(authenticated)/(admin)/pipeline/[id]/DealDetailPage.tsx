@@ -70,6 +70,7 @@ import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTa
 
 // Lazy-load heavy tab components (only downloaded when user navigates to that tab)
 const DocumentsTab = lazy(() => import("@/components/pipeline/tabs/DocumentsTab").then(m => ({ default: m.DocumentsTab })));
+import type { DealDocument } from "@/components/pipeline/tabs/DocumentsTab/types";
 const PropertyTab = lazy(() => import("@/components/pipeline/tabs/PropertyTab").then(m => ({ default: m.PropertyTab })));
 const PeopleTab = lazy(() => import("@/components/pipeline/tabs/PeopleTab").then(m => ({ default: m.default })));
 const UnderwritingTab = lazy(() => import("@/components/pipeline/tabs/UnderwritingTab").then(m => ({ default: m.UnderwritingTab })));
@@ -602,7 +603,7 @@ function DealDetailPageInner({
               <SectionErrorBoundary fallbackTitle="Could not load documents">
               <Suspense fallback={<TabLoadingFallback />}>
                 <DocumentsTab
-                  documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null; archived_at?: string | null; condition_id?: string | null }[]}
+                  documents={documents as unknown as DealDocument[]}
                   conditions={conditions}
                   dealId={deal.id}
                   dealName={(deal as { name?: string }).name ?? undefined}
