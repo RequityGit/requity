@@ -42,14 +42,14 @@ function detectType(filename: string): DocumentType {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { dealId: string } }
+  { params }: { params: Promise<{ dealId: string }> }
 ) {
   if (!authorize(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const { dealId } = params;
+  const { dealId } = await params;
   let documentId: string | undefined;
 
   try {

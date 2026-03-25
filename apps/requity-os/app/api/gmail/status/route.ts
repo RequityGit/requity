@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * token refresh. Returns { connected, healthy, email, error? }.
  */
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

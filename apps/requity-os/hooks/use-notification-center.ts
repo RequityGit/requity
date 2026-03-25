@@ -44,8 +44,8 @@ export function NotificationCenterProvider({
   >(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const supabaseRef = useRef(createClient());
-  const fetchCountRef = useRef<() => Promise<void>>();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const fetchCountRef = useRef<() => Promise<void>>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // ── Unread count fetcher ──
   const fetchCount = useCallback(async () => {

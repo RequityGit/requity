@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
 export default async function NotificationsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -22,7 +22,7 @@ export default async function NotificationsPage() {
     .eq("id", user.id)
     .single();
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const activeRoleCookie = cookieStore.get("active_role")?.value;
   const allowedRoles: string[] = profile?.allowed_roles?.length
     ? (profile.allowed_roles.filter(Boolean) as string[])

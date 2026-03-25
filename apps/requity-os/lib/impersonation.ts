@@ -23,8 +23,8 @@ export interface EffectiveAuth {
 /**
  * Read impersonation state from cookies (server-side).
  */
-export function getImpersonationState(): ImpersonationState {
-  const cookieStore = cookies();
+export async function getImpersonationState(): Promise<ImpersonationState> {
+  const cookieStore = await cookies();
   const targetUserId = cookieStore.get("impersonate_user_id")?.value ?? null;
   const targetRole = cookieStore.get("impersonate_role")?.value ?? null;
   const targetUserName = cookieStore.get("impersonate_user_name")?.value ?? null;
@@ -47,7 +47,7 @@ export function getImpersonationState(): ImpersonationState {
  * Always validates the real user is super_admin before allowing impersonation.
  */
 export async function getEffectiveAuth(): Promise<EffectiveAuth> {
-  const serverSupabase = createClient();
+  const serverSupabase = await createClient();
 
   const {
     data: { user },
@@ -57,7 +57,7 @@ export async function getEffectiveAuth(): Promise<EffectiveAuth> {
     redirect("/login");
   }
 
-  const impersonation = getImpersonationState();
+  const impersonation = await getImpersonationState();
 
   if (impersonation.isImpersonating && impersonation.targetUserId) {
     // Verify the real user is a super_admin

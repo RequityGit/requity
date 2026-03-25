@@ -27,10 +27,11 @@ type DistributionRow = {
 };
 
 export default async function DistributionsPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { fund?: string; year?: string; type?: string };
+  searchParams: Promise<{ fund?: string; year?: string; type?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   type DistributionJoined = {
     id: string;
     fund_id: string;

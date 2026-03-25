@@ -62,8 +62,8 @@ async function redirectForUser(
   return NextResponse.redirect(`${origin}/login?error=no_access`);
 }
 
-function buildSupabaseClient() {
-  const cookieStore = cookies();
+async function buildSupabaseClient() {
+  const cookieStore = await cookies();
   return createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
   // --- PKCE flow: Supabase redirects with a `code` parameter ---
   const code = searchParams.get("code");
   if (code) {
-    const supabase = buildSupabaseClient();
+    const supabase = await buildSupabaseClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return redirectForUser(supabase, origin);
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
 
   if (token_hash && type) {
-    const supabase = buildSupabaseClient();
+    const supabase = await buildSupabaseClient();
     const { error } = await supabase.auth.verifyOtp({
       type,
       token_hash,

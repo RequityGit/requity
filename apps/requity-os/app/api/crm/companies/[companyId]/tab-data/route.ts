@@ -10,7 +10,7 @@ const SCOPES = new Set([
   "overview",
 ]);
 
-async function assertCrmAccess(supabase: ReturnType<typeof createClient>) {
+async function assertCrmAccess(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },
   } = await supabase.auth.getUser();

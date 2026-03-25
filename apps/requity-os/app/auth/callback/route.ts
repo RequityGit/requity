@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
 
     // Log cookie state for debugging PKCE failures

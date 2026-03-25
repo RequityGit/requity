@@ -17,10 +17,11 @@ import { LoanDetailTabs } from "@/components/borrower/loan-detail-tabs";
 import { getEffectiveAuth, getBorrowerId } from "@/lib/impersonation";
 
 interface LoanDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
+  const { id } = await params;
   const { supabase, userId } = await getEffectiveAuth();
 
   // Resolve auth user to borrowers.id
@@ -31,7 +32,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
     ? await supabase
         .from("loans")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", id)
         .eq("borrower_id", borrowerId)
         .single()
     : { data: null };

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the requesting user is authenticated and is super_admin
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   try {
     // Verify the requesting user is authenticated
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

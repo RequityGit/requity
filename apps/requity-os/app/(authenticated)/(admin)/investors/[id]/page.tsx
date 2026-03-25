@@ -13,7 +13,7 @@ import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AdminInvestorDetailPage({ params }: PageProps) {

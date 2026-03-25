@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function DialerListDetailPage({
   params,
 }: {
-  params: { listId: string };
+  params: Promise<{ listId: string }>;
 }) {
   const { listId } = await params;
   const supabase = await createClient();

@@ -4,11 +4,12 @@ import { redirect, notFound } from "next/navigation";
 import { SOPDetailClient } from "./sop-detail-client";
 
 interface SOPDetailPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function SOPDetailPage({ params }: SOPDetailPageProps) {
-  const supabase = createClient();
+  const { slug } = await params;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -30,7 +31,7 @@ export default async function SOPDetailPage({ params }: SOPDetailPageProps) {
   const { data: sop, error } = await sop_db
     .from("sops")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
   if (error || !sop) notFound();

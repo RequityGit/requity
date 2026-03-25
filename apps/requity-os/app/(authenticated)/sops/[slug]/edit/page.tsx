@@ -4,11 +4,12 @@ import { redirect, notFound } from "next/navigation";
 import { SOPEditor } from "@/components/sops/SOPEditor";
 
 interface SOPEditPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function SOPEditPage({ params }: SOPEditPageProps) {
-  const supabase = createClient();
+  const { slug } = await params;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -32,7 +33,7 @@ export default async function SOPEditPage({ params }: SOPEditPageProps) {
   const { data: sop, error } = await sop_db
     .from("sops")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
   if (error || !sop) notFound();
