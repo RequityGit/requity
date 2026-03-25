@@ -3,10 +3,11 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Users, Calendar } from "lucide-react";
+import { User, Users, Calendar, Pin } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import {
   type UnifiedDeal,
+  type UnifiedStage,
   type StageConfig,
   ASSET_CLASS_LABELS,
   type AssetClass,
@@ -31,6 +32,7 @@ interface DealCardProps {
   assigneeName?: string | null;
   onClick: (e?: React.MouseEvent) => void;
   onHover?: () => void;
+  onTogglePriority?: (dealId: string, isPriority: boolean) => void;
   isSelected?: boolean;
 }
 
@@ -112,14 +114,32 @@ export function getAmountLabel(deal: UnifiedDeal): string {
   return isEquity ? "Target Equity" : "Target Loan Amount";
 }
 
-function getCloseDateStatus(dateStr: string | null): "normal" | "soon" | "overdue" {
+function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "soon" | "overdue" {
   if (!dateStr) return "normal";
-  const close = new Date(dateStr);
+  // Split ISO date string directly to avoid timezone shift
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const close = new Date(y!, m! - 1, d!);
   const now = new Date();
-  const diffDays = Math.floor((close.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  now.setHours(0, 0, 0, 0);
+  const diffDays = Math.floor((close.getTime() - now.getTime()) / 86400000);
   if (diffDays < 0) return "overdue";
   if (diffDays <= 7) return "soon";
+  if (diffDays <= 14) return "urgent";
   return "normal";
+}
+
+const EARLY_STAGES: UnifiedStage[] = ["lead", "analysis", "negotiation"];
+
+/** Deal needs high-visibility glow: in early stage AND close date within 14 days */
+export function isUrgentDeal(deal: UnifiedDeal): boolean {
+  if (!EARLY_STAGES.includes(deal.stage)) return false;
+  const status = getCloseDateStatus(deal.expected_close_date);
+  return status === "urgent" || status === "soon" || status === "overdue";
+}
+
+/** Deal should glow red: either urgent by close date or manually pinned */
+function shouldGlow(deal: UnifiedDeal): boolean {
+  return deal.is_priority || isUrgentDeal(deal);
 }
 
 function getConditionsBarColor(progress: { completed: number; total: number }): string {
@@ -323,7 +343,7 @@ function CardContent({
               className={cn(
                 "flex items-center gap-1 text-[10px] font-medium",
                 closeDateStatus === "overdue" && "text-red-600 dark:text-red-400",
-                closeDateStatus === "soon" && "text-amber-600 dark:text-amber-400",
+                (closeDateStatus === "soon" || closeDateStatus === "urgent") && "text-amber-600 dark:text-amber-400",
                 closeDateStatus === "normal" && "text-muted-foreground"
               )}
             >
@@ -360,6 +380,7 @@ function DealCardInner({
   assigneeName,
   onClick,
   onHover,
+  onTogglePriority,
   isSelected,
 }: DealCardProps) {
   const router = useRouter();
@@ -410,6 +431,16 @@ function DealCardInner({
   }, [deal.stage_entered_at, stageConfig]);
 
   const isClosed = deal.status === "won" || deal.status === "lost";
+  const glowing = shouldGlow(deal);
+
+  const handlePinClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      onTogglePriority?.(deal.id, !deal.is_priority);
+    },
+    [deal.id, deal.is_priority, onTogglePriority]
+  );
 
   return (
     <div
@@ -432,9 +463,27 @@ function DealCardInner({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected && "ring-2 ring-primary/40",
         isDragging && "opacity-50",
-        isClosed && "opacity-60"
+        isClosed && "opacity-60",
+        glowing && "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow"
       )}
     >
+      {/* Priority pin toggle */}
+      {onTogglePriority && (
+        <button
+          type="button"
+          onClick={handlePinClick}
+          className={cn(
+            "absolute top-2 right-2 z-10 p-1 rounded-md rq-transition",
+            deal.is_priority
+              ? "text-red-500 opacity-100"
+              : "text-muted-foreground opacity-0 group-hover:opacity-60 hover:!opacity-100"
+          )}
+          title={deal.is_priority ? "Unpin deal" : "Pin deal as priority"}
+        >
+          <Pin className={cn("h-3.5 w-3.5", deal.is_priority && "fill-current")} />
+        </button>
+      )}
+
       <CardContent
         deal={deal}
         days={days}
@@ -458,6 +507,7 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.capital_side === next.deal.capital_side &&
     prev.deal.status === next.deal.status &&
     prev.deal.expected_close_date === next.deal.expected_close_date &&
+    prev.deal.is_priority === next.deal.is_priority &&
     prev.deal.assigned_to === next.deal.assigned_to &&
     prev.deal.primary_contact_id === next.deal.primary_contact_id &&
     prev.deal.broker_contact_id === next.deal.broker_contact_id &&
@@ -480,13 +530,15 @@ export function DealCardOverlay({
   const days = daysInStage(deal.stage_entered_at);
   const alertLevel = getAlertLevel(days, stageConfig);
   const isClosed = deal.status === "won" || deal.status === "lost";
+  const glowing = shouldGlow(deal);
 
   return (
     <div
       className={cn(
         "w-72 text-left rounded-xl border bg-card relative overflow-hidden flex flex-col shadow-lg",
         "ring-2 ring-primary/50 cursor-grabbing",
-        isClosed && "opacity-60"
+        isClosed && "opacity-60",
+        glowing && "ring-red-500/60 border-red-500/40"
       )}
     >
       <CardContent

@@ -17,7 +17,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { DealCard, DealCardOverlay } from "./DealCard";
+import { DealCard, DealCardOverlay, isUrgentDeal } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import { advanceStageAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -41,6 +41,7 @@ interface PipelineKanbanProps {
   relationshipDealIds: Set<string>;
   onDealClick: (deal: UnifiedDeal, e?: React.MouseEvent) => void;
   onDealHover?: (dealId: string) => void;
+  onTogglePriority?: (dealId: string, isPriority: boolean) => void;
   intakeItems?: IntakeItem[];
   onIntakeClick?: (item: IntakeItem) => void;
   teamMembers: { id: string; full_name: string }[];
@@ -76,6 +77,7 @@ export function PipelineKanban({
   relationshipDealIds,
   onDealClick,
   onDealHover,
+  onTogglePriority,
   intakeItems = [],
   onIntakeClick,
   teamMembers,
@@ -135,6 +137,15 @@ export function PipelineKanban({
 
       if (deal.stage === newStage) return;
 
+      // Gate: closing date required to leave lead
+      if (deal.stage === "lead" && newStage !== "lead" && !deal.expected_close_date) {
+        showError(
+          "Could not move deal",
+          "Closing date is required to move past Intake. Set a closing date first."
+        );
+        return;
+      }
+
       // Save original stage for potential revert
       const originalStage = deal.stage;
 
@@ -168,7 +179,16 @@ export function PipelineKanban({
     return STAGES.map((stage) => {
       const stageDeals = deals
         .filter((d) => d.stage === stage.key)
-        .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
+        .sort((a, b) => {
+          // Priority deals first
+          if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1;
+          // Then urgent deals (close date <= 14 days in early stages)
+          const aUrgent = isUrgentDeal(a);
+          const bUrgent = isUrgentDeal(b);
+          if (aUrgent !== bUrgent) return aUrgent ? -1 : 1;
+          // Then by amount descending
+          return (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
+        });
 
       const totalAmount = stageDeals.reduce(
         (sum, d) => sum + (d.amount ?? 0),
@@ -243,6 +263,7 @@ export function PipelineKanban({
                           assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
                           onClick={(e) => onDealClick(deal, e)}
                           onHover={() => onDealHover?.(deal.id)}
+                          onTogglePriority={onTogglePriority}
                           isSelected={deal.id === selectedDealId}
                         />
                       );

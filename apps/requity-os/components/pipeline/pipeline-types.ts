@@ -115,6 +115,7 @@ export interface UnifiedDeal {
   uw_data: Record<string, unknown>;
   property_data: Record<string, unknown>;
   notes: string | null;
+  is_priority: boolean;
   tags: string[];
   created_by: string | null;
   created_at: string;
