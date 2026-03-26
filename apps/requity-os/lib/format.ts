@@ -182,6 +182,64 @@ export function isFinancialFieldType(fieldType: string): boolean {
   return FINANCIAL_FIELD_TYPES.has(fieldType);
 }
 
+export interface AddressParts {
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+}
+
+/**
+ * Formats address parts into a single string, deduplicating city/state/zip
+ * if they already appear in the street field.
+ *
+ * Handles the common data issue where `street` contains a full address like
+ * "123 Main St, Denver, CO 80202" and city/state/zip are also provided separately.
+ */
+export function formatAddress(parts: AddressParts): string {
+  let street = parts.street?.trim() || "";
+  const city = parts.city?.trim() || "";
+  const state = parts.state?.trim() || "";
+  const zip = parts.zip?.trim() || "";
+
+  // If we have city or state, check if the street field already ends with them
+  if (street && (city || state)) {
+    const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    let suffixPattern: RegExp | null = null;
+    if (city && state && zip) {
+      suffixPattern = new RegExp(
+        `,?\\s*${esc(city)},?\\s*${esc(state)}\\s*${esc(zip)}\\s*$`,
+        "i"
+      );
+    } else if (city && state) {
+      suffixPattern = new RegExp(
+        `,?\\s*${esc(city)},?\\s*${esc(state)}\\s*$`,
+        "i"
+      );
+    } else if (state && zip) {
+      suffixPattern = new RegExp(
+        `,?\\s*${esc(state)}\\s*${esc(zip)}\\s*$`,
+        "i"
+      );
+    } else if (state) {
+      suffixPattern = new RegExp(`,?\\s*${esc(state)}\\s*$`, "i");
+    }
+
+    if (suffixPattern) {
+      const stripped = street.replace(suffixPattern, "").trim();
+      if (stripped.length > 0) {
+        street = stripped;
+      }
+    }
+  }
+
+  const cityState = [city, state].filter(Boolean).join(", ");
+  const line2 = [cityState, zip].filter(Boolean).join(" ");
+  if (!street && !line2) return "";
+  return [street, line2].filter(Boolean).join(", ");
+}
+
 export function formatFieldValue(value: unknown, fieldType: string): string {
   if (isFieldEmpty(value)) return "";
 

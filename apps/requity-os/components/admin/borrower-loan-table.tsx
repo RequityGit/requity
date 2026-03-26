@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatAddress } from "@/lib/format";
 
 interface Loan {
   id: string;
@@ -38,9 +38,11 @@ const loanColumns: Column<Loan>[] = [
     key: "property_address",
     header: "Property",
     cell: (row) =>
-      row.property_address
-        ? `${row.property_address}, ${row.property_city || ""} ${row.property_state || ""}`
-        : "—",
+      formatAddress({
+        street: row.property_address,
+        city: row.property_city,
+        state: row.property_state,
+      }) || "—",
   },
   {
     key: "type",

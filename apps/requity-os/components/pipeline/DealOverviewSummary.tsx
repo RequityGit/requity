@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { InlineField } from "@/components/ui/inline-field";
 import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatCurrency, formatPercent, formatAddress } from "@/lib/format";
 import { updateUwDataAction, updateDealNameAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { type UnifiedDeal, ASSET_CLASS_LABELS, ACTIVE_ASSET_CLASS_OPTIONS } from "./pipeline-types";
 import { CostBasisSection } from "./CostBasisSection";
@@ -197,14 +197,15 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     });
   }, [dealId, deal.name, startTransition]);
 
-  // Build full address string for display
+  // Build full address string for display (deduplicates city/state/zip if already in street)
   const fullAddress = useMemo(() => {
-    const street = uwStr("property_address");
-    const cityState = [uwStr("property_city"), uwStr("property_state")].filter(Boolean).join(", ");
-    const zip = uwStr("property_zip");
-    const line2 = [cityState, zip].filter(Boolean).join(" ");
-    if (!street && !line2) return null;
-    return [street, line2].filter(Boolean).join(", ");
+    const result = formatAddress({
+      street: uwStr("property_address"),
+      city: uwStr("property_city"),
+      state: uwStr("property_state"),
+      zip: uwStr("property_zip"),
+    });
+    return result || null;
   }, [uwStr]);
 
   // Address editing state
