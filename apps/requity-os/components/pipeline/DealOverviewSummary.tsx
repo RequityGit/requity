@@ -105,7 +105,7 @@ function daysAgo(dateString: string | null | undefined): number | null {
 
 function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-1.5 rq-micro-label mb-2">
+    <div className="rq-section-label">
       <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
       {children}
     </div>
@@ -133,7 +133,7 @@ function Placeholder() {
 
 function OverviewCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-lg border border-border bg-card p-4 px-5", className)}>
+    <div className={cn("rq-overview-card", className)}>
       {children}
     </div>
   );
