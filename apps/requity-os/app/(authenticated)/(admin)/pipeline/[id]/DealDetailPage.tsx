@@ -434,7 +434,7 @@ function DealDetailPageInner({
         />
 
         {/* Tab Bar */}
-        <div className="flex items-center justify-between px-3 md:px-6 py-1.5 border-b flex-shrink-0 overflow-hidden">
+        <div className="flex items-center justify-between px-3 md:px-6 py-1.5 flex-shrink-0 overflow-hidden">
           <div className="flex gap-0.5 rounded-[10px] p-[3px] bg-muted border rq-scroll-x">
             {tabs.map((tab) => {
               const tabButton = (
@@ -552,6 +552,9 @@ function DealDetailPageInner({
           </div>
 
         </div>
+
+        {/* Tab bar separator — inset to match content padding, with spacing below */}
+        <div className="mx-3 md:mx-6 border-b mb-4" />
 
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
