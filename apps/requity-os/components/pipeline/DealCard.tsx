@@ -479,8 +479,8 @@ function DealCardInner({
         "group w-full text-left rounded-xl border bg-card relative overflow-hidden flex flex-col",
         "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)]",
         "dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.35),0_1px_3px_rgba(0,0,0,0.15)]",
-        "hover:border-foreground/[0.18] hover:-translate-y-px",
-        "rq-transition cursor-pointer",
+        "hover:border-foreground/[0.18]",
+        "rq-transition cursor-grab active:cursor-grabbing",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected && "ring-2 ring-primary/40",
         isDragging && "opacity-50",
@@ -539,7 +539,7 @@ export function DealCardOverlay({
   return (
     <div
       className={cn(
-        "w-72 text-left rounded-xl border bg-card relative overflow-hidden flex flex-col shadow-lg",
+        "w-72 text-left rounded-xl border bg-card relative overflow-hidden flex flex-col shadow-lg rotate-[2deg]",
         glowing
           ? "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow cursor-grabbing"
           : "ring-2 ring-primary/50 cursor-grabbing",
