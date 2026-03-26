@@ -433,11 +433,13 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
         {/* Proposed Terms (only if not early stage) */}
         {showProposedTerms && (
           <div className="rq-card-wrapper border-blue-300 dark:border-blue-700 border-2">
-            <div className="p-4 px-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-[11px] font-medium text-muted-foreground">Proposed terms</div>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Active</Badge>
+            <div className="rq-card-header">
+              <div className="flex items-center gap-2">
+                <h4 className="rq-micro-label">Proposed terms</h4>
               </div>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Active</Badge>
+            </div>
+            <div className="p-4 px-5">
               <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                 {/* Loan type spans first row left */}
                 <InlineField
