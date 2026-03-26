@@ -17,7 +17,9 @@ interface ActionCenterComposerProps {
     mentionIds: string[],
     attachments?: UploadedAttachment[]
   ) => Promise<void>;
-  onSendMessage: (body: string) => Promise<void>;
+  onSendMessage?: (body: string) => Promise<void>;
+  /** Whether to show the Note/Message mode toggle. Defaults to true. */
+  showMessageMode?: boolean;
 }
 
 export function ActionCenterComposer({
@@ -25,6 +27,7 @@ export function ActionCenterComposer({
   currentUserName,
   onPost,
   onSendMessage,
+  showMessageMode = true,
 }: ActionCenterComposerProps) {
   const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState<ComposerMode>("note");
@@ -48,7 +51,7 @@ export function ActionCenterComposer({
 
   const handleSendMessage = useCallback(async () => {
     const trimmed = messageBody.trim();
-    if (!trimmed || sending) return;
+    if (!trimmed || sending || !onSendMessage) return;
 
     setSending(true);
     try {
@@ -89,32 +92,34 @@ export function ActionCenterComposer({
   return (
     <div ref={containerRef} className="border-t bg-muted/20 px-3 py-2">
       {/* Mode toggle */}
-      <div className="flex items-center gap-1 mb-2">
-        <button
-          type="button"
-          onClick={() => setMode("note")}
-          className={cn(
-            "rounded-md border px-2.5 py-0.5 text-[11px] font-medium rq-transition cursor-pointer",
-            mode === "note"
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
-          )}
-        >
-          Note
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("message")}
-          className={cn(
-            "rounded-md border px-2.5 py-0.5 text-[11px] font-medium rq-transition cursor-pointer",
-            mode === "message"
-              ? "bg-orange-600 text-white border-orange-600"
-              : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
-          )}
-        >
-          Message
-        </button>
-      </div>
+      {showMessageMode && (
+        <div className="flex items-center gap-1 mb-2">
+          <button
+            type="button"
+            onClick={() => setMode("note")}
+            className={cn(
+              "rounded-md border px-2.5 py-0.5 text-[11px] font-medium rq-transition cursor-pointer",
+              mode === "note"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            Note
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("message")}
+            className={cn(
+              "rounded-md border px-2.5 py-0.5 text-[11px] font-medium rq-transition cursor-pointer",
+              mode === "message"
+                ? "bg-orange-600 text-white border-orange-600"
+                : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            Message
+          </button>
+        </div>
+      )}
 
       {mode === "note" ? (
         <NoteComposer
