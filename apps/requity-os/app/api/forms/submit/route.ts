@@ -342,6 +342,13 @@ export async function POST(request: Request) {
               if (timeline) uwData.timeline_to_close = timeline;
               if (company) uwData.company = company;
 
+              // Pre-populate borrower fields for Overview tab
+              const borrowerName = `${firstName} ${lastName}`.trim();
+              if (borrowerName) uwData.borrower_name = borrowerName;
+              if (data.email) uwData.borrower_email = data.email;
+              if (data.phone) uwData.borrower_phone = data.phone;
+              if (creditScore) uwData.borrower_credit_score = parseInt(creditScore, 10) || null;
+
               // Build notes
               const notesLines = [
                 `Form submission - ${new Date().toISOString().split("T")[0]}`,
@@ -394,6 +401,51 @@ export async function POST(request: Request) {
                   is_guarantor: false,
                   sort_order: 1,
                 });
+
+                // Auto-create borrowing entity and borrower member so People tab is pre-populated
+                try {
+                  const entityName = company || `${firstName} ${lastName}`.trim() || "TBD";
+                  const { data: newEntity } = await supabase
+                    .from("deal_borrowing_entities")
+                    .insert({
+                      deal_id: dealData.id,
+                      entity_name: entityName,
+                      entity_type: company ? "LLC" : "Individual",
+                    } as never)
+                    .select("id")
+                    .single();
+
+                  if (newEntity) {
+                    const parsedCredit = creditScore ? parseInt(creditScore, 10) : 0;
+                    const experienceMap: Record<string, number> = {
+                      "0": 0, "1-3": 2, "4-10": 7, "10+": 15,
+                    };
+                    const parsedExperience = experienceLevel
+                      ? (experienceMap[experienceLevel] ?? 0)
+                      : 0;
+
+                    await supabase
+                      .from("deal_borrower_members")
+                      .insert({
+                        borrowing_entity_id: (newEntity as { id: string }).id,
+                        deal_id: dealData.id,
+                        contact_id: entityIds.contact_id,
+                        first_name: firstName || null,
+                        last_name: lastName || null,
+                        email: (data.email as string) || null,
+                        phone: (data.phone as string) || null,
+                        role: "Managing Member",
+                        credit_score: parsedCredit || 0,
+                        experience: parsedExperience,
+                        ownership_pct: 100,
+                        is_guarantor: true,
+                        sort_order: 1,
+                      } as never);
+                  }
+                } catch (borrowerErr) {
+                  // Non-blocking: deal is created, borrower info can be added manually
+                  console.error("Auto-create borrower member failed:", borrowerErr);
+                }
               }
             } else {
               // Standard opportunity creation for other forms
