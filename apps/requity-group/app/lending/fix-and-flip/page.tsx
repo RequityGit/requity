@@ -23,6 +23,10 @@ import {
   ClipboardCheck,
   Search,
   DollarSign,
+  FileText,
+  User,
+  Building,
+  CheckCircle,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -47,10 +51,12 @@ export const revalidate = 300;
 const LOAN_DETAILS = [
   { label: "Loan Size", value: "$100K - $3M" },
   { label: "LTC", value: "Up to 90%" },
+  { label: "Max ARV", value: "Up to 75%" },
   { label: "Rate", value: "12% Interest-Only" },
   { label: "Term", value: "6 - 18 Months" },
   { label: "Closing", value: "As Few as 7 Days" },
   { label: "Rehab Funding", value: "100% of Budget" },
+  { label: "Prepayment", value: "No Penalty" },
 ];
 
 const WHY_ITEMS = [
@@ -191,6 +197,26 @@ export default function FixAndFlipPage() {
       question: "What are the costs of a fix and flip loan?",
       answer:
         "Fix and flip loans are priced at 12% interest-only with origination points and standard closing costs. Interest is calculated only on the drawn balance, so you do not pay interest on rehab funds until they are released. There are no prepayment penalties, so you can pay off the loan as soon as the property sells without additional cost.",
+    },
+    {
+      question: "What property types are eligible for a fix and flip loan?",
+      answer:
+        "Requity finances single-family homes, duplexes, triplexes, fourplexes, townhomes, and warrantable condominiums. Properties must be residential investment properties. We do not finance owner-occupied primary residences, vacant land, or commercial properties through the fix and flip program. Properties in any condition are eligible, including distressed and bank-owned.",
+    },
+    {
+      question: "Do I need an LLC to get a fix and flip loan?",
+      answer:
+        "An LLC is preferred but not required. Many experienced investors hold properties in an LLC for liability protection, and we can close in the name of your entity. First-time investors who have not yet formed an LLC can still qualify and close in their personal name. We recommend consulting with an attorney or CPA about entity structure before your first project.",
+    },
+    {
+      question: "What is the 70% rule in house flipping?",
+      answer:
+        "The 70% rule is a common guideline used by fix and flip investors to evaluate deal profitability. It states that your maximum purchase price plus renovation costs should not exceed 70% of the property's after-repair value (ARV). For example, if the ARV is $400,000, your total investment (purchase plus rehab) should stay below $280,000 to maintain a healthy profit margin after holding costs, closing costs, and selling expenses.",
+    },
+    {
+      question: "Can I extend my fix and flip loan if the project takes longer than expected?",
+      answer:
+        "Yes. Extension options are available if your renovation or sale timeline extends beyond the original loan term. Extensions are evaluated on a case-by-case basis and depend on project progress, remaining work, and market conditions. We recommend communicating early if you anticipate needing additional time so we can discuss options before maturity.",
     },
   ];
 
@@ -413,8 +439,140 @@ export default function FixAndFlipPage() {
         </div>
       </section>
 
-      {/* DEAL ECONOMICS */}
+      {/* ELIGIBILITY & REQUIREMENTS */}
       <section className="light-zone section-pad-lg">
+        <div className="container">
+          <ScrollReveal>
+            <SectionLabel>Eligibility</SectionLabel>
+            <h2
+              className="type-h2"
+              style={{ color: "var(--text)", marginBottom: 16 }}
+            >
+              Who qualifies and{" "}
+              <em style={{ fontStyle: "italic", color: "var(--gold)" }}>
+                what you need
+              </em>
+            </h2>
+            <p
+              className="type-body"
+              style={{
+                color: "var(--text-mid)",
+                maxWidth: 640,
+                marginBottom: 48,
+              }}
+            >
+              Fix and flip loans are for investment properties only, not
+              primary residences. Both first-time flippers and experienced
+              investors can qualify. Here is what we look at and what to bring.
+            </p>
+          </ScrollReveal>
+          <ScrollReveal staggerChildren>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: 24,
+              }}
+            >
+              <div className="card">
+                <div style={{ color: "var(--gold)", marginBottom: 16 }}>
+                  <Building size={22} />
+                </div>
+                <h3
+                  className="card-title"
+                  style={{ fontSize: 20, marginBottom: 8 }}
+                >
+                  Eligible Property Types
+                </h3>
+                <p className="card-body" style={{ marginBottom: 16 }}>
+                  We finance residential investment properties across a range of
+                  types and conditions.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    "Single-family homes (SFR)",
+                    "2-4 unit residential properties",
+                    "Townhomes and condos (warrantable)",
+                    "Properties in any condition (including distressed)",
+                    "Urban, suburban, and select rural markets",
+                  ].map((item) => (
+                    <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <CheckCircle size={16} style={{ color: "var(--gold)", marginTop: 3, flexShrink: 0 }} />
+                      <span className="type-body-sm" style={{ color: "var(--text-mid)" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card">
+                <div style={{ color: "var(--gold)", marginBottom: 16 }}>
+                  <User size={22} />
+                </div>
+                <h3
+                  className="card-title"
+                  style={{ fontSize: 20, marginBottom: 8 }}
+                >
+                  Borrower Requirements
+                </h3>
+                <p className="card-body" style={{ marginBottom: 16 }}>
+                  We underwrite the deal first, then the borrower. Experience
+                  helps but is not required.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    "First-time flippers welcome with strong deal economics",
+                    "Experienced investors (2+ flips) receive better terms and faster approvals",
+                    "LLC or entity structure preferred but not required",
+                    "No W-2s, tax returns, or employment verification needed",
+                    "No minimum credit score to receive a term sheet",
+                  ].map((item) => (
+                    <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <CheckCircle size={16} style={{ color: "var(--gold)", marginTop: 3, flexShrink: 0 }} />
+                      <span className="type-body-sm" style={{ color: "var(--text-mid)" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card">
+                <div style={{ color: "var(--gold)", marginBottom: 16 }}>
+                  <FileText size={22} />
+                </div>
+                <h3
+                  className="card-title"
+                  style={{ fontSize: 20, marginBottom: 8 }}
+                >
+                  What to Bring
+                </h3>
+                <p className="card-body" style={{ marginBottom: 16 }}>
+                  A complete deal package helps us deliver a term sheet within
+                  24 hours.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    "Property address and purchase price (or estimated value for refis)",
+                    "Renovation scope of work with line-item budget",
+                    "After-repair value (ARV) estimate with comparable sales",
+                    "Entity documents (LLC operating agreement, if applicable)",
+                    "Brief experience resume (past flips, if any)",
+                  ].map((item) => (
+                    <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <CheckCircle size={16} style={{ color: "var(--gold)", marginTop: 3, flexShrink: 0 }} />
+                      <span className="type-body-sm" style={{ color: "var(--text-mid)" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* DEAL ECONOMICS */}
+      <section
+        className="cream-zone section-pad-lg"
+        style={{ borderTop: "1px solid var(--border-light)" }}
+      >
         <div className="container">
           <ScrollReveal>
             <SectionLabel>Deal Economics</SectionLabel>
@@ -589,7 +747,7 @@ export default function FixAndFlipPage() {
 
       {/* DRAW PROCESS */}
       <section
-        className="cream-zone section-pad-lg"
+        className="light-zone section-pad-lg"
         style={{ borderTop: "1px solid var(--border-light)" }}
       >
         <div className="container">
@@ -671,7 +829,7 @@ export default function FixAndFlipPage() {
 
       {/* FAQ */}
       <section
-        className="light-zone section-pad-lg"
+        className="cream-zone section-pad-lg"
         style={{ borderTop: "1px solid var(--border-light)" }}
       >
         <div className="container">
