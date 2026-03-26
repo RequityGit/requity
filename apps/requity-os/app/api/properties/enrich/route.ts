@@ -140,7 +140,7 @@ function sanitizeStreetAddress(
 ): string {
   let address = rawAddress.trim();
 
-  // Remove trailing zip code patterns (5-digit or 5+4)
+  // Remove trailing zip code patterns (5-digit or 5+4) — anywhere at the end
   if (zip) {
     address = address.replace(new RegExp(`,?\\s*${escapeRegExp(zip)}\\s*$`), "");
   }
@@ -157,6 +157,18 @@ function sanitizeStreetAddress(
   if (city) {
     const cityPattern = new RegExp(`,?\\s*${escapeRegExp(city)}\\s*$`, "i");
     address = address.replace(cityPattern, "");
+  }
+
+  // Second pass: handle "street, city, state zip" patterns that weren't fully
+  // cleaned (e.g. state without trailing position, or zip already removed
+  // leaving "street, city, state" or "street, city").
+  if (state) {
+    const statePattern2 = new RegExp(`,?\\s*${escapeRegExp(state)}\\s*$`, "i");
+    address = address.replace(statePattern2, "");
+  }
+  if (city) {
+    const cityPattern2 = new RegExp(`,?\\s*${escapeRegExp(city)}\\s*$`, "i");
+    address = address.replace(cityPattern2, "");
   }
 
   return address.trim().replace(/,\s*$/, "");
@@ -458,7 +470,8 @@ export async function POST(req: NextRequest) {
       state: body.state.trim().toUpperCase(),
     });
     if (body.city) params.set("city", body.city.trim());
-    if (body.zip) params.set("zip", body.zip.trim());
+    // Note: Realie Address Lookup does not accept a zip param — only state,
+    // address (street-only), city, and optionally county.
     if (body.county) params.set("county", body.county.trim());
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
