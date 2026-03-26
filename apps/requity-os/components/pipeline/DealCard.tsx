@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Users, Calendar, Clock, AlertTriangle, Star } from "lucide-react";
+import { User, Users, Calendar, Clock, AlertTriangle } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import {
   type UnifiedDeal,
@@ -29,7 +29,6 @@ interface DealCardProps {
   assigneeName?: string | null;
   onClick: (e?: React.MouseEvent) => void;
   onHover?: () => void;
-  onTogglePriority?: (dealId: string, isPriority: boolean) => void;
   isSelected?: boolean;
 }
 
@@ -111,7 +110,7 @@ export function getAmountLabel(deal: UnifiedDeal): string {
   return isEquity ? "Target Equity" : "Target Loan Amount";
 }
 
-function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "soon" | "overdue" {
+function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "overdue" {
   if (!dateStr) return "normal";
   // Split ISO date string directly to avoid timezone shift
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -120,7 +119,6 @@ function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "soon
   now.setHours(0, 0, 0, 0);
   const diffDays = Math.floor((close.getTime() - now.getTime()) / 86400000);
   if (diffDays < 0) return "overdue";
-  if (diffDays <= 7) return "soon";
   if (diffDays <= 14) return "urgent";
   return "normal";
 }
@@ -158,7 +156,8 @@ function CardContent({
   const propertyName = deal.name;
   const displayAddress = address || (isCommercial ? "" : deal.name);
   const loanType = getLoanTypeLabel(deal);
-  const closeDateStatus = getCloseDateStatus(deal.close_date);
+  const isClosed = deal.status === "won" || deal.status === "lost" || deal.stage === "closed";
+  const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
   const condPct = conditionsProgress && conditionsProgress.total > 0
     ? Math.round((conditionsProgress.completed / conditionsProgress.total) * 100)
     : 0;
@@ -340,8 +339,7 @@ function CardContent({
             <span
               className={cn(
                 "flex items-center gap-1 text-[10px] font-medium",
-                closeDateStatus === "overdue" && "text-red-600 dark:text-red-400",
-                (closeDateStatus === "soon" || closeDateStatus === "urgent") && "text-amber-600 dark:text-amber-400",
+                (closeDateStatus === "overdue" || closeDateStatus === "urgent") && "text-red-600 dark:text-red-400",
                 closeDateStatus === "normal" && "text-muted-foreground"
               )}
             >
@@ -378,7 +376,6 @@ function DealCardInner({
   assigneeName,
   onClick,
   onHover,
-  onTogglePriority,
   isSelected,
 }: DealCardProps) {
   const router = useRouter();
@@ -458,31 +455,6 @@ function DealCardInner({
         isClosed && "opacity-60"
       )}
     >
-      {/* Priority star toggle */}
-      {onTogglePriority && (
-        <button
-          type="button"
-          data-focus-btn
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onTogglePriority(deal.id, !deal.is_priority);
-          }}
-          className={cn(
-            "absolute top-2 right-2 z-10 flex items-center justify-center rounded-full w-6 h-6 rq-transition",
-            deal.is_priority
-              ? "text-amber-500 dark:text-amber-400"
-              : "text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-muted-foreground"
-          )}
-          title={deal.is_priority ? "Remove priority" : "Prioritize deal"}
-          aria-label={deal.is_priority ? "Remove priority" : "Prioritize deal"}
-          aria-pressed={deal.is_priority}
-        >
-          <Star className={cn("h-3.5 w-3.5", deal.is_priority && "fill-current")} />
-        </button>
-      )}
-
       <CardContent
         deal={deal}
         days={days}
@@ -506,7 +478,6 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.capital_side === next.deal.capital_side &&
     prev.deal.status === next.deal.status &&
     prev.deal.close_date === next.deal.close_date &&
-    prev.deal.is_priority === next.deal.is_priority &&
     prev.deal.assigned_to === next.deal.assigned_to &&
     prev.deal.primary_contact_id === next.deal.primary_contact_id &&
     prev.deal.broker_contact_id === next.deal.broker_contact_id &&
@@ -537,11 +508,6 @@ export function DealCardOverlay({
         isClosed && "opacity-60"
       )}
     >
-      {deal.is_priority && (
-        <div className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full w-6 h-6 text-amber-500 dark:text-amber-400">
-          <Star className="h-3.5 w-3.5 fill-current" />
-        </div>
-      )}
       <CardContent
         deal={deal}
         days={days}
