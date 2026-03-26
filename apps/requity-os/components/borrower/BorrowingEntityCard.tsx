@@ -91,11 +91,11 @@ export function BorrowingEntityCard({
   }, [entity?.id, dealId, onDeleted]);
 
   return (
-    <div className="rounded-xl border bg-card">
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3.5 border-b">
+      <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
         <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <Building2 className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
           <h4 className="rq-micro-label">
             Borrowing Entity
           </h4>
@@ -196,8 +196,8 @@ export function BorrowingEntityCard({
       </div>
 
       {/* Inline-editable fields */}
-      <div className="p-5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-2">
+      <div className="p-4 px-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-1">
           <InlineField
             type="text"
             label="Entity Name"

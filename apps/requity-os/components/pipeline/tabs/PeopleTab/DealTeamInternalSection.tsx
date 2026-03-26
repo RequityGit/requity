@@ -90,10 +90,10 @@ export function DealTeamInternalSection({
 
   return (
     <>
-      <div className="rq-card-wrapper">
-        <div className="rq-card-header">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
             <h4 className="rq-micro-label">
               Deal Team
             </h4>
