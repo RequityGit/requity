@@ -62,6 +62,7 @@ export function DealFilters({
     filters.assetClass !== "all",
     filters.dateAdded !== "all",
     filters.closingDate !== "all",
+    showingLostDeals === true,
   ].filter(Boolean).length;
 
   function clearFilters() {
@@ -72,40 +73,14 @@ export function DealFilters({
       dateAdded: "all",
       closingDate: "all",
     });
+    if (showingLostDeals && onToggleLostDeals) {
+      onToggleLostDeals();
+    }
   }
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-1 items-center gap-2 flex-wrap">
-        {/* Status toggle */}
-        {onToggleLostDeals && (
-          <div className="flex rounded-md border">
-            <button
-              onClick={() => showingLostDeals && onToggleLostDeals()}
-              className={cn(
-                "px-3 py-2 md:py-1.5 text-xs font-medium transition-colors min-h-[36px]",
-                !showingLostDeals
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Active
-            </button>
-            <button
-              onClick={() => !showingLostDeals && onToggleLostDeals()}
-              className={cn(
-                "px-3 py-2 md:py-1.5 text-xs font-medium transition-colors min-h-[36px] flex items-center gap-1",
-                showingLostDeals
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <XCircle className="h-3 w-3" />
-              Closed Lost
-            </button>
-          </div>
-        )}
-
         {/* Search */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -249,6 +224,38 @@ export function DealFilters({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Status (Active / Closed Lost) */}
+              {onToggleLostDeals && (
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Status</span>
+                  <div className="flex rounded-md border">
+                    <button
+                      onClick={() => showingLostDeals && onToggleLostDeals()}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 text-xs font-medium rq-transition",
+                        !showingLostDeals
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Active
+                    </button>
+                    <button
+                      onClick={() => !showingLostDeals && onToggleLostDeals()}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 text-xs font-medium rq-transition flex items-center justify-center gap-1",
+                        showingLostDeals
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <XCircle className="h-3 w-3" />
+                      Closed Lost
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>
