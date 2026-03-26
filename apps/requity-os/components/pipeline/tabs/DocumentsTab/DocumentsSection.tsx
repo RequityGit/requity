@@ -19,6 +19,7 @@ import {
   Link2,
   Users,
   RefreshCw,
+  FileSignature,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -87,6 +88,7 @@ export function DocumentsSection({
   onUploadComplete,
   currentUserId,
   currentUserName,
+  onSendForSignature,
 }: {
   documents: DealDocument[];
   conditions: DealCondition[];
@@ -98,6 +100,7 @@ export function DocumentsSection({
   onUploadComplete?: () => void;
   currentUserId?: string;
   currentUserName?: string;
+  onSendForSignature?: (doc: DealDocument) => void;
 }) {
   const confirm = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -689,6 +692,16 @@ export function DocumentsSection({
                             title="Download"
                           >
                             <Download className="h-3 w-3" strokeWidth={1.5} />
+                          </button>
+                        )}
+                        {doc.storage_path && onSendForSignature && (
+                          <button
+                            type="button"
+                            onClick={() => onSendForSignature(doc)}
+                            className="p-1 text-muted-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0"
+                            title="Send for Signature"
+                          >
+                            <FileSignature className="h-3 w-3" strokeWidth={1.5} />
                           </button>
                         )}
                         {!isArchived && (

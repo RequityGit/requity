@@ -6,10 +6,13 @@ import { showSuccess, showError } from "@/lib/toast";
 import {
   updateConditionDocumentApproval,
   requestConditionRevision,
+  getDocumentSignedUrl,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
+import { SendForSignatureDialog } from "@/components/esign/send-for-signature-dialog";
+import { EsignSection } from "./EsignSection";
 import { FormsSection } from "./FormsSection";
 import { DocumentsSection } from "./DocumentsSection";
 import { DocPreviewModal } from "./DocPreviewModal";
@@ -45,6 +48,37 @@ export function DocumentsTab({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
   const [reviewDoc, setReviewDoc] = useState<DealDocument | null>(null);
+  const [esignDoc, setEsignDoc] = useState<DealDocument | null>(null);
+  const [esignDialogOpen, setEsignDialogOpen] = useState(false);
+  const [esignPdfBase64, setEsignPdfBase64] = useState<string | undefined>();
+  const [esignRefreshKey, setEsignRefreshKey] = useState(0);
+
+  async function handleSendForSignature(doc: DealDocument) {
+    if (!doc.storage_path) return;
+
+    // Fetch the document to get a base64 version for DocuSeal
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    if (result.error || !result.url) {
+      showError("Could not prepare document", result.error ?? "Unknown error");
+      return;
+    }
+
+    try {
+      const response = await fetch(result.url);
+      if (!response.ok) throw new Error("Could not download document");
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(",")[1];
+        setEsignPdfBase64(base64);
+        setEsignDoc(doc);
+        setEsignDialogOpen(true);
+      };
+      reader.readAsDataURL(blob);
+    } catch {
+      showError("Could not prepare document for signing");
+    }
+  }
 
   async function handleApprovalChange(
     docId: string,
@@ -112,7 +146,13 @@ export function DocumentsTab({
         onUploadComplete={onUploadComplete}
         currentUserId={currentUserId}
         currentUserName={currentUserName}
+        onSendForSignature={handleSendForSignature}
       />
+
+      {/* E-Signatures Section */}
+      <SectionErrorBoundary fallbackTitle="Could not load e-signatures">
+        <EsignSection dealId={dealId} refreshKey={esignRefreshKey} />
+      </SectionErrorBoundary>
 
       {/* Document Generation: Credit Memo & Investor Summary */}
       {dealDocData && (
@@ -165,6 +205,22 @@ export function DocumentsTab({
         documentName={reviewDoc?.document_name ?? ""}
         onApplied={() => {}}
       />
+
+      {/* Send for Signature Dialog */}
+      {esignDoc && (
+        <SendForSignatureDialog
+          open={esignDialogOpen}
+          onOpenChange={setEsignDialogOpen}
+          dealId={parseInt(dealId, 10)}
+          documentName={esignDoc.document_name}
+          pdfBase64={esignPdfBase64}
+          onSent={() => {
+            setEsignRefreshKey((k) => k + 1);
+            setEsignDoc(null);
+            setEsignPdfBase64(undefined);
+          }}
+        />
+      )}
     </div>
   );
 }
