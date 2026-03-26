@@ -3,8 +3,6 @@ import jwt from "jsonwebtoken";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * POST /api/esign/token
  * Generates a short-lived JWT token for the DocusealForm embedded signing component.
@@ -36,13 +34,12 @@ export async function POST(request: NextRequest) {
 
   // Verify user has access
   const { data: submission } = await admin
-    .from("esign_submissions" as never)
-    .select("id, requested_by" as never)
-    .eq("id" as never, submissionId as never)
+    .from("esign_submissions")
+    .select("id, requested_by")
+    .eq("id", submissionId)
     .single();
 
-  const sub = submission as any;
-  if (!sub) {
+  if (!submission) {
     return NextResponse.json({ error: "Submission not found" }, { status: 404 });
   }
 
@@ -56,20 +53,19 @@ export async function POST(request: NextRequest) {
     .limit(1)
     .single();
 
-  if (!adminRole && sub.requested_by !== user.id) {
+  if (!adminRole && submission.requested_by !== user.id) {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
   // Get the signer's DocuSeal submitter ID
   const { data: signer } = await admin
-    .from("esign_signers" as never)
-    .select("docuseal_submitter_id" as never)
-    .eq("submission_id" as never, submissionId as never)
-    .eq("email" as never, signerEmail as never)
+    .from("esign_signers")
+    .select("docuseal_submitter_id")
+    .eq("submission_id", submissionId)
+    .eq("email", signerEmail)
     .single();
 
-  const s = signer as any;
-  if (!s?.docuseal_submitter_id) {
+  if (!signer?.docuseal_submitter_id) {
     return NextResponse.json({ error: "Signer not found" }, { status: 404 });
   }
 
@@ -85,7 +81,7 @@ export async function POST(request: NextRequest) {
     {
       submissionId,
       signerEmail,
-      submitterId: s.docuseal_submitter_id,
+      submitterId: signer.docuseal_submitter_id,
       userId: user.id,
     },
     secret,

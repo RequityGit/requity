@@ -4,8 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { downloadAndStoreSignedDocument } from "@/lib/esign/esign-service";
 import type { DocuSealWebhookPayload } from "@/lib/esign/esign-types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * POST /api/webhooks/docuseal
  * Handles DocuSeal webhook events for signature lifecycle.
@@ -42,113 +40,111 @@ export async function POST(request: NextRequest) {
     case "form.started":
     case "form.viewed": {
       await admin
-        .from("esign_signers" as never)
-        .update({ status: "opened" } as never)
-        .eq("docuseal_submitter_id" as never, payload.data.id as never)
-        .in("status" as never, ["pending", "sent"] as never);
+        .from("esign_signers")
+        .update({ status: "opened" })
+        .eq("docuseal_submitter_id", payload.data.id)
+        .in("status", ["pending", "sent"]);
       break;
     }
 
     case "form.completed": {
       // Update the signer record
       await admin
-        .from("esign_signers" as never)
+        .from("esign_signers")
         .update({
           status: "signed",
           signed_at: payload.data.completed_at ?? new Date().toISOString(),
-        } as never)
-        .eq("docuseal_submitter_id" as never, payload.data.id as never);
+        })
+        .eq("docuseal_submitter_id", payload.data.id);
 
       // Find the submission
       const submissionId = payload.data.submission_id;
       const { data: submission } = await admin
-        .from("esign_submissions" as never)
-        .select("id, deal_id, requested_by, document_name" as never)
-        .eq("docuseal_submission_id" as never, submissionId as never)
+        .from("esign_submissions")
+        .select("id, deal_id, requested_by, document_name")
+        .eq("docuseal_submission_id", submissionId)
         .single();
 
-      const sub = submission as any;
-      if (!sub) break;
+      if (!submission) break;
 
       // Check if all signers have signed
       const { data: signers } = await admin
-        .from("esign_signers" as never)
-        .select("status" as never)
-        .eq("submission_id" as never, sub.id as never);
+        .from("esign_signers")
+        .select("status")
+        .eq("submission_id", submission.id);
 
       const allSigned =
         signers != null &&
         signers.length > 0 &&
-        (signers as any[]).every((s) => s.status === "signed");
+        signers.every((s) => s.status === "signed");
 
       if (allSigned) {
         await admin
-          .from("esign_submissions" as never)
+          .from("esign_submissions")
           .update({
             status: "completed",
             completed_at: new Date().toISOString(),
-          } as never)
-          .eq("id" as never, sub.id as never);
+          })
+          .eq("id", submission.id);
 
         // Download and store signed document
-        await downloadAndStoreSignedDocument(sub.id as number);
+        await downloadAndStoreSignedDocument(submission.id);
 
         // Notify the requester
-        if (sub.requested_by) {
+        if (submission.requested_by) {
           await admin.from("notifications").insert({
-            user_id: sub.requested_by,
+            user_id: submission.requested_by,
             notification_slug: "esign_completed",
             title: "All signatures collected",
-            body: `All signers have signed "${sub.document_name}"`,
+            body: `All signers have signed "${submission.document_name}"`,
             priority: "normal",
-            entity_type: sub.deal_id ? "deal" : null,
-            entity_id: sub.deal_id ? String(sub.deal_id) : null,
-            entity_label: sub.document_name,
-            action_url: sub.deal_id
-              ? `/pipeline/${sub.deal_id}?tab=documents`
+            entity_type: submission.deal_id ? "deal" : null,
+            entity_id: submission.deal_id ? String(submission.deal_id) : null,
+            entity_label: submission.document_name,
+            action_url: submission.deal_id
+              ? `/pipeline/${submission.deal_id}?tab=documents`
               : null,
           });
         }
       } else {
         await admin
-          .from("esign_submissions" as never)
-          .update({ status: "partially_signed" } as never)
-          .eq("id" as never, sub.id as never);
+          .from("esign_submissions")
+          .update({ status: "partially_signed" })
+          .eq("id", submission.id);
       }
       break;
     }
 
     case "form.declined": {
       await admin
-        .from("esign_signers" as never)
-        .update({ status: "declined" } as never)
-        .eq("docuseal_submitter_id" as never, payload.data.id as never);
+        .from("esign_signers")
+        .update({ status: "declined" })
+        .eq("docuseal_submitter_id", payload.data.id);
 
       const { data: decSub } = await admin
-        .from("esign_submissions" as never)
-        .select("id, requested_by, document_name, deal_id" as never)
-        .eq("docuseal_submission_id" as never, payload.data.submission_id as never)
+        .from("esign_submissions")
+        .select("id, requested_by, document_name, deal_id")
+        .eq("docuseal_submission_id", payload.data.submission_id)
         .single();
 
-      const ds = decSub as any;
-      if (ds) {
+      if (decSub) {
         await admin
-          .from("esign_submissions" as never)
-          .update({ status: "declined" } as never)
-          .eq("id" as never, ds.id as never);
+          .from("esign_submissions")
+          .update({ status: "declined" })
+          .eq("id", decSub.id);
 
-        if (ds.requested_by) {
+        if (decSub.requested_by) {
           await admin.from("notifications").insert({
-            user_id: ds.requested_by,
+            user_id: decSub.requested_by,
             notification_slug: "esign_declined",
             title: "Signature declined",
-            body: `${payload.data.email} declined to sign "${ds.document_name}"`,
+            body: `${payload.data.email} declined to sign "${decSub.document_name}"`,
             priority: "high",
-            entity_type: ds.deal_id ? "deal" : null,
-            entity_id: ds.deal_id ? String(ds.deal_id) : null,
-            entity_label: ds.document_name,
-            action_url: ds.deal_id
-              ? `/pipeline/${ds.deal_id}?tab=documents`
+            entity_type: decSub.deal_id ? "deal" : null,
+            entity_id: decSub.deal_id ? String(decSub.deal_id) : null,
+            entity_label: decSub.document_name,
+            action_url: decSub.deal_id
+              ? `/pipeline/${decSub.deal_id}?tab=documents`
               : null,
           });
         }
