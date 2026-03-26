@@ -91,9 +91,9 @@ export function BorrowingEntityCard({
   }, [entity?.id, dealId, onDeleted]);
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
+    <div className="rq-card-wrapper">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
+      <div className="rq-card-header">
         <div className="flex items-center gap-2">
           <Building2 className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
           <h4 className="rq-micro-label">

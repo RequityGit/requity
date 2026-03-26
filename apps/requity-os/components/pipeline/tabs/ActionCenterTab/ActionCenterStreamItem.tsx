@@ -133,7 +133,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
     const cfg = TYPE_CONFIG[item.type];
     const Icon = cfg.icon;
     return (
-      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rq-system-event flex items-center gap-2">
         <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
         <span>{item.title}</span>
         <span className="ml-auto shrink-0 text-[10px]">{timeAgo(item.timestamp)}</span>
@@ -146,7 +146,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
     const cfg = TYPE_CONFIG[item.type];
     const Icon = cfg.icon;
     return (
-      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rq-system-event flex items-center gap-2">
         <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
         <span className="truncate">{item.title}</span>
         <span className="ml-auto shrink-0 text-[10px]">{timeAgo(item.timestamp)}</span>
@@ -399,7 +399,7 @@ function SystemItem({ item }: { item: StreamItem }) {
     item.author?.name
   );
   return (
-    <div className="flex items-center gap-2 px-4 py-1 text-[11px] text-muted-foreground/70 border-b border-border/10">
+    <div className="rq-system-event flex items-center gap-2 border-b border-border/10">
       <Zap className="h-3 w-3 shrink-0 text-muted-foreground/40" />
       <span className="truncate">{displayText}</span>
       <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(item.timestamp)}</span>
@@ -487,7 +487,7 @@ function SystemGroupItem({ item }: { item: StreamItem }) {
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
-        className="flex w-full items-center gap-2 px-4 py-1 text-[11px] text-muted-foreground/70 hover:bg-muted/30 rq-transition"
+        className="rq-system-event-group flex w-full items-center gap-2 text-[11px]"
       >
         <ChevronRight
           className={cn(

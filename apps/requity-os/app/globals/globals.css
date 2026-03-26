@@ -708,6 +708,54 @@
 }
 
 /* ============================
+   Empty / null field display
+   ============================ */
+  .rq-field-empty {
+    @apply text-muted-foreground/50 select-none;
+  }
+  .rq-field-placeholder {
+    @apply text-sm text-muted-foreground/40 italic;
+  }
+
+  /* ============================
+   Key-value display pair — for detail page fields
+   Use with .rq-field-grid or .rq-field-grid-3 as the parent grid.
+   ============================ */
+  .rq-kv-label {
+    @apply text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground leading-none;
+  }
+  .rq-kv-value {
+    @apply text-sm font-medium text-foreground mt-1.5;
+  }
+
+  /* ============================
+   Section header with inline action
+   ============================ */
+  .rq-section-header {
+    @apply flex items-center justify-between px-5 py-3 border-b border-border;
+  }
+  .rq-section-header-title {
+    @apply flex items-center gap-2 text-[13px] font-semibold text-foreground uppercase tracking-wide;
+  }
+  .rq-section-header-action {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5
+      rounded-md border border-border text-xs font-medium
+      text-muted-foreground hover:text-foreground hover:bg-accent/50
+      rq-transition cursor-pointer;
+  }
+
+  /* ============================
+   Status condition dots
+   ============================ */
+  .rq-status-dot {
+    @apply inline-block w-2 h-2 rounded-full flex-shrink-0;
+  }
+  .rq-status-dot-pending { @apply bg-blue-500; }
+  .rq-status-dot-not-started { @apply bg-gray-300 dark:bg-gray-600; }
+  .rq-status-dot-in-review { @apply bg-amber-500; }
+  .rq-status-dot-complete { @apply bg-emerald-500; }
+
+  /* ============================
    Inline text links — clickable text that isn't a button
    ============================ */
 @layer components {
@@ -735,6 +783,29 @@
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   letter-spacing: -0.025em;
+}
+
+/* ============================
+   System event rows — lighter treatment for automated activity feed entries
+   ============================ */
+.rq-system-event {
+  @apply text-xs text-muted-foreground py-1.5 px-2.5;
+}
+.rq-system-event-group {
+  @apply text-xs text-muted-foreground py-2 px-2.5
+    border border-border/50 rounded-md bg-muted/20
+    cursor-pointer hover:bg-muted/40 rq-transition;
+}
+
+/* ============================
+   AI Summary card — highlighted block in activity feed
+   ============================ */
+.rq-ai-summary {
+  @apply rounded-lg border-l-[3px] border-info p-4 text-sm;
+  background-color: hsl(var(--info) / 0.05);
+}
+.dark .rq-ai-summary {
+  background-color: hsl(var(--info) / 0.08);
 }
 
 /* ─── Reduced motion: respect user preference ─── */
