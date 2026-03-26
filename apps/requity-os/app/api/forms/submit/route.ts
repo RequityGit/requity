@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseCurrency, LOAN_TYPE_CODES } from "@repo/lib";
 import { createHash } from "crypto";
 import type { FormStep, FormFieldDefinition } from "@/lib/form-engine/types";
+import { ensureInvestorRelationship } from "@/lib/crm/ensure-investor-relationship";
 
 interface SubmitRequest {
   submission_id: string;
@@ -217,6 +218,11 @@ export async function POST(request: Request) {
             }
 
             if (contactId) entityIds.contact_id = contactId;
+
+            // Auto-tag soft commitment contacts as investors
+            if (isSoftCommitmentForm && contactId) {
+              await ensureInvestorRelationship(supabase, contactId);
+            }
             break;
           }
 
