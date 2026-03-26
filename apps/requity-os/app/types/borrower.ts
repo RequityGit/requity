@@ -42,6 +42,7 @@ export interface DealBorrowerMember {
   updated_at: string;
   contact?: {
     id: string;
+    contact_number: string;
     first_name: string;
     last_name: string;
     email: string;

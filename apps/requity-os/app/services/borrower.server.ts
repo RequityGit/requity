@@ -50,7 +50,7 @@ export async function deleteBorrowingEntity(
 // --- Borrower Members ---
 
 const MEMBER_SELECT =
-  "*, contact:crm_contacts!deal_borrower_members_contact_id_fkey(id, first_name, last_name, email, phone, google_drive_folder_id, google_drive_folder_url)";
+  "*, contact:crm_contacts!deal_borrower_members_contact_id_fkey(id, contact_number, first_name, last_name, email, phone, google_drive_folder_id, google_drive_folder_url)";
 
 export async function getBorrowerMembersByDealId(
   supabase: AdminClient,
