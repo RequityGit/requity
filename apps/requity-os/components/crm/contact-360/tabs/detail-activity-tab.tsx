@@ -34,8 +34,10 @@ import {
   Paperclip,
   MessageSquare,
 } from "lucide-react";
+import Link from "next/link";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ExpandableText } from "@/components/shared/ExpandableText";
+import { formatCurrency } from "@/lib/format";
 import { relTime } from "../contact-detail-shared";
 import type { ActivityData, EmailData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "../types";
@@ -463,8 +465,25 @@ function ActivityTimelineItem({
             </Badge>
           )}
         </div>
-        {a.description && (
-          <ExpandableText text={a.description} />
+        {a.activity_type === "system" && a.subject === "Soft commitment placed" && a.metadata?.commitment_amount != null ? (
+          <div className="mt-1 text-[12px] text-muted-foreground">
+            <span className="text-[13px] text-foreground font-medium num">
+              {formatCurrency(a.metadata.commitment_amount as number)}
+            </span>
+            {typeof a.metadata?.deal_id === "string" && (
+              <span className="ml-1.5">
+                in{" "}
+                <Link
+                  href={`/pipeline/${a.metadata.deal_id}`}
+                  className="text-primary hover:underline underline-offset-2"
+                >
+                  {(a.metadata.deal_name as string) || "View deal"}
+                </Link>
+              </span>
+            )}
+          </div>
+        ) : (
+          a.description && <ExpandableText text={a.description} />
         )}
       </div>
     </div>

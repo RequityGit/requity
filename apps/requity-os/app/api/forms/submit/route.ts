@@ -475,6 +475,7 @@ export async function POST(request: Request) {
     }
 
     // 2b. Soft commitment: create soft_commitments record + call edge function
+    let softCommitmentDealName: string | null = null;
     if (isSoftCommitmentForm && body.deal_id) {
       try {
         const commitmentAmount = typeof data.commitment_amount === "number"
@@ -493,11 +494,12 @@ export async function POST(request: Request) {
         let commitmentStatus = "pending";
         const { data: dealData } = await supabase
           .from("unified_deals")
-          .select("fundraise_hard_cap" as never)
+          .select("fundraise_hard_cap, name" as never)
           .eq("id" as never, body.deal_id as never)
           .single();
 
         if (dealData) {
+          softCommitmentDealName = (dealData as { name: string | null }).name || null;
           const hardCap = (dealData as { fundraise_hard_cap: number | null }).fundraise_hard_cap;
           if (hardCap && hardCap > 0) {
             const { data: sumData } = await supabase
@@ -602,7 +604,12 @@ export async function POST(request: Request) {
               ? `Placed a ${amountStr} soft commitment via investment form.`
               : "Placed a soft commitment via investment form.",
             performed_by_name: "System",
-            metadata: { soft_commitment_id: entityIds.soft_commitment_id },
+            metadata: {
+              soft_commitment_id: entityIds.soft_commitment_id,
+              deal_id: body.deal_id,
+              deal_name: softCommitmentDealName,
+              commitment_amount: commitmentAmount,
+            },
           });
         }
 

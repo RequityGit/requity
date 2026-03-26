@@ -81,7 +81,7 @@ export async function GET(
         supabase
           .from("crm_activities")
           .select(
-            "id, activity_type, subject, description, call_disposition, direction, call_duration_seconds, performed_by, performed_by_name, created_at"
+            "id, activity_type, subject, description, call_disposition, direction, call_duration_seconds, performed_by, performed_by_name, created_at, metadata"
           )
           .eq("contact_id", contactId)
           .order("created_at", { ascending: false })
@@ -108,6 +108,7 @@ export async function GET(
           || (a.performed_by ? profileLookup[a.performed_by as string] : null)
           || null,
         created_at: a.created_at as string,
+        metadata: (a.metadata as Record<string, unknown> | null) ?? null,
       }));
 
       const emails = (emailsResult.data ?? []).map((e) => ({

@@ -20,10 +20,10 @@ export async function updateCommitmentStatus(
   if (status === "confirmed") updates.confirmed_at = now;
   if (status === "subscribed") updates.subscribed_at = now;
 
-  // Fetch current commitment to get contact_id for activity logging
+  // Fetch current commitment to get contact_id and deal info for activity logging
   const { data: commitment } = await admin
     .from("soft_commitments" as never)
-    .select("contact_id, status, name" as never)
+    .select("contact_id, status, name, deal_id, commitment_amount" as never)
     .eq("id" as never, commitmentId as never)
     .single();
 
@@ -35,8 +35,20 @@ export async function updateCommitmentStatus(
   if (error) return { error: error.message };
 
   // Log status change on contact timeline
-  const contactId = (commitment as { contact_id: string | null } | null)?.contact_id;
+  const typedCommitment = commitment as { contact_id: string | null; deal_id: string | null; commitment_amount: number | null } | null;
+  const contactId = typedCommitment?.contact_id;
   if (contactId) {
+    // Fetch deal name for enriched activity metadata
+    let dealName: string | null = null;
+    if (typedCommitment?.deal_id) {
+      const { data: dealRow } = await admin
+        .from("unified_deals" as never)
+        .select("name" as never)
+        .eq("id" as never, typedCommitment.deal_id as never)
+        .single();
+      dealName = (dealRow as { name: string } | null)?.name || null;
+    }
+
     const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
     await admin.from("crm_activities").insert({
       contact_id: contactId,
@@ -45,7 +57,12 @@ export async function updateCommitmentStatus(
       description: `Soft commitment status changed to "${statusLabel}".`,
       performed_by: auth.user.id,
       performed_by_name: "System",
-      metadata: { soft_commitment_id: commitmentId },
+      metadata: {
+        soft_commitment_id: commitmentId,
+        deal_id: typedCommitment?.deal_id || null,
+        deal_name: dealName,
+        commitment_amount: typedCommitment?.commitment_amount || null,
+      },
     } as never);
   }
 
@@ -120,6 +137,14 @@ export async function addManualCommitment(data: {
       maximumFractionDigits: 0,
     }).format(data.commitment_amount);
 
+    // Fetch deal name for enriched activity metadata
+    const { data: dealRow } = await admin
+      .from("unified_deals" as never)
+      .select("name" as never)
+      .eq("id" as never, data.deal_id as never)
+      .single();
+    const dealName = (dealRow as { name: string } | null)?.name || null;
+
     await admin.from("crm_activities").insert({
       contact_id: contactId,
       activity_type: "system",
@@ -127,7 +152,12 @@ export async function addManualCommitment(data: {
       description: `Placed a ${amountStr} soft commitment (added manually by admin).`,
       performed_by: auth.user.id,
       performed_by_name: "System",
-      metadata: { soft_commitment_id: (scData as { id: string }).id },
+      metadata: {
+        soft_commitment_id: (scData as { id: string }).id,
+        deal_id: data.deal_id,
+        deal_name: dealName,
+        commitment_amount: data.commitment_amount,
+      },
     } as never);
   }
 
