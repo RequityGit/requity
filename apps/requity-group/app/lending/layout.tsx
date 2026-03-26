@@ -11,18 +11,16 @@ export default function LendingLayout({
         id="retell-widget"
         src="https://dashboard.retellai.com/retell-widget.js"
         type="module"
-        async
         data-public-key="public_key_b2e3b961e5076c4619ab6"
         data-agent-id="agent_b392bf026c0c3af8395b9e9c2d"
         data-agent-version="0"
         data-title="Chat with Requity Lending"
         data-bot-name="Sarah"
         data-color="#1a1a2e"
-        data-popup-message="Hi there! I can help you with any lending or investment questions. Click here to chat with our team."
+        data-logo-url="/images/requity-chat-logo.png"
+        data-popup-message="Hi there! I can help you get a term sheet today. Click here to chat with our team."
         data-show-ai-popup="true"
         data-show-ai-popup-time="5"
-        data-avatar="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Diamond%20Favicon%20White.svg"
-        data-logo-url="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Diamond%20Favicon%20White.svg"
       />
     </>
   );
