@@ -18,7 +18,7 @@ export default function LendingLayout({
         data-title="Chat with Requity Lending"
         data-bot-name="Sarah"
         data-color="#1a1a2e"
-        data-popup-message="Have a deal? Get a term sheet in 24 hours."
+        data-popup-message="Hi there! I can help you with any lending or investment questions. Click here to chat with our team."
         data-show-ai-popup="true"
         data-show-ai-popup-time="5"
         data-avatar="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Diamond%20Favicon%20White.svg"
