@@ -418,9 +418,9 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                 onSave={(v) => saveField("exit_strategy", ES_LABEL_TO_KEY[v] ?? v)}
               />
               <InlineField
-                label="Target close date"
+                label="Closing date"
                 type="date"
-                value={uwStr("expected_close_date") ?? deal.expected_close_date}
+                value={deal.expected_close_date}
                 onSave={(v) => saveField("expected_close_date", v)}
               />
               <InlineField

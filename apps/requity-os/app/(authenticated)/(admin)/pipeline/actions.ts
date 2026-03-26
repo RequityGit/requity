@@ -937,21 +937,16 @@ export async function updateDealStatusAction(
       return { error: error.message };
     }
 
-    // Closing Date is the single source of truth: expected until close, then actual once won.
+    // Closing date column is the single source of truth.
+    // When a deal is won, stamp today as the closing date.
     if (status === "won") {
       const closingDate = new Date().toISOString().split("T")[0];
-      const { data: deal } = await admin
+      const { error: closeErr } = await admin
         .from("unified_deals")
-        .select("uw_data")
-        .eq("id", dealId)
-        .single();
-      const uwData = (deal?.uw_data as Record<string, unknown>) || {};
-      const { error: uwError } = await admin
-        .from("unified_deals")
-        .update({ uw_data: { ...uwData, closing_date: closingDate, expected_close_date: closingDate } as Json })
+        .update({ expected_close_date: closingDate })
         .eq("id", dealId);
-      if (uwError) {
-        console.error("updateDealStatusAction uw_data closing_date error:", uwError);
+      if (closeErr) {
+        console.error("updateDealStatusAction closing_date error:", closeErr);
       }
     }
 
