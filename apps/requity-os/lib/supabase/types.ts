@@ -16135,6 +16135,7 @@ export type Database = {
           property_id: string | null
           source: string | null
           source_detail: string | null
+          sort_order: number | null
           stage: string
           stage_entered_at: string
           status: string
@@ -16176,6 +16177,7 @@ export type Database = {
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          sort_order?: number | null
           source?: string | null
           source_detail?: string | null
           stage?: string
@@ -16219,6 +16221,7 @@ export type Database = {
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          sort_order?: number | null
           source?: string | null
           source_detail?: string | null
           stage?: string

@@ -117,6 +117,7 @@ export interface UnifiedDeal {
   notes: string | null;
   is_priority: boolean;
   tags: string[];
+  sort_order: number | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

@@ -47,6 +47,7 @@ interface PipelineState {
   // Actions
   hydrate: (data: PipelineHydratePayload) => void;
   moveDeal: (dealId: string, newStage: UnifiedStage) => void;
+  reorderDeal: (orderedIds: string[], stage: UnifiedStage) => void;
   updateDeal: (dealId: string, patch: Partial<UnifiedDeal>) => void;
   addDeal: (deal: UnifiedDeal) => void;
   removeDeal: (dealId: string) => void;
@@ -91,6 +92,16 @@ export const usePipelineStore = create<PipelineState>()(
           deal.stage = newStage;
           deal.stage_entered_at = new Date().toISOString();
         }
+      }),
+
+    reorderDeal: (orderedIds, stage) =>
+      set((state) => {
+        orderedIds.forEach((id, index) => {
+          const deal = state.deals.get(id);
+          if (deal && deal.stage === stage) {
+            deal.sort_order = index;
+          }
+        });
       }),
 
     updateDeal: (dealId, patch) =>

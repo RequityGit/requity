@@ -13,13 +13,22 @@ import {
   closestCorners,
   type DragStartEvent,
   type DragEndEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { showSuccess, showError } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
-import { advanceStageAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import {
+  advanceStageAction,
+  reorderDealsAction,
+} from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
   type UnifiedDeal,
   type StageConfig,
@@ -79,9 +88,11 @@ export function PipelineKanban({
   selectedDealId,
 }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overStage, setOverStage] = useState<UnifiedStage | null>(null);
 
   // Use store's moveDeal for optimistic updates instead of local dealOverrides
   const moveDeal = usePipelineStore((s) => s.moveDeal);
+  const reorderDeal = usePipelineStore((s) => s.reorderDeal);
 
   // Build assignee name lookup map
   const assigneeMap = useMemo(() => {
@@ -108,43 +119,126 @@ export function PipelineKanban({
     setActiveId(event.active.id as string);
   }, []);
 
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { over } = event;
+      if (!over) {
+        setOverStage(null);
+        return;
+      }
+      // Determine which stage the cursor is over
+      // over.id could be a deal id or a stage key (droppable column)
+      const overId = over.id as string;
+      const stageKeys = STAGES.map((s) => s.key) as string[];
+      if (stageKeys.includes(overId)) {
+        setOverStage(overId as UnifiedStage);
+      } else {
+        // It's a deal card - find which stage that deal belongs to
+        const overDeal = deals.find((d) => d.id === overId);
+        if (overDeal) setOverStage(overDeal.stage);
+      }
+    },
+    [deals]
+  );
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       setActiveId(null);
+      setOverStage(null);
 
       const { active, over } = event;
       if (!over) return;
 
       const dealId = active.id as string;
-      const newStage = over.id as UnifiedStage;
+      const overId = over.id as string;
       const deal = deals.find((d) => d.id === dealId);
       if (!deal) return;
 
-      if (deal.stage === newStage) return;
+      // Determine if we dropped on a stage column or on another deal
+      const stageKeys = STAGES.map((s) => s.key) as string[];
+      const isDropOnStage = stageKeys.includes(overId);
+      const overDeal = !isDropOnStage ? deals.find((d) => d.id === overId) : null;
+      const targetStage = isDropOnStage
+        ? (overId as UnifiedStage)
+        : overDeal
+          ? overDeal.stage
+          : deal.stage;
 
-      // Save original stage for potential revert
-      const originalStage = deal.stage;
+      const sameColumn = deal.stage === targetStage;
 
-      // Optimistic update via store (UI re-renders instantly)
-      moveDeal(dealId, newStage);
+      if (sameColumn && !overDeal) return; // Dropped on own column with no target
+      if (sameColumn && dealId === overId) return; // Dropped on self
 
-      // Fire server action (realtime will confirm/correct)
-      const result = await advanceStageAction(dealId, newStage);
+      // Build the ordered list for the target stage
+      const stageDeals = deals
+        .filter((d) => d.stage === targetStage)
+        .sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
 
-      if (result.error) {
-        // Revert on error
-        moveDeal(dealId, originalStage);
-        showError("Could not move deal", result.error);
+      if (sameColumn) {
+        // Reorder within same column
+        const oldIndex = stageDeals.findIndex((d) => d.id === dealId);
+        const newIndex = stageDeals.findIndex((d) => d.id === overId);
+        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+
+        const reordered = arrayMove(stageDeals, oldIndex, newIndex);
+        const orderedIds = reordered.map((d) => d.id);
+
+        // Optimistic update
+        reorderDeal(orderedIds, targetStage);
+
+        // Persist
+        const result = await reorderDealsAction(orderedIds, targetStage);
+        if (result.error) {
+          // Revert by re-sorting to original order
+          const originalIds = stageDeals.map((d) => d.id);
+          reorderDeal(originalIds, targetStage);
+          showError("Could not reorder deals", result.error);
+        }
       } else {
-        const stageLabel = STAGES.find((s) => s.key === newStage)?.label ?? newStage;
-        showSuccess(`${deal.name} moved to ${stageLabel}`);
+        // Cross-column move
+        const originalStage = deal.stage;
+
+        // Figure out insertion index in target column
+        let insertIndex = stageDeals.length; // default: end
+        if (overDeal) {
+          const overIndex = stageDeals.findIndex((d) => d.id === overId);
+          if (overIndex !== -1) insertIndex = overIndex;
+        }
+
+        // Build new target column order (insert the moved deal)
+        const targetIds = stageDeals
+          .filter((d) => d.id !== dealId)
+          .map((d) => d.id);
+        targetIds.splice(insertIndex, 0, dealId);
+
+        // Optimistic update: move stage + set sort order
+        moveDeal(dealId, targetStage);
+        reorderDeal(targetIds, targetStage);
+
+        // Persist stage change
+        const stageResult = await advanceStageAction(dealId, targetStage);
+        if (stageResult.error) {
+          moveDeal(dealId, originalStage);
+          showError("Could not move deal", stageResult.error);
+          return;
+        }
+
+        // Persist new sort order in target column
+        const orderResult = await reorderDealsAction(targetIds, targetStage);
+        if (orderResult.error) {
+          showError("Deal moved but could not save order", orderResult.error);
+        } else {
+          const stageLabel = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+          showSuccess(`${deal.name} moved to ${stageLabel}`);
+        }
       }
     },
-    [deals, moveDeal]
+    [deals, moveDeal, reorderDeal]
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
+    setOverStage(null);
   }, []);
 
   // Find active deal for DragOverlay
@@ -155,7 +249,7 @@ export function PipelineKanban({
     return STAGES.map((stage) => {
       const stageDeals = deals
         .filter((d) => d.stage === stage.key)
-        .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
+        .sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
 
       const totalAmount = stageDeals.reduce(
         (sum, d) => sum + (d.amount ?? 0),
@@ -173,12 +267,14 @@ export function PipelineKanban({
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
       <ScrollArea className="w-full">
         <div className="flex gap-4 pb-4 min-w-max">
           {stageData.map(({ stage, stageDeals, totalAmount, isLead, columnCount }) => {
+            const dealIds = stageDeals.map((d) => d.id);
 
             return (
               <div key={stage.key} className="flex flex-col w-72 shrink-0">
@@ -209,30 +305,32 @@ export function PipelineKanban({
                       />
                     ))}
 
-                  {/* Regular deal cards */}
-                  {stageDeals.length === 0 && (!isLead || intakeItems.length === 0) ? (
-                    <EmptyState
-                      icon={Layers}
-                      title="No deals"
-                      compact
-                    />
-                  ) : (
-                    stageDeals.map((deal) => {
-                      const stageConfig = stageConfigMap.get(stage.key);
-                      return (
-                        <DealCard
-                          key={deal.id}
-                          deal={deal}
-                          stageConfig={stageConfig}
-                          conditionsProgress={conditionsMap.get(deal.id) ?? null}
-                          assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
-                          onClick={(e) => onDealClick(deal, e)}
-                          onHover={() => onDealHover?.(deal.id)}
-                          isSelected={deal.id === selectedDealId}
-                        />
-                      );
-                    })
-                  )}
+                  {/* Sortable deal cards */}
+                  <SortableContext items={dealIds} strategy={verticalListSortingStrategy}>
+                    {stageDeals.length === 0 && (!isLead || intakeItems.length === 0) ? (
+                      <EmptyState
+                        icon={Layers}
+                        title="No deals"
+                        compact
+                      />
+                    ) : (
+                      stageDeals.map((deal) => {
+                        const stageConfig = stageConfigMap.get(stage.key);
+                        return (
+                          <DealCard
+                            key={deal.id}
+                            deal={deal}
+                            stageConfig={stageConfig}
+                            conditionsProgress={conditionsMap.get(deal.id) ?? null}
+                            assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
+                            onClick={(e) => onDealClick(deal, e)}
+                            onHover={() => onDealHover?.(deal.id)}
+                            isSelected={deal.id === selectedDealId}
+                          />
+                        );
+                      })
+                    )}
+                  </SortableContext>
                 </StageColumn>
               </div>
             );
