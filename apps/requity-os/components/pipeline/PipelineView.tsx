@@ -14,9 +14,6 @@ import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
 import { STAGES, type UnifiedDeal } from "./pipeline-types";
 import { getDealFlavor } from "@/lib/pipeline/deal-display-config";
-import { toggleDealPriorityAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
-import { showError } from "@/lib/toast";
-import { usePipelineStore } from "@/stores/pipeline-store";
 import {
   useAllDeals,
   useStageConfigs,
@@ -54,9 +51,8 @@ function filterByClosingDate(dateStr: string | null, filter: ClosingDateFilter):
   }
 }
 
-/** Sort deals: priority first, then by amount descending */
+/** Sort deals by amount descending */
 function sortDeals(a: UnifiedDeal, b: UnifiedDeal): number {
-  if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1;
   return (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
 }
 
@@ -126,7 +122,7 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
     });
   }, [deals, filters]);
 
-  // Build ordered deal IDs (stages left-to-right, priority + urgent + amount within stage)
+  // Build ordered deal IDs (stages left-to-right, amount within stage)
   const orderedDealIds = useMemo(() => {
     const ids: string[] = [];
     for (const stage of STAGES) {
@@ -180,23 +176,6 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
     searchInputRef,
   });
 
-  const updateDeal = usePipelineStore((s) => s.updateDeal);
-
-  const handleTogglePriority = useCallback(
-    async (dealId: string, isPriority: boolean) => {
-      // Optimistic update
-      updateDeal(dealId, { is_priority: isPriority });
-
-      const result = await toggleDealPriorityAction(dealId, isPriority);
-      if (result.error) {
-        // Revert on error
-        updateDeal(dealId, { is_priority: !isPriority });
-        showError("Could not toggle priority", result.error);
-      }
-    },
-    [updateDeal]
-  );
-
   const handleIntakeClick = useCallback((item: IntakeItem) => {
     setReviewItem(item);
   }, []);
@@ -232,7 +211,6 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
           stageConfigs={stageConfigs}
           onDealClick={handleDealClick}
           onDealHover={handleDealHover}
-          onTogglePriority={handleTogglePriority}
           intakeItems={intakeItems}
           onIntakeClick={handleIntakeClick}
           teamMembers={teamMembers}

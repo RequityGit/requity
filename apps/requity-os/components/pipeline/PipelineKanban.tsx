@@ -38,7 +38,6 @@ interface PipelineKanbanProps {
   stageConfigs: StageConfig[];
   onDealClick: (deal: UnifiedDeal, e?: React.MouseEvent) => void;
   onDealHover?: (dealId: string) => void;
-  onTogglePriority?: (dealId: string, isPriority: boolean) => void;
   intakeItems?: IntakeItem[];
   onIntakeClick?: (item: IntakeItem) => void;
   teamMembers: { id: string; full_name: string }[];
@@ -73,7 +72,6 @@ export function PipelineKanban({
   stageConfigs,
   onDealClick,
   onDealHover,
-  onTogglePriority,
   intakeItems = [],
   onIntakeClick,
   teamMembers,
@@ -157,11 +155,7 @@ export function PipelineKanban({
     return STAGES.map((stage) => {
       const stageDeals = deals
         .filter((d) => d.stage === stage.key)
-        .sort((a, b) => {
-          // Priority deals first, then by amount descending
-          if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1;
-          return (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
-        });
+        .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
 
       const totalAmount = stageDeals.reduce(
         (sum, d) => sum + (d.amount ?? 0),
@@ -234,7 +228,6 @@ export function PipelineKanban({
                           assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
                           onClick={(e) => onDealClick(deal, e)}
                           onHover={() => onDealHover?.(deal.id)}
-                          onTogglePriority={onTogglePriority}
                           isSelected={deal.id === selectedDealId}
                         />
                       );
