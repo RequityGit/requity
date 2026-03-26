@@ -32,7 +32,6 @@ export function GmailIntegration() {
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [gmailToken, setGmailToken] = useState<GmailToken | null>(null);
-  const [gmailConfigured, setGmailConfigured] = useState<boolean | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [tokenExpired, setTokenExpired] = useState(false);
   const [syncResult, setSyncResult] = useState<{
@@ -61,20 +60,6 @@ export function GmailIntegration() {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Check if Gmail OAuth is configured on the server
-  useEffect(() => {
-    async function checkConfig() {
-      try {
-        const res = await fetch("/api/gmail/config");
-        const data = await res.json();
-        setGmailConfigured(data.configured ?? false);
-      } catch {
-        setGmailConfigured(false);
-      }
-    }
-    checkConfig();
   }, []);
 
   // Handle OAuth callback query params
@@ -129,17 +114,21 @@ export function GmailIntegration() {
   async function handleConnect() {
     setConnecting(true);
     try {
-      const res = await fetch("/api/gmail/auth/start", { method: "POST" });
-      const data = await res.json();
+      const supabase = createClient();
 
-      if (!res.ok) {
-        showError("Could not start Gmail authorization", data?.error || "Please try again.");
+      // Call the Supabase edge function to get the Google OAuth URL
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-start');
+
+      if (error) {
+        console.error('Failed to start Gmail OAuth:', error);
+        showError("Could not start Gmail authorization", "Please try again.");
         return;
       }
 
       if (data?.auth_url) {
         window.location.href = data.auth_url;
       } else {
+        console.error('No auth_url returned from gmail-oauth-start');
         showError("Could not start Gmail authorization", "No authorization URL received.");
       }
     } catch (err) {
@@ -371,52 +360,6 @@ export function GmailIntegration() {
                 </>
               )}
             </Button>
-          </div>
-        ) : gmailConfigured === false ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 rounded-md bg-amber-50 border border-amber-200">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-amber-900">
-                  Gmail integration is not configured
-                </p>
-                {!pathname.startsWith("/b/") && !pathname.startsWith("/i/") ? (
-                  <div className="text-xs text-amber-700 space-y-1 mt-1">
-                    <p>
-                      To enable Gmail integration, add these environment variables
-                      to your deployment:
-                    </p>
-                    <ul className="list-disc list-inside space-y-0.5 ml-1">
-                      <li>
-                        <code className="bg-amber-100 px-1 rounded text-[11px]">GMAIL_CLIENT_ID</code>
-                      </li>
-                      <li>
-                        <code className="bg-amber-100 px-1 rounded text-[11px]">GMAIL_CLIENT_SECRET</code>
-                      </li>
-                    </ul>
-                    <p>
-                      Create OAuth credentials in the{" "}
-                      <a
-                        href="https://console.cloud.google.com/apis/credentials"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline font-medium"
-                      >
-                        Google Cloud Console
-                      </a>{" "}
-                      and set the redirect URI to{" "}
-                      <code className="bg-amber-100 px-1 rounded text-[11px]">
-                        {"<your-domain>"}/api/gmail/auth/callback
-                      </code>
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-amber-700">
-                    Contact your administrator to enable Gmail OAuth.
-                  </p>
-                )}
-              </div>
-            </div>
           </div>
         ) : tokenExpired ? (
           <div className="space-y-4">

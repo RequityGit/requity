@@ -74,6 +74,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
+  // /settings → /{role}/account (preserves query params for Gmail OAuth callback)
+  if (pathname === "/settings") {
+    const cookieRole = request.cookies.get("active_role")?.value;
+    const rolePrefix =
+      cookieRole === "borrower" ? "/b" : cookieRole === "investor" ? "/i" : "";
+    const url = request.nextUrl.clone();
+    url.pathname = `${rolePrefix}/account`;
+    return NextResponse.redirect(url);
+  }
+
   // Passthrough routes are accessible regardless of auth state — no redirects.
   const isPassthrough = PASSTHROUGH_ROUTES.some((r) => pathname.startsWith(r));
   if (isPassthrough) return NextResponse.next();
