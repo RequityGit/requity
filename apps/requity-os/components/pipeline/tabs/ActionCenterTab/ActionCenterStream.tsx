@@ -20,7 +20,9 @@ interface ActionCenterStreamProps {
   currentUserId: string;
   currentUserName: string;
   onPost: (body: string, isInternal: boolean, mentionIds: string[], attachments?: UploadedAttachment[]) => Promise<void>;
-  onSendMessage: (body: string) => Promise<void>;
+  onSendMessage?: (body: string) => Promise<void>;
+  /** Whether to show the Note/Message mode toggle in the composer. Defaults to true. */
+  showMessageMode?: boolean;
   // Note handlers
   noteHandlers: NoteHandlers;
 }
@@ -52,6 +54,7 @@ export function ActionCenterStream({
   currentUserName,
   onPost,
   onSendMessage,
+  showMessageMode,
   noteHandlers,
 }: ActionCenterStreamProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -141,6 +144,7 @@ export function ActionCenterStream({
         currentUserName={currentUserName}
         onPost={onPost}
         onSendMessage={onSendMessage}
+        showMessageMode={showMessageMode}
       />
     </div>
   );

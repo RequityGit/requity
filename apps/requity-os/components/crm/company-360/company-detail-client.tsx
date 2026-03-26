@@ -20,16 +20,14 @@ import { CompanyDetailSidebar } from "./company-detail-sidebar";
 import { CompanyOverviewTab } from "./tabs/overview-tab";
 import { CrmInlineEditorWrapper } from "@/components/inline-layout-editor/CrmInlineEditorWrapper";
 import { CompanyContactsTab } from "./tabs/contacts-tab";
-import { CompanyActivityTab } from "./tabs/activity-tab";
 import { CompanyDealsTab } from "./tabs/deals-tab";
 import { CompanyFilesTab } from "./tabs/files-tab";
 import { CompanyTasksTab } from "./tabs/tasks-tab";
-import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { EntityActivityStream } from "@/components/shared/EntityActivityStream";
 import { useCompany360Lazy } from "@/hooks/useCompany360Lazy";
 import type {
   CompanyDetailData,
   CompanyContactData,
-  CompanyActivityData,
   CompanyFileData,
   CompanyTaskData,
   CompanyWireData,
@@ -45,7 +43,6 @@ type OverviewPayload = {
   wireInstructions: CompanyWireData | null;
   files: CompanyFileData[];
 };
-type ActivitiesPayload = { activities: CompanyActivityData[] };
 type FilesPayload = { files: CompanyFileData[] };
 type TasksPayload = { tasks: CompanyTaskData[] };
 
@@ -91,11 +88,10 @@ export function CompanyDetailClient({
     () => [
       { id: "overview", label: "Overview" },
       { id: "contacts", label: "Contacts", count: counts.contacts },
-      { id: "notes", label: "Notes", count: counts.notes },
+      { id: "activity", label: "Activity" },
       { id: "tasks", label: "Tasks", count: counts.openTasks },
       { id: "deals", label: "Deals & Quotes", count: counts.deals || undefined },
       { id: "files", label: "Files", count: counts.files },
-      { id: "activity", label: "Activity", count: counts.activities },
     ],
     [counts]
   );
@@ -110,11 +106,6 @@ export function CompanyDetailClient({
   );
 
   const overviewQ = useCompany360Lazy<OverviewPayload>(company.id, "overview", true);
-  const activitiesQ = useCompany360Lazy<ActivitiesPayload>(
-    company.id,
-    "activities",
-    loadedTabs.has("activity")
-  );
   const filesQ = useCompany360Lazy<FilesPayload>(
     company.id,
     "files",
@@ -128,7 +119,6 @@ export function CompanyDetailClient({
 
   const wireInstructions = overviewQ.data?.wireInstructions ?? null;
   const overviewFiles = overviewQ.data?.files ?? [];
-  const activities = activitiesQ.data?.activities ?? [];
   const filesForTab = filesQ.data?.files ?? [];
   const tasks = tasksQ.data?.tasks ?? [];
 
@@ -231,16 +221,6 @@ export function CompanyDetailClient({
               </SectionErrorBoundary>
             </div>
           )}
-          {loadedTabs.has("notes") && (
-            <div className={activeTab !== "notes" ? "hidden" : undefined}>
-              <SectionErrorBoundary fallbackTitle="Could not load notes">
-                <UnifiedNotes
-                  entityType="company"
-                  entityId={company.id}
-                />
-              </SectionErrorBoundary>
-            </div>
-          )}
           {loadedTabs.has("tasks") && (
             <div className={activeTab !== "tasks" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load tasks">
@@ -281,13 +261,14 @@ export function CompanyDetailClient({
           {loadedTabs.has("activity") && (
             <div className={activeTab !== "activity" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load activity">
-                <CompanyActivityTab
-                  companyId={company.id}
-                  activities={activities}
-                  currentUserId={currentUserId}
-                  logCallTrigger={logCallTrigger}
-                  loading={activitiesQ.loading}
-                />
+                <div className="rounded-xl border bg-card overflow-hidden" style={{ height: "calc(100vh - 300px)", minHeight: "500px" }}>
+                  <EntityActivityStream
+                    entityType="company"
+                    entityId={company.id}
+                    currentUserId={currentUserId}
+                    currentUserName={currentUserName}
+                  />
+                </div>
               </SectionErrorBoundary>
             </div>
           )}
