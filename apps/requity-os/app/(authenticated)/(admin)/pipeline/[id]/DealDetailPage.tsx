@@ -617,6 +617,7 @@ function DealDetailPageInner({
               <Suspense fallback={<TabLoadingFallback />}>
                 <PropertyTab
                   dealId={deal.id}
+                  propertyId={deal.property_id}
                   propertyData={{
                     ...((deal.property_data as Record<string, unknown>) ?? {}),
                     ...Object.fromEntries(
