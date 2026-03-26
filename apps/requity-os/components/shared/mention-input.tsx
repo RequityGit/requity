@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 import { extractMentionIds } from "@/lib/comment-utils";
 import { useAutoExpand } from "@/hooks/useAutoExpand";
 
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 interface TeamMember {
   id: string;
   full_name: string;
@@ -260,6 +264,24 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
 
     // Strip any remaining zero-width spaces
     markupText = markupText.replaceAll("\u200B", "");
+
+    // Fallback: resolve plain @Name patterns against loaded team members
+    // Handles users who type names manually without selecting from dropdown
+    if (teamMembers.length > 0) {
+      const sortedMembers = [...teamMembers].sort(
+        (a, b) => b.full_name.length - a.full_name.length
+      );
+      for (const member of sortedMembers) {
+        const pattern = new RegExp(
+          `@${escapeRegExp(member.full_name)}(?!\\])`,
+          "gi"
+        );
+        markupText = markupText.replace(
+          pattern,
+          `@[${member.full_name}](${member.id})`
+        );
+      }
+    }
 
     const mentionIds = extractMentionIds(markupText);
     onSubmit(markupText.trim(), mentionIds);
