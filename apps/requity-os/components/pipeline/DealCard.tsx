@@ -479,7 +479,7 @@ function DealCardInner({
         "group w-full text-left rounded-xl border bg-card relative overflow-hidden flex flex-col",
         "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)]",
         "dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.35),0_1px_3px_rgba(0,0,0,0.15)]",
-        "hover:border-foreground/[0.18] hover:-translate-y-px",
+        "hover:border-foreground/[0.18]",
         "rq-transition cursor-pointer",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected && "ring-2 ring-primary/40",
@@ -499,29 +499,8 @@ function DealCardInner({
   );
 }
 
-// Memoized wrapper to prevent unnecessary re-renders
-export const DealCard = React.memo(DealCardInner, (prev, next) => {
-  return (
-    prev.deal.id === next.deal.id &&
-    prev.deal.stage === next.deal.stage &&
-    prev.deal.stage_entered_at === next.deal.stage_entered_at &&
-    prev.deal.name === next.deal.name &&
-    prev.deal.amount === next.deal.amount &&
-    prev.deal.asset_class === next.deal.asset_class &&
-    prev.deal.capital_side === next.deal.capital_side &&
-    prev.deal.status === next.deal.status &&
-    prev.deal.close_date === next.deal.close_date &&
-    prev.deal.assigned_to === next.deal.assigned_to &&
-    prev.deal.sort_order === next.deal.sort_order &&
-    prev.deal.primary_contact_id === next.deal.primary_contact_id &&
-    prev.deal.broker_contact_id === next.deal.broker_contact_id &&
-    prev.stageConfig?.stage === next.stageConfig?.stage &&
-    prev.conditionsProgress?.completed === next.conditionsProgress?.completed &&
-    prev.conditionsProgress?.total === next.conditionsProgress?.total &&
-    prev.assigneeName === next.assigneeName &&
-    prev.isSelected === next.isSelected
-  );
-});
+// Export directly — React.memo blocks re-renders needed for @dnd-kit state
+export const DealCard = DealCardInner;
 
 /** Static card clone for DragOverlay -- no hooks, no interactivity */
 export function DealCardOverlay({
