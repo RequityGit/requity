@@ -636,6 +636,8 @@ function DealDetailPageInner({
                   fundraiseAmountOptions={deal.fundraise_amount_options ?? null}
                   fundraiseHeroImageUrl={deal.fundraise_hero_image_url ?? null}
                   fundraiseDeckUrl={deal.fundraise_deck_url ?? null}
+                  currentUserId={currentUserId}
+                  currentUserName={currentUserName}
                 />
               </Suspense>
               </SectionErrorBoundary>

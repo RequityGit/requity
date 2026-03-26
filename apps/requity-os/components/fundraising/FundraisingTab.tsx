@@ -17,6 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTable, type Column } from "@/components/shared/data-table";
@@ -40,12 +41,14 @@ import {
   Rocket,
   FileCheck,
   MessageSquare,
+  Mail,
 } from "lucide-react";
 import { FundraiseDropZone } from "./FundraiseDropZone";
 import { HeroCropModal } from "./HeroCropModal";
 import { formatCurrency, formatDate, formatPhoneNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import type { SoftCommitment, CommitmentStatus } from "@/lib/fundraising/types";
 import {
   COMMITMENT_STATUS_OPTIONS,
@@ -55,6 +58,7 @@ import {
   updateCommitmentStatus,
   updateCommitmentNotes,
   updateFundraiseSettings,
+  bulkUpdateCommitmentStatus,
 } from "@/lib/fundraising/actions";
 import {
   Dialog,
@@ -66,6 +70,9 @@ import {
 import { FormModal } from "@/components/forms/contexts/FormModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
+import { SelectionActionBar } from "./SelectionActionBar";
+import { BulkEmailComposer } from "./BulkEmailComposer";
 
 interface FundraisingTabProps {
   dealId: string;
@@ -78,6 +85,8 @@ interface FundraisingTabProps {
   fundraiseAmountOptions: number[] | null;
   fundraiseHeroImageUrl: string | null;
   fundraiseDeckUrl: string | null;
+  currentUserId?: string;
+  currentUserName?: string;
 }
 
 export function FundraisingTab({
@@ -91,6 +100,8 @@ export function FundraisingTab({
   fundraiseAmountOptions,
   fundraiseHeroImageUrl,
   fundraiseDeckUrl,
+  currentUserId,
+  currentUserName,
 }: FundraisingTabProps) {
   if (!fundraiseEnabled) {
     return (
@@ -117,6 +128,8 @@ export function FundraisingTab({
       fundraiseAmountOptions={fundraiseAmountOptions}
       fundraiseHeroImageUrl={fundraiseHeroImageUrl}
       fundraiseDeckUrl={fundraiseDeckUrl}
+      currentUserId={currentUserId}
+      currentUserName={currentUserName}
     />
   );
 }
@@ -373,6 +386,8 @@ function FundraiseDashboard({
   fundraiseAmountOptions,
   fundraiseHeroImageUrl,
   fundraiseDeckUrl,
+  currentUserId: propUserId,
+  currentUserName: propUserName,
 }: {
   dealId: string;
   dealName: string;
@@ -383,8 +398,11 @@ function FundraiseDashboard({
   fundraiseAmountOptions: number[] | null;
   fundraiseHeroImageUrl: string | null;
   fundraiseDeckUrl: string | null;
+  currentUserId?: string;
+  currentUserName?: string;
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [commitments, setCommitments] = useState<SoftCommitment[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -394,6 +412,30 @@ function FundraiseDashboard({
     id: string;
     notes: string;
   } | null>(null);
+
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Single email state
+  const [emailTarget, setEmailTarget] = useState<SoftCommitment | null>(null);
+
+  // Bulk email state
+  const [showBulkEmail, setShowBulkEmail] = useState(false);
+
+  // Get current user from Supabase if not passed via props
+  const [currentUserId, setCurrentUserId] = useState(propUserId ?? "");
+  const [currentUserName, setCurrentUserName] = useState(propUserName ?? "");
+
+  useEffect(() => {
+    if (propUserId) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setCurrentUserId(user.id);
+        setCurrentUserName(user.email ?? "Unknown");
+      }
+    });
+  }, [propUserId]);
 
   // Load commitments client-side
   useEffect(() => {
@@ -519,6 +561,37 @@ function FundraiseDashboard({
       setNotesDialog(null);
     }
   }, [notesDialog]);
+
+  // Bulk status change
+  const handleBulkStatusChange = useCallback(
+    async (status: CommitmentStatus) => {
+      const ids = Array.from(selectedIds);
+      const ok = await confirm({
+        title: `Change ${ids.length} commitments to ${status}?`,
+        description: `This will update the status of ${ids.length} selected commitment${ids.length > 1 ? "s" : ""}.`,
+        confirmLabel: `Mark as ${status}`,
+      });
+      if (!ok) return;
+
+      const result = await bulkUpdateCommitmentStatus(ids, status);
+      if (result.error) {
+        showError("Could not update statuses", result.error);
+      } else {
+        showSuccess(`${ids.length} commitment${ids.length > 1 ? "s" : ""} updated`);
+        setSelectedIds(new Set());
+        setCommitments((prev) =>
+          prev.map((c) => (ids.includes(c.id) ? { ...c, status } : c))
+        );
+      }
+    },
+    [selectedIds, confirm]
+  );
+
+  // Get selected commitments for bulk email
+  const selectedCommitments = useMemo(
+    () => commitments.filter((c) => selectedIds.has(c.id)),
+    [commitments, selectedIds]
+  );
 
   const handleFormComplete = useCallback(() => {
     setShowFormModal(false);
@@ -666,6 +739,11 @@ function FundraiseDashboard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setEmailTarget(row)}>
+              <Mail className="h-3.5 w-3.5 mr-2" />
+              Send Email
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {COMMITMENT_STATUS_OPTIONS.filter(
               (o) => o.value !== row.status
             ).map((o) => (
@@ -676,6 +754,7 @@ function FundraiseDashboard({
                 Mark as {o.label}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() =>
                 setNotesDialog({ id: row.id, notes: row.notes ?? "" })
@@ -824,6 +903,45 @@ function FundraiseDashboard({
           columns={columns}
           data={commitments}
           emptyMessage="No commitments yet"
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+        />
+      )}
+
+      {/* Selection Action Bar */}
+      <SelectionActionBar
+        count={selectedIds.size}
+        onEmailSelected={() => setShowBulkEmail(true)}
+        onChangeStatus={handleBulkStatusChange}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
+
+      {/* Single Email Composer */}
+      {currentUserId && (
+        <EmailComposeSheet
+          open={!!emailTarget}
+          onOpenChange={(open) => !open && setEmailTarget(null)}
+          toEmail={emailTarget?.email ?? ""}
+          toName={emailTarget?.name ?? ""}
+          linkedContactId={emailTarget?.contact_id ?? undefined}
+          currentUserId={currentUserId}
+          currentUserName={currentUserName}
+        />
+      )}
+
+      {/* Bulk Email Composer */}
+      {currentUserId && (
+        <BulkEmailComposer
+          open={showBulkEmail}
+          onOpenChange={setShowBulkEmail}
+          recipients={selectedCommitments}
+          currentUserId={currentUserId}
+          currentUserName={currentUserName}
+          onSendComplete={() => {
+            setSelectedIds(new Set());
+            setShowBulkEmail(false);
+          }}
         />
       )}
 
