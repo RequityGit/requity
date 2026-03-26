@@ -30,6 +30,7 @@ import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import {
   advanceStageAction,
+  regressStageAction,
   reorderDealsAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -144,6 +145,7 @@ export function PipelineKanban({
   // Use store's moveDeal for optimistic updates instead of local dealOverrides
   const moveDeal = usePipelineStore((s) => s.moveDeal);
   const reorderDeal = usePipelineStore((s) => s.reorderDeal);
+  const setDraggingDealId = usePipelineStore((s) => s.setDraggingDealId);
 
   // Build assignee name lookup map
   const assigneeMap = useMemo(() => {
@@ -170,9 +172,10 @@ export function PipelineKanban({
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    console.log("[DnD] dragStart", event.active.id);
-    setActiveId(event.active.id as string);
-  }, []);
+    const id = event.active.id as string;
+    setActiveId(id);
+    setDraggingDealId(id);
+  }, [setDraggingDealId]);
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
@@ -195,20 +198,28 @@ export function PipelineKanban({
     []
   );
 
+  // Stage order for determining forward vs backward moves
+  const STAGE_ORDER = useMemo(() => STAGES.map((s) => s.key), []);
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       setActiveId(null);
       setOverStage(null);
 
       const { active, over } = event;
-      console.log("[DnD] dragEnd", { activeId: active.id, overId: over?.id });
-      if (!over) return;
+      if (!over) {
+        setDraggingDealId(null);
+        return;
+      }
 
       const currentDeals = dealsRef.current;
       const dealId = active.id as string;
       const overId = over.id as string;
       const deal = currentDeals.find((d) => d.id === dealId);
-      if (!deal) return;
+      if (!deal) {
+        setDraggingDealId(null);
+        return;
+      }
 
       // Determine if we dropped on a stage column or on another deal
       const isDropOnStage = STAGE_KEY_SET.has(overId);
@@ -221,80 +232,99 @@ export function PipelineKanban({
 
       const sameColumn = deal.stage === targetStage;
 
-      if (sameColumn && !overDeal) return; // Dropped on own column with no target
-      if (sameColumn && dealId === overId) return; // Dropped on self
+      if (sameColumn && !overDeal) {
+        setDraggingDealId(null);
+        return;
+      }
+      if (sameColumn && dealId === overId) {
+        setDraggingDealId(null);
+        return;
+      }
 
       // Build the ordered list for the target stage
       const stageDeals = currentDeals
         .filter((d) => d.stage === targetStage)
         .sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
 
-      if (sameColumn) {
-        // Reorder within same column
-        const oldIndex = stageDeals.findIndex((d) => d.id === dealId);
-        const newIndex = stageDeals.findIndex((d) => d.id === overId);
-        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+      try {
+        if (sameColumn) {
+          // Reorder within same column
+          const oldIndex = stageDeals.findIndex((d) => d.id === dealId);
+          const newIndex = stageDeals.findIndex((d) => d.id === overId);
+          if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
 
-        const reordered = arrayMove(stageDeals, oldIndex, newIndex);
-        const orderedIds = reordered.map((d) => d.id);
+          const reordered = arrayMove(stageDeals, oldIndex, newIndex);
+          const orderedIds = reordered.map((d) => d.id);
 
-        // Optimistic update
-        reorderDeal(orderedIds, targetStage);
+          // Optimistic update
+          reorderDeal(orderedIds, targetStage);
 
-        // Persist
-        const result = await reorderDealsAction(orderedIds, targetStage);
-        if (result.error) {
-          // Revert by re-sorting to original order
-          const originalIds = stageDeals.map((d) => d.id);
-          reorderDeal(originalIds, targetStage);
-          showError("Could not reorder deals", result.error);
-        }
-      } else {
-        // Cross-column move
-        const originalStage = deal.stage;
-
-        // Figure out insertion index in target column
-        let insertIndex = stageDeals.length; // default: end
-        if (overDeal) {
-          const overIndex = stageDeals.findIndex((d) => d.id === overId);
-          if (overIndex !== -1) insertIndex = overIndex;
-        }
-
-        // Build new target column order (insert the moved deal)
-        const targetIds = stageDeals
-          .filter((d) => d.id !== dealId)
-          .map((d) => d.id);
-        targetIds.splice(insertIndex, 0, dealId);
-
-        // Optimistic update: move stage + set sort order
-        moveDeal(dealId, targetStage);
-        reorderDeal(targetIds, targetStage);
-
-        // Persist stage change
-        const stageResult = await advanceStageAction(dealId, targetStage);
-        if (stageResult.error) {
-          moveDeal(dealId, originalStage);
-          showError("Could not move deal", stageResult.error);
-          return;
-        }
-
-        // Persist new sort order in target column
-        const orderResult = await reorderDealsAction(targetIds, targetStage);
-        if (orderResult.error) {
-          showError("Deal moved but could not save order", orderResult.error);
+          // Persist
+          const result = await reorderDealsAction(orderedIds, targetStage);
+          if (result.error) {
+            // Revert by re-sorting to original order
+            const originalIds = stageDeals.map((d) => d.id);
+            reorderDeal(originalIds, targetStage);
+            showError("Could not reorder deals", result.error);
+          }
         } else {
-          const stageLabel = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
-          showSuccess(`${deal.name} moved to ${stageLabel}`);
+          // Cross-column move
+          const originalStage = deal.stage;
+
+          // Figure out insertion index in target column
+          let insertIndex = stageDeals.length; // default: end
+          if (overDeal) {
+            const overIndex = stageDeals.findIndex((d) => d.id === overId);
+            if (overIndex !== -1) insertIndex = overIndex;
+          }
+
+          // Build new target column order (insert the moved deal)
+          const targetIds = stageDeals
+            .filter((d) => d.id !== dealId)
+            .map((d) => d.id);
+          targetIds.splice(insertIndex, 0, dealId);
+
+          // Optimistic update: move stage + set sort order
+          moveDeal(dealId, targetStage);
+          reorderDeal(targetIds, targetStage);
+
+          // Use regressStageAction for backward moves (skips approval/close-date gates)
+          const fromIndex = STAGE_ORDER.indexOf(deal.stage);
+          const toIndex = STAGE_ORDER.indexOf(targetStage);
+          const isBackward = toIndex < fromIndex;
+
+          const stageResult = isBackward
+            ? await regressStageAction(dealId, targetStage)
+            : await advanceStageAction(dealId, targetStage);
+
+          if (stageResult.error) {
+            moveDeal(dealId, originalStage);
+            showError("Could not move deal", stageResult.error);
+            return;
+          }
+
+          // Persist new sort order in target column
+          const orderResult = await reorderDealsAction(targetIds, targetStage);
+          if (orderResult.error) {
+            showError("Deal moved but could not save order", orderResult.error);
+          } else {
+            const stageLabel = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+            showSuccess(`${deal.name} moved to ${stageLabel}`);
+          }
         }
+      } finally {
+        // Always clear the dragging guard so realtime resumes for this deal
+        setDraggingDealId(null);
       }
     },
-    [moveDeal, reorderDeal]
+    [moveDeal, reorderDeal, setDraggingDealId, STAGE_ORDER]
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
     setOverStage(null);
-  }, []);
+    setDraggingDealId(null);
+  }, [setDraggingDealId]);
 
   // Find active deal for DragOverlay
   const activeDeal = activeId ? deals.find((d) => d.id === activeId) : null;
@@ -394,6 +424,7 @@ export function PipelineKanban({
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
+      {/* DragOverlay outside ScrollArea so it's not clipped by scroll container */}
       <DragOverlay>
         {activeDeal ? (
           <DealCardOverlay
