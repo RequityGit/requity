@@ -14,7 +14,6 @@ import {
   rectIntersection,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
   type CollisionDetection,
 } from "@dnd-kit/core";
 import {
@@ -29,8 +28,7 @@ import { cn } from "@/lib/utils";
 import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import {
-  advanceStageAction,
-  regressStageAction,
+  updateDealStageAction,
   reorderDealsAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -51,9 +49,7 @@ const STAGE_KEY_SET = new Set<string>(STAGES.map((s) => s.key));
 
 /**
  * Custom collision detection that prioritises card-level droppables over
- * stage-column droppables. Without this, closestCorners can resolve to the
- * large column container instead of the sibling card the user is dragging
- * over, which silently discards within-column reorders.
+ * stage-column droppables so within-column reorders resolve correctly.
  */
 const kanbanCollisionDetection: CollisionDetection = (args) => {
   // 1. Find all droppables whose rect contains the pointer
@@ -66,7 +62,6 @@ const kanbanCollisionDetection: CollisionDetection = (args) => {
     );
 
     if (cardCollisions.length > 0) {
-      // Among card droppables, pick the closest by center distance
       const cardIds = new Set(cardCollisions.map((c) => String(c.id)));
       return closestCenter({
         ...args,
@@ -76,7 +71,7 @@ const kanbanCollisionDetection: CollisionDetection = (args) => {
       });
     }
 
-    // Only container-level hits (empty column or whitespace) — return those
+    // Only container-level hits (empty column or whitespace)
     return pointerCollisions;
   }
 
@@ -84,8 +79,7 @@ const kanbanCollisionDetection: CollisionDetection = (args) => {
   const rectHits = rectIntersection(args);
   if (rectHits.length > 0) return rectHits;
 
-  // 4. Last resort: closestCenter across stage columns only so drops
-  //    never silently fail when the pointer is near the kanban area
+  // 4. Last resort: closestCenter across stage columns only
   return closestCenter({
     ...args,
     droppableContainers: args.droppableContainers.filter((c) =>
@@ -140,9 +134,8 @@ export function PipelineKanban({
   selectedDealId,
 }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [overStage, setOverStage] = useState<UnifiedStage | null>(null);
 
-  // Use store's moveDeal for optimistic updates instead of local dealOverrides
+  // Store actions for optimistic updates
   const moveDeal = usePipelineStore((s) => s.moveDeal);
   const reorderDeal = usePipelineStore((s) => s.reorderDeal);
   const setDraggingDealId = usePipelineStore((s) => s.setDraggingDealId);
@@ -156,7 +149,6 @@ export function PipelineKanban({
     return map;
   }, [teamMembers]);
 
-  // Memoize maps to prevent recreation on every render
   const stageConfigMap = useMemo(
     () => new Map(stageConfigs.map((sc) => [sc.stage, sc])),
     [stageConfigs]
@@ -168,43 +160,23 @@ export function PipelineKanban({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const id = event.active.id as string;
-    setActiveId(id);
-    setDraggingDealId(id);
-  }, [setDraggingDealId]);
-
-  const handleDragOver = useCallback(
-    (event: DragOverEvent) => {
-      const { over } = event;
-      if (!over) {
-        setOverStage(null);
-        return;
-      }
-      // Determine which stage the cursor is over
-      // over.id could be a deal id or a stage key (droppable column)
-      const overId = over.id as string;
-      if (STAGE_KEY_SET.has(overId)) {
-        setOverStage(overId as UnifiedStage);
-      } else {
-        // It's a deal card - find which stage that deal belongs to
-        const overDeal = dealsRef.current.find((d) => d.id === overId);
-        if (overDeal) setOverStage(overDeal.stage);
-      }
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const id = event.active.id as string;
+      setActiveId(id);
+      setDraggingDealId(id);
     },
-    []
+    [setDraggingDealId]
   );
-
-  // Stage order for determining forward vs backward moves
-  const STAGE_ORDER = useMemo(() => STAGES.map((s) => s.key), []);
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       setActiveId(null);
-      setOverStage(null);
 
       const { active, over } = event;
       if (!over) {
@@ -221,9 +193,11 @@ export function PipelineKanban({
         return;
       }
 
-      // Determine if we dropped on a stage column or on another deal
+      // Determine target: dropped on a stage column or on another card
       const isDropOnStage = STAGE_KEY_SET.has(overId);
-      const overDeal = !isDropOnStage ? currentDeals.find((d) => d.id === overId) : null;
+      const overDeal = !isDropOnStage
+        ? currentDeals.find((d) => d.id === overId)
+        : null;
       const targetStage = isDropOnStage
         ? (overId as UnifiedStage)
         : overDeal
@@ -232,6 +206,7 @@ export function PipelineKanban({
 
       const sameColumn = deal.stage === targetStage;
 
+      // Dropped in same spot — no-op
       if (sameColumn && !overDeal) {
         setDraggingDealId(null);
         return;
@@ -241,17 +216,21 @@ export function PipelineKanban({
         return;
       }
 
-      // Build the ordered list for the target stage
+      // Build ordered list for the target stage
       const stageDeals = currentDeals
         .filter((d) => d.stage === targetStage)
-        .sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
+        .sort(
+          (a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity)
+        );
 
       try {
         if (sameColumn) {
-          // Reorder within same column
+          // ── Reorder within same column ──
           const oldIndex = stageDeals.findIndex((d) => d.id === dealId);
           const newIndex = stageDeals.findIndex((d) => d.id === overId);
-          if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+          if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+            return;
+          }
 
           const reordered = arrayMove(stageDeals, oldIndex, newIndex);
           const orderedIds = reordered.map((d) => d.id);
@@ -262,13 +241,12 @@ export function PipelineKanban({
           // Persist
           const result = await reorderDealsAction(orderedIds, targetStage);
           if (result.error) {
-            // Revert by re-sorting to original order
             const originalIds = stageDeals.map((d) => d.id);
             reorderDeal(originalIds, targetStage);
             showError("Could not reorder deals", result.error);
           }
         } else {
-          // Cross-column move
+          // ── Cross-column move ──
           const originalStage = deal.stage;
 
           // Figure out insertion index in target column
@@ -278,70 +256,77 @@ export function PipelineKanban({
             if (overIndex !== -1) insertIndex = overIndex;
           }
 
-          // Build new target column order (insert the moved deal)
+          // Build new target column order
           const targetIds = stageDeals
             .filter((d) => d.id !== dealId)
             .map((d) => d.id);
           targetIds.splice(insertIndex, 0, dealId);
 
-          // Optimistic update: move stage + set sort order
+          // Optimistic update FIRST (synchronous, before any async call)
           moveDeal(dealId, targetStage);
           reorderDeal(targetIds, targetStage);
 
-          // Use regressStageAction for backward moves (skips approval/close-date gates)
-          const fromIndex = STAGE_ORDER.indexOf(deal.stage);
-          const toIndex = STAGE_ORDER.indexOf(targetStage);
-          const isBackward = toIndex < fromIndex;
-
-          const stageResult = isBackward
-            ? await regressStageAction(dealId, targetStage)
-            : await advanceStageAction(dealId, targetStage);
+          // Persist stage change — simple direct update, no gating
+          const stageResult = await updateDealStageAction(
+            dealId,
+            targetStage,
+            insertIndex
+          );
 
           if (stageResult.error) {
+            // Revert optimistic update
             moveDeal(dealId, originalStage);
             showError("Could not move deal", stageResult.error);
             return;
           }
 
-          // Persist new sort order in target column
-          const orderResult = await reorderDealsAction(targetIds, targetStage);
+          // Persist sort order for all cards in the target column
+          const orderResult = await reorderDealsAction(
+            targetIds,
+            targetStage
+          );
           if (orderResult.error) {
             showError("Deal moved but could not save order", orderResult.error);
           } else {
-            const stageLabel = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+            const stageLabel =
+              STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
             showSuccess(`${deal.name} moved to ${stageLabel}`);
           }
         }
       } finally {
-        // Always clear the dragging guard so realtime resumes for this deal
+        // Always clear the dragging guard so realtime resumes
         setDraggingDealId(null);
       }
     },
-    [moveDeal, reorderDeal, setDraggingDealId, STAGE_ORDER]
+    [moveDeal, reorderDeal, setDraggingDealId]
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
-    setOverStage(null);
     setDraggingDealId(null);
   }, [setDraggingDealId]);
 
   // Find active deal for DragOverlay
-  const activeDeal = activeId ? deals.find((d) => d.id === activeId) : null;
+  const activeDeal = activeId
+    ? deals.find((d) => d.id === activeId)
+    : null;
 
-  // Memoize stage calculations to avoid recomputing on every render
+  // Memoize stage calculations
   const stageData = useMemo(() => {
     return STAGES.map((stage) => {
       const stageDeals = deals
         .filter((d) => d.stage === stage.key)
-        .sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
+        .sort(
+          (a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity)
+        );
 
       const totalAmount = stageDeals.reduce(
         (sum, d) => sum + (d.amount ?? 0),
         0
       );
       const isLead = stage.key === "lead";
-      const columnCount = stageDeals.length + (isLead ? intakeItems.length : 0);
+      const columnCount =
+        stageDeals.length + (isLead ? intakeItems.length : 0);
 
       return { stage, stageDeals, totalAmount, isLead, columnCount };
     });
@@ -352,74 +337,81 @@ export function PipelineKanban({
       sensors={sensors}
       collisionDetection={kanbanCollisionDetection}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
       <ScrollArea className="w-full">
         <div className="flex gap-4 pb-4 min-w-max">
-          {stageData.map(({ stage, stageDeals, totalAmount, isLead, columnCount }) => {
-            const dealIds = stageDeals.map((d) => d.id);
+          {stageData.map(
+            ({ stage, stageDeals, totalAmount, isLead, columnCount }) => {
+              const dealIds = stageDeals.map((d) => d.id);
 
-            return (
-              <div key={stage.key} className="flex flex-col w-72 shrink-0">
-                {/* Column header */}
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-medium">{stage.label}</h3>
-                    <span className="text-xs text-muted-foreground num">
-                      {columnCount}
-                    </span>
-                  </div>
-                  {totalAmount > 0 && (
-                    <span className="text-xs text-muted-foreground num">
-                      {formatCompactCurrency(totalAmount)}
-                    </span>
-                  )}
-                </div>
-
-                {/* Droppable column */}
-                <StageColumn stageKey={stage.key}>
-                  {/* Intake cards at the top of the Lead column */}
-                  {isLead &&
-                    intakeItems.map((item) => (
-                      <IntakeCard
-                        key={item.id}
-                        item={item}
-                        onClick={() => onIntakeClick?.(item)}
-                      />
-                    ))}
-
-                  {/* Sortable deal cards */}
-                  <SortableContext items={dealIds} strategy={verticalListSortingStrategy}>
-                    {stageDeals.length === 0 && (!isLead || intakeItems.length === 0) ? (
-                      <EmptyState
-                        icon={Layers}
-                        title="No deals"
-                        compact
-                      />
-                    ) : (
-                      stageDeals.map((deal) => {
-                        const stageConfig = stageConfigMap.get(stage.key);
-                        return (
-                          <DealCard
-                            key={deal.id}
-                            deal={deal}
-                            stageConfig={stageConfig}
-                            conditionsProgress={conditionsMap.get(deal.id) ?? null}
-                            assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
-                            onClick={(e) => onDealClick(deal, e)}
-                            onHover={() => onDealHover?.(deal.id)}
-                            isSelected={deal.id === selectedDealId}
-                          />
-                        );
-                      })
+              return (
+                <div key={stage.key} className="flex flex-col w-72 shrink-0">
+                  {/* Column header */}
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium">{stage.label}</h3>
+                      <span className="text-xs text-muted-foreground num">
+                        {columnCount}
+                      </span>
+                    </div>
+                    {totalAmount > 0 && (
+                      <span className="text-xs text-muted-foreground num">
+                        {formatCompactCurrency(totalAmount)}
+                      </span>
                     )}
-                  </SortableContext>
-                </StageColumn>
-              </div>
-            );
-          })}
+                  </div>
+
+                  {/* Droppable column */}
+                  <StageColumn stageKey={stage.key}>
+                    {/* Intake cards at the top of the Lead column */}
+                    {isLead &&
+                      intakeItems.map((item) => (
+                        <IntakeCard
+                          key={item.id}
+                          item={item}
+                          onClick={() => onIntakeClick?.(item)}
+                        />
+                      ))}
+
+                    {/* Sortable deal cards */}
+                    <SortableContext
+                      items={dealIds}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {stageDeals.length === 0 &&
+                      (!isLead || intakeItems.length === 0) ? (
+                        <EmptyState icon={Layers} title="No deals" compact />
+                      ) : (
+                        stageDeals.map((deal) => {
+                          const stageConfig = stageConfigMap.get(stage.key);
+                          return (
+                            <DealCard
+                              key={deal.id}
+                              deal={deal}
+                              stageConfig={stageConfig}
+                              conditionsProgress={
+                                conditionsMap.get(deal.id) ?? null
+                              }
+                              assigneeName={
+                                deal.assigned_to
+                                  ? assigneeMap.get(deal.assigned_to) ?? null
+                                  : null
+                              }
+                              onClick={(e) => onDealClick(deal, e)}
+                              onHover={() => onDealHover?.(deal.id)}
+                              isSelected={deal.id === selectedDealId}
+                            />
+                          );
+                        })
+                      )}
+                    </SortableContext>
+                  </StageColumn>
+                </div>
+              );
+            }
+          )}
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -431,7 +423,11 @@ export function PipelineKanban({
             deal={activeDeal}
             stageConfig={stageConfigMap.get(activeDeal.stage)}
             conditionsProgress={conditionsMap.get(activeDeal.id) ?? null}
-            assigneeName={activeDeal.assigned_to ? assigneeMap.get(activeDeal.assigned_to) ?? null : null}
+            assigneeName={
+              activeDeal.assigned_to
+                ? assigneeMap.get(activeDeal.assigned_to) ?? null
+                : null
+            }
           />
         ) : null}
       </DragOverlay>
