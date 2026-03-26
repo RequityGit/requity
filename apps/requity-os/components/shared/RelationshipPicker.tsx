@@ -24,7 +24,6 @@ import {
   UserPlus,
   Plus,
   X,
-  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -317,7 +316,6 @@ export function RelationshipPicker({
                 className
               )}
             >
-              <Link2 className="h-3 w-3 mr-1.5 text-primary shrink-0" />
               <span className="truncate font-medium">{value.label}</span>
             </button>
             {clearable && onClear && (

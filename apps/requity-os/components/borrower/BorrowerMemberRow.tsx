@@ -107,9 +107,9 @@ export function BorrowerMemberRow({
               existingContactIds={existingContactIds}
               onLinked={onLinked}
             />
-            {hasContact && (
+            {hasContact && member.contact?.contact_number && (
               <Link
-                href={`/contacts/${member.contact_id}`}
+                href={`/contacts/${member.contact.contact_number}`}
                 className="text-muted-foreground hover:text-primary shrink-0"
                 title="View linked contact"
               >

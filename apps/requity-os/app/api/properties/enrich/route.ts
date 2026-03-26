@@ -140,7 +140,7 @@ function sanitizeStreetAddress(
 ): string {
   let address = rawAddress.trim();
 
-  // Remove trailing zip code patterns (5-digit or 5+4)
+  // Remove trailing zip code patterns (5-digit or 5+4) — anywhere at the end
   if (zip) {
     address = address.replace(new RegExp(`,?\\s*${escapeRegExp(zip)}\\s*$`), "");
   }
@@ -157,6 +157,18 @@ function sanitizeStreetAddress(
   if (city) {
     const cityPattern = new RegExp(`,?\\s*${escapeRegExp(city)}\\s*$`, "i");
     address = address.replace(cityPattern, "");
+  }
+
+  // Second pass: handle "street, city, state zip" patterns that weren't fully
+  // cleaned (e.g. state without trailing position, or zip already removed
+  // leaving "street, city, state" or "street, city").
+  if (state) {
+    const statePattern2 = new RegExp(`,?\\s*${escapeRegExp(state)}\\s*$`, "i");
+    address = address.replace(statePattern2, "");
+  }
+  if (city) {
+    const cityPattern2 = new RegExp(`,?\\s*${escapeRegExp(city)}\\s*$`, "i");
+    address = address.replace(cityPattern2, "");
   }
 
   return address.trim().replace(/,\s*$/, "");
