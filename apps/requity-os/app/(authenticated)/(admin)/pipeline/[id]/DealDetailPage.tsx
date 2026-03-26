@@ -360,7 +360,7 @@ function DealDetailPageInner({
 
   // Derive metrics for condensed header
   const currentStageIndex = STAGES.findIndex((s) => s.key === optimisticStage);
-  const currentStageName = STAGES[currentStageIndex]?.label ?? optimisticStage;
+  const currentStageName = optimisticStage === "closed" ? "Closed Won" : (STAGES[currentStageIndex]?.label ?? optimisticStage);
   const uwData = deal.uw_data as Record<string, unknown> | null;
 
   // Optimistic header metrics state
@@ -1274,24 +1274,39 @@ function DealHeader({
               const isCurrent = i === currentStageIndex;
               const isCompleted = i < currentStageIndex;
               const isFuture = i > currentStageIndex;
+              const isClosed = stage.key === "closed";
               return (
                 <DropdownMenuItem
                   key={stage.key}
                   disabled={isCurrent || stageJumping}
                   onSelect={() => onStageChange(stage.key)}
-                  className={cn(isCurrent && "font-semibold bg-muted/50")}
+                  className={cn(
+                    "gap-2",
+                    isCurrent && "font-semibold bg-muted/50",
+                    isClosed && "text-emerald-600 dark:text-emerald-400"
+                  )}
                 >
                   <div className={cn(
                     "h-2 w-2 rounded-full shrink-0",
                     isCompleted && "bg-emerald-500",
                     isCurrent && "bg-foreground ring-2 ring-foreground/15",
-                    isFuture && "bg-muted border border-border"
+                    isFuture && !isClosed && "bg-muted border border-border",
+                    isClosed && !isCompleted && !isCurrent && "bg-emerald-500/40 border border-emerald-500/60"
                   )} />
-                  {stage.label}
+                  {isClosed ? "Closed Won" : stage.label}
                   {isCurrent && <Check className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
                 </DropdownMenuItem>
               );
             })}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={stageJumping || deal.status === "lost"}
+              onSelect={() => setClosedLostOpen(true)}
+              className="gap-2 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-500/10"
+            >
+              <div className="h-2 w-2 rounded-full shrink-0 bg-red-500/40 border border-red-500/60" />
+              Closed Lost
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
