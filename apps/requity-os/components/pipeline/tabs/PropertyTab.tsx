@@ -17,6 +17,7 @@ import { EditableSection } from "@/components/inline-layout-editor/EditableSecti
 import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
 import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import { ReadValue } from "../ReadValue";
 
@@ -51,6 +52,7 @@ function shouldShowSection(section: LayoutSection, rawAssetClass: string | null)
 
 interface PropertyTabProps {
   dealId: string;
+  propertyId?: string | null;
   propertyData: Record<string, unknown>;
   visibilityContext?: VisibilityContext | null;
   assetClass?: string | null;
@@ -58,6 +60,7 @@ interface PropertyTabProps {
 
 export function PropertyTab({
   dealId,
+  propertyId,
   propertyData,
   visibilityContext,
   assetClass,
@@ -65,6 +68,7 @@ export function PropertyTab({
   return (
     <PropertyDetailsContent
       dealId={dealId}
+      propertyId={propertyId}
       propertyData={propertyData}
       visibilityContext={visibilityContext}
       assetClass={assetClass}
@@ -76,11 +80,13 @@ export function PropertyTab({
 
 function PropertyDetailsContent({
   dealId,
+  propertyId,
   propertyData,
   visibilityContext,
   assetClass,
 }: {
   dealId: string;
+  propertyId?: string | null;
   propertyData: Record<string, unknown>;
   visibilityContext?: VisibilityContext | null;
   assetClass?: string | null;
@@ -260,41 +266,51 @@ function PropertyDetailsContent({
 
     setEnriching(true);
     try {
-      const response = await fetch("/api/properties/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address: String(address).trim(),
-          state: String(state).trim(),
-          ...(city ? { city: String(city).trim() } : {}),
-          ...(zip ? { zip: String(zip).trim() } : {}),
-          ...(county ? { county: String(county).trim() } : {}),
-        }),
-      });
+      const supabase = createClient();
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        const searched = data.searched;
-        const cityStr = searched?.city ?? city;
-        const zipStr = searched?.zip ?? zip;
+      // Call the edge function with property_id and address overrides
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "realie-property-lookup",
+        {
+          body: {
+            property_id: propertyId,
+            address_override: {
+              address_line1: String(address).trim(),
+              state: String(state).trim(),
+              ...(city ? { city: String(city).trim() } : {}),
+              ...(zip ? { zip: String(zip).trim() } : {}),
+              ...(county ? { county: String(county).trim() } : {}),
+            },
+          },
+        }
+      );
+
+      if (invokeError) {
+        // FunctionsHttpError contains the response body
+        const errorBody = typeof invokeError === "object" && "context" in invokeError
+          ? (invokeError as { context?: { body?: string } }).context?.body
+          : null;
+        let parsed: { error?: string; detail?: string; realie_status?: number } = {};
+        if (errorBody) {
+          try { parsed = JSON.parse(errorBody); } catch { /* ignore */ }
+        }
+
+        const errorMsg = parsed.error ?? invokeError.message ?? "Enrichment failed";
         const addrParts = [
           String(address).trim(),
-          cityStr ? String(cityStr).trim() : null,
+          city ? String(city).trim() : null,
           String(state).trim(),
-          zipStr ? String(zipStr).trim() : null,
+          zip ? String(zip).trim() : null,
         ].filter(Boolean);
         const searchedAddr = addrParts.join(", ");
+        const is404 = parsed.realie_status === 404;
 
-        // Show the actual backend error for non-404s (auth failures, config issues, etc.)
-        const backendError = data.error as string | undefined;
-        const detail = data.detail as string | undefined;
-        const is404 = response.status === 404;
-        const errorMsg = is404
-          ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
-          : detail
-            ? `${backendError ?? "Enrichment error"}: ${detail}`
-            : backendError ?? `Enrichment service error (${response.status}). Try again later.`;
-        showError("Could not enrich property", errorMsg);
+        showError(
+          "Could not enrich property",
+          is404
+            ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+            : errorMsg
+        );
         showInfo(
           "Fields you can fill manually",
           enrichableFieldLabels.slice(0, 15).join(", ") +
@@ -303,20 +319,20 @@ function PropertyDetailsContent({
         return;
       }
 
-      const data = await response.json();
-      const enriched = data.enriched as Record<string, unknown>;
+      const enriched = data?.enriched as Record<string, unknown> | undefined;
+      if (!enriched) {
+        showError("Could not enrich property", "No enrichment data returned");
+        return;
+      }
 
       // Determine which enrichable fields already have values
       const fieldsWithValues: string[] = [];
-      const fieldsToFill: string[] = [];
       for (const [key, value] of Object.entries(enriched)) {
         if (value === null || value === undefined || value === "") continue;
         if (!enrichFieldMap.has(key)) continue;
         const hasExisting = localData[key] !== null && localData[key] !== undefined && localData[key] !== "";
         if (hasExisting) {
           fieldsWithValues.push(enrichFieldMap.get(key)?.label ?? key);
-        } else {
-          fieldsToFill.push(key);
         }
       }
 
