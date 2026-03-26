@@ -1315,7 +1315,7 @@ function DealHeader({
 
         {/* E. Metrics (inline-editable) */}
         <div className="hidden md:flex items-center gap-4 shrink-0">
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center min-w-fit">
             <InlineField
               type="select"
               value={HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? ""}
@@ -1325,7 +1325,7 @@ function DealHeader({
             />
             <span className="rq-micro-label">Asset</span>
           </div>
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center min-w-fit">
             <InlineField
               type="currency"
               value={loanAmount}
@@ -1335,7 +1335,7 @@ function DealHeader({
             />
             <span className="rq-micro-label">Loan</span>
           </div>
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center min-w-fit">
             <InlineField
               type="date"
               value={expectedClose ? String(expectedClose).split("T")[0] : null}
