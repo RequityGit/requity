@@ -258,6 +258,7 @@ All reusable UI patterns are defined as global CSS classes in `apps/requity-os/a
 | `.rq-section-title` | Section heading on detail pages/cards (13px, semibold) | `text-[13px] font-semibold text-foreground` |
 | `.rq-micro-label` | Uppercase micro label (section card headers, KPI labels, table group headers) | `text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground` |
 | `.rq-stat-value` | Large bold number in KPI/stat blocks | `text-xl font-bold tabular-nums` |
+| `.rq-stat-card` | Stat/metric card padding: 16px top, 18px sides, 20px bottom. Title-to-value spacing 10px min. | `padding: 16px 18px 20px 18px` |
 | `.num` | Tabular figures for financial data | `font-variant-numeric: tabular-nums` |
 | **Table** | | |
 | `.rq-th` | Table header cell (commercial UW, pro forma grids) | `text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2` |

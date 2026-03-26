@@ -21,8 +21,8 @@ export function KpiCard({
 
   return (
     <Card className={cn("rounded-xl", className)}>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-2">
+      <CardContent className="rq-stat-card">
+        <div className="rq-stat-card-title flex items-center justify-between">
           <span className="text-[11px] uppercase tracking-[0.05em] font-semibold text-muted-foreground">
             {title}
           </span>
