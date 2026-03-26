@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { deleteContactFileAction } from "@/app/(authenticated)/(admin)/contacts/actions";
 import { CONTACT_FILE_TYPES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -33,6 +34,7 @@ function formatFileSize(bytes: number | null): string {
 }
 
 export function ContactFileList({ files, onDeleted }: ContactFileListProps) {
+  const confirm = useConfirm();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleView = async (storagePath: string) => {
@@ -66,6 +68,14 @@ export function ContactFileList({ files, onDeleted }: ContactFileListProps) {
   };
 
   const handleDelete = async (file: ContactFile) => {
+    const ok = await confirm({
+      title: "Delete file?",
+      description: `"${file.file_name}" will be permanently removed. This cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
     setDeletingId(file.id);
     try {
       const result = await deleteContactFileAction(file.id, file.storage_path);
