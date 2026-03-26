@@ -915,6 +915,21 @@
 }
 
 
+/* ─── Urgent deal glow (closing within 14 days) ─── */
+.rq-urgent-glow {
+  animation: rq-urgent-pulse 2s ease-in-out infinite;
+}
+@keyframes rq-urgent-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+  50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rq-urgent-glow {
+    animation: none;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+  }
+}
+
 /* ─── Like button animations ─── */
 @keyframes like-pulse {
   0% { transform: scale(1); }
