@@ -871,7 +871,7 @@
 
 /* Borderless textarea inside the surface */
 .comment-surface-textarea {
-  @apply w-full bg-transparent border-0 outline-none resize-none
+  @apply w-full bg-transparent border-0 outline-none resize-none overflow-hidden
     text-xs text-foreground placeholder:text-muted-foreground
     focus:ring-0 focus:outline-none;
 }

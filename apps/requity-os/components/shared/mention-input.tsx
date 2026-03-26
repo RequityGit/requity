@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { extractMentionIds } from "@/lib/comment-utils";
+import { useAutoExpand } from "@/hooks/useAutoExpand";
 
 interface TeamMember {
   id: string;
@@ -69,6 +70,8 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
   const mentionStartRef = useRef<number>(-1);
   const mentionsRef = useRef<Map<string, string>>(new Map());
   const initializedRef = useRef(false);
+
+  useAutoExpand(textareaRef, value);
 
   useImperativeHandle(ref, () => ({
     focus() {
