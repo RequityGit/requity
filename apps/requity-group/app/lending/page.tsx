@@ -10,6 +10,7 @@ import PageHero from "../components/PageHero";
 import FooterCTA from "../components/FooterCTA";
 import FAQSchema from "../components/FAQSchema";
 import FAQSection from "../components/FAQSection";
+import RetellChatWidget from "../components/RetellChatWidget";
 import {
   ArrowRight,
   Zap,
@@ -632,6 +633,7 @@ export default async function LendingPage() {
           </Link>
         }
       />
+      <RetellChatWidget />
     </main>
   );
 }
