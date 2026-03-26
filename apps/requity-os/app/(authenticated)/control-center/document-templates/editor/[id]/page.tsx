@@ -35,6 +35,7 @@ export default async function TemplateEditorPage({ params }: PageProps) {
   }>) ?? [];
 
   const styledLayout = (template as Record<string, unknown>).styled_layout as Record<string, unknown> | null;
+  const docusealTemplateId = (template as Record<string, unknown>).docuseal_template_id as number | null;
 
   return (
     <div className="-m-4 md:-m-6 lg:-m-8 h-[calc(100vh-64px)]">
@@ -48,6 +49,9 @@ export default async function TemplateEditorPage({ params }: PageProps) {
         initialContent={template.content ?? ""}
         mergeFields={mergeFields}
         styledLayout={styledLayout}
+        requiresSignature={template.requires_signature}
+        signatureRoles={(template.signature_roles as Array<{ role: string }>) ?? []}
+        docusealTemplateId={docusealTemplateId}
       />
     </div>
   );

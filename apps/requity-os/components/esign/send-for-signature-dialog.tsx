@@ -30,12 +30,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Send, Loader2 } from "lucide-react";
+import { Plus, Trash2, Send, Loader2, PenTool } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   sendForSignature,
   sendGeneratedForSignature,
+  sendWithDocusealTemplate,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/esign-actions";
+import { DocusealBuilderEmbed } from "@/components/esign/docuseal-builder-embed";
 import type { EsignSignerRole } from "@/lib/esign/esign-types";
 
 const signerSchema = z.object({
@@ -80,6 +82,8 @@ export function SendForSignatureDialog({
   onSent,
 }: SendForSignatureDialogProps) {
   const [sending, setSending] = useState(false);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [adhocTemplateId, setAdhocTemplateId] = useState<number | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -108,18 +112,30 @@ export function SendForSignatureDialog({
     try {
       let result: { submissionId?: number; error?: string };
 
+      const signers = values.signers as {
+        name: string;
+        email: string;
+        role: EsignSignerRole;
+        contactId?: number | null;
+        signOrder?: number;
+      }[];
+
       if (templateId) {
+        // Pre-registered esign_templates record
         result = await sendForSignature(
           dealId,
           documentName,
           templateId,
-          values.signers as {
-            name: string;
-            email: string;
-            role: EsignSignerRole;
-            contactId?: number | null;
-            signOrder?: number;
-          }[],
+          signers,
+          values.message
+        );
+      } else if (adhocTemplateId) {
+        // Ad-hoc: user placed fields via builder, use the DocuSeal template directly
+        result = await sendWithDocusealTemplate(
+          dealId,
+          documentName,
+          adhocTemplateId,
+          signers,
           values.message
         );
       } else if (pdfBase64) {
@@ -127,13 +143,7 @@ export function SendForSignatureDialog({
           dealId,
           documentName,
           pdfBase64,
-          values.signers as {
-            name: string;
-            email: string;
-            role: EsignSignerRole;
-            contactId?: number | null;
-            signOrder?: number;
-          }[],
+          signers,
           values.message
         );
       } else {
@@ -159,6 +169,39 @@ export function SendForSignatureDialog({
     }
   }
 
+  // Ad-hoc builder: shown when user wants to place fields on a non-template doc
+  if (showBuilder) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[95vw] w-[95vw] h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Place Signing Fields</DialogTitle>
+            <DialogDescription>
+              Drag signature, date, and initials fields onto the document, then
+              save to continue sending.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <DocusealBuilderEmbed
+              templateName={documentName}
+              onSave={(detail) => {
+                setAdhocTemplateId(detail.id);
+                setShowBuilder(false);
+                showSuccess("Signing fields saved");
+              }}
+              className="w-full h-full min-h-[600px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBuilder(false)}>
+              Back
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -171,6 +214,33 @@ export function SendForSignatureDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Ad-hoc builder option for non-template docs */}
+            {!templateId && pdfBase64 && (
+              <div className="rounded-lg border border-border p-3 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">
+                    {adhocTemplateId
+                      ? "Signing fields configured"
+                      : "Place signing fields?"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {adhocTemplateId
+                      ? "Fields will be pre-positioned on the document."
+                      : "Optionally place signature, date, and initials fields before sending."}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant={adhocTemplateId ? "ghost" : "outline"}
+                  size="sm"
+                  onClick={() => setShowBuilder(true)}
+                >
+                  <PenTool className="h-3 w-3 mr-1" />
+                  {adhocTemplateId ? "Edit Fields" : "Place Fields"}
+                </Button>
+              </div>
+            )}
+
             {/* Signers */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">

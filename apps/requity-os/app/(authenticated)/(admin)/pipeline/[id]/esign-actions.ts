@@ -3,6 +3,7 @@
 import { requireAdmin, type AuthResult } from "@/lib/auth/require-admin";
 import {
   createFromTemplate,
+  createFromDocusealTemplate,
   createFromGenerated,
   getSubmissionStatus,
   getSubmissionsForDeal,
@@ -84,6 +85,43 @@ export async function sendGeneratedForSignature(
     documentName,
     pdfBase64,
     signers: signers.map((s) => ({ ...s, userId: auth.user.id })),
+    message,
+  });
+
+  if (result.error) return { error: result.error };
+
+  const admin = createAdminClient();
+  const signerNames = signers.map((s) => s.name).join(", ");
+  await admin.from("deal_activities" as never).insert({
+    deal_id: String(dealId),
+    activity_type: "system",
+    subject: "E-signature request sent",
+    description: `Sent "${documentName}" for signature to ${signerNames}`,
+    created_by: auth.user.id,
+  } as never);
+
+  return { submissionId: result.submissionId };
+}
+
+/**
+ * Send a document for signature using a raw DocuSeal template ID.
+ * Used for ad-hoc builder field placement and document_templates with linked signing fields.
+ */
+export async function sendWithDocusealTemplate(
+  dealId: number,
+  documentName: string,
+  docusealTemplateId: number,
+  signers: SignerInput[],
+  message?: string
+): Promise<{ submissionId?: number; error?: string }> {
+  const auth: AuthResult = await requireAdmin();
+  if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+  const result = await createFromDocusealTemplate({
+    dealId,
+    documentName,
+    signers: signers.map((s) => ({ ...s, userId: auth.user.id })),
+    docusealTemplateId,
     message,
   });
 

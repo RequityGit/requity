@@ -97,6 +97,74 @@ export async function createFromTemplate(
 }
 
 /**
+ * Create a submission using a raw DocuSeal template ID (no esign_templates record needed).
+ * Used for: ad-hoc builder field placement, and document_templates with linked docuseal_template_id.
+ */
+export async function createFromDocusealTemplate(
+  input: SendForSignatureInput & { docusealTemplateId: number }
+): Promise<{ submissionId: number; error?: string }> {
+  const admin = createAdminClient();
+
+  try {
+    const dsSubmission = await docuseal.createSubmission({
+      template_id: input.docusealTemplateId,
+      send_email: true,
+      message: input.message ? { body: input.message } : undefined,
+      submitters: input.signers.map((s) => ({
+        email: s.email,
+        name: s.name,
+        role: s.role === "signer" ? "First Party" : s.role,
+      })),
+    });
+
+    const { data: submission, error: subErr } = await admin
+      .from("esign_submissions" as never)
+      .insert({
+        docuseal_submission_id: dsSubmission.id,
+        deal_id: input.dealId,
+        requested_by: input.signers[0]?.userId ?? null,
+        status: "pending",
+        document_name: input.documentName,
+        expiration_date: input.expirationDays
+          ? new Date(Date.now() + input.expirationDays * 86400000).toISOString()
+          : null,
+        metadata: { docuseal_template_id: input.docusealTemplateId },
+      } as never)
+      .select("id" as never)
+      .single();
+
+    if (subErr || !submission) {
+      return { submissionId: 0, error: subErr?.message ?? "Could not create submission record" };
+    }
+
+    const sub = submission as any;
+
+    const signerRows = dsSubmission.submitters.map(
+      (submitter: any, idx: number) => ({
+        submission_id: sub.id,
+        docuseal_submitter_id: submitter.id,
+        contact_id: input.signers[idx]?.contactId ?? null,
+        user_id: input.signers[idx]?.userId ?? null,
+        name: input.signers[idx]?.name ?? "",
+        email: submitter.email,
+        role: input.signers[idx]?.role ?? "signer",
+        status: "sent",
+        sign_order: input.signers[idx]?.signOrder ?? idx + 1,
+      })
+    );
+
+    await admin.from("esign_signers" as never).insert(signerRows as never);
+
+    return { submissionId: sub.id as number };
+  } catch (err) {
+    return {
+      submissionId: 0,
+      error: err instanceof Error ? err.message : "DocuSeal API error",
+    };
+  }
+}
+
+/**
  * Create a submission from a freshly generated PDF.
  * Key integration: takes PDF output from doc generator and sends to DocuSeal.
  */
