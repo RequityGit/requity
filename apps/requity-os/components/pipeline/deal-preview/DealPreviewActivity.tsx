@@ -8,6 +8,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useState, useCallback, useRef } from "react";
+import { useAutoExpand } from "@/hooks/useAutoExpand";
 import { timeAgo } from "@/lib/format";
 import type { DealPreviewData, DealNote } from "./useDealPreviewData";
 import type { DealActivity } from "../pipeline-types";
@@ -71,6 +72,8 @@ export function DealPreviewActivity({
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = noteInputRef ?? localRef;
 
+  useAutoExpand(textareaRef, noteText);
+
   const handlePost = useCallback(async () => {
     const text = noteText.trim();
     if (!text || posting) return;
@@ -126,7 +129,7 @@ export function DealPreviewActivity({
             onChange={(e) => setNoteText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Write a note... use @mention to tag"
-            className="w-full resize-none border-none bg-transparent px-2.5 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground"
+            className="w-full resize-none overflow-hidden border-none bg-transparent px-2.5 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground"
           />
           <div className="flex items-center justify-between border-t border-border/50 bg-muted/30 px-2.5 py-1.5">
             <div className="flex items-center gap-1">

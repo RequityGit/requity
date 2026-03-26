@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useAutoExpand } from "@/hooks/useAutoExpand";
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { ActionCenterStream } from "@/components/pipeline/tabs/ActionCenterTab/ActionCenterStream";
 import type { NoteHandlers } from "@/components/pipeline/tabs/ActionCenterTab/ActionCenterStreamItem";
@@ -82,6 +83,7 @@ export function EntityActivityStream({
   );
 
   // Log Activity form state
+  const logDescRef = useRef<HTMLTextAreaElement>(null);
   const [showLogForm, setShowLogForm] = useState(false);
   const [logLoading, setLogLoading] = useState(false);
   const [logForm, setLogForm] = useState({
@@ -89,6 +91,7 @@ export function EntityActivityStream({
     subject: "",
     description: "",
   });
+  useAutoExpand(logDescRef, logForm.description);
 
   async function handleLogActivity(e: React.FormEvent) {
     e.preventDefault();
@@ -173,13 +176,14 @@ export function EntityActivityStream({
                 Description
               </Label>
               <Textarea
+                ref={logDescRef}
                 value={logForm.description}
                 onChange={(e) =>
                   setLogForm((p) => ({ ...p, description: e.target.value }))
                 }
                 rows={2}
                 placeholder="Details..."
-                className="rounded-lg border-border resize-none text-xs"
+                className="rounded-lg border-border resize-none overflow-hidden text-xs"
               />
             </div>
             <div className="flex justify-end gap-2">
