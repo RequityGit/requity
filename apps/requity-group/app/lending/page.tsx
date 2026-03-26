@@ -395,6 +395,7 @@ export default async function LendingPage() {
                 <div className="program-list">
                   {[
                     { name: "Fix & Flip", tagline: "Short-term renovation and resale, up to 90% LTC, draw-based rehab", href: "/lending/fix-and-flip" },
+                    { name: "New Construction", tagline: "Ground-up residential and commercial, draw schedule based", href: "/lending/new-construction" },
                   ].map((item) => (
                     <Link key={item.name} href={item.href} className="program-row">
                       <div className="program-row-content">
@@ -407,7 +408,6 @@ export default async function LendingPage() {
                   ))}
                   {[
                     { name: "DSCR Rental", tagline: "Long-term rental loans qualified on property cash flow, 30-year fixed available" },
-                    { name: "New Construction", tagline: "Ground-up residential and commercial, draw schedule based" },
                   ].map((item) => (
                     <div key={item.name} className="program-row program-row-static">
                       <div className="program-row-content">
