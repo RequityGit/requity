@@ -162,33 +162,6 @@ export async function bulkUpdateCommitmentStatus(
   return { success: true };
 }
 
-export async function bulkUpdateCommitmentStatus(
-  commitmentIds: string[],
-  status: CommitmentStatus
-) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
-
-  if (commitmentIds.length === 0) return { error: "No commitments selected" };
-
-  const admin = createAdminClient();
-  const now = new Date().toISOString();
-
-  const updates: Record<string, unknown> = { status, updated_at: now };
-  if (status === "confirmed") updates.confirmed_at = now;
-  if (status === "subscribed") updates.subscribed_at = now;
-
-  const { error } = await admin
-    .from("soft_commitments" as never)
-    .update(updates as never)
-    .in("id" as never, commitmentIds as never);
-
-  if (error) return { error: error.message };
-
-  revalidatePath("/funds/soft-commitments");
-  return { success: true };
-}
-
 export async function updateFundraiseSettings(
   dealId: string,
   settings: {
