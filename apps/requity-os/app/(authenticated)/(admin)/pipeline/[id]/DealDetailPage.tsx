@@ -363,7 +363,7 @@ function DealDetailPageInner({
   const assetClass = deal.asset_class
     ? (ASSET_CLASS_LABELS[deal.asset_class as AssetClass] ?? deal.asset_class)
     : null;
-  const expectedClose = uwData?.expected_close_date ?? uwData?.closing_date ?? deal.expected_close_date;
+  const expectedClose = deal.expected_close_date;
 
   return (
     <div className="flex flex-col h-full -mb-20 md:-mb-6 lg:-mb-8 overflow-hidden">
