@@ -3,11 +3,10 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Users, Calendar, Clock, AlertTriangle, Zap, Crosshair } from "lucide-react";
+import { User, Users, Calendar, Clock, AlertTriangle, Star } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import {
   type UnifiedDeal,
-  type UnifiedStage,
   type StageConfig,
   ASSET_CLASS_LABELS,
   type AssetClass,
@@ -126,19 +125,6 @@ function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "soon
   return "normal";
 }
 
-const EARLY_STAGES: UnifiedStage[] = ["lead", "analysis", "negotiation"];
-
-/** Deal needs high-visibility glow: in early stage AND close date within 14 days */
-export function isUrgentDeal(deal: UnifiedDeal): boolean {
-  if (!EARLY_STAGES.includes(deal.stage)) return false;
-  const status = getCloseDateStatus(deal.expected_close_date);
-  return status === "urgent" || status === "soon" || status === "overdue";
-}
-
-/** Deal should glow red: either urgent by close date or manually pinned */
-function shouldGlow(deal: UnifiedDeal): boolean {
-  return deal.is_priority || isUrgentDeal(deal);
-}
 
 function getConditionsBarColor(progress: { completed: number; total: number }): string {
   if (progress.completed === progress.total) return "bg-emerald-500";
@@ -447,22 +433,6 @@ function DealCardInner({
   }, [deal.stage_entered_at, stageConfig]);
 
   const isClosed = deal.status === "won" || deal.status === "lost";
-  const glowing = shouldGlow(deal);
-
-  // Guard against double-fire from both onClick and onPointerUp
-  const pinFiredRef = useRef(false);
-  const handlePinClick = useCallback(
-    (e: React.MouseEvent | React.PointerEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (pinFiredRef.current) return;
-      pinFiredRef.current = true;
-      onTogglePriority?.(deal.id, !deal.is_priority);
-      // Reset guard after a tick so next click works
-      requestAnimationFrame(() => { pinFiredRef.current = false; });
-    },
-    [deal.id, deal.is_priority, onTogglePriority]
-  );
 
   return (
     <div
@@ -485,33 +455,31 @@ function DealCardInner({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected && "ring-2 ring-primary/40",
         isDragging && "opacity-50",
-        isClosed && "opacity-60",
-        glowing && "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow"
+        isClosed && "opacity-60"
       )}
     >
-      {/* Focus ribbon toggle */}
+      {/* Priority star toggle */}
       {onTogglePriority && (
         <button
           type="button"
           data-focus-btn
           onPointerDown={(e) => e.stopPropagation()}
-          onPointerUp={(e) => { e.stopPropagation(); handlePinClick(e); }}
-          onClick={handlePinClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onTogglePriority(deal.id, !deal.is_priority);
+          }}
           className={cn(
-            "rq-focus-ribbon",
+            "absolute top-2 right-2 z-10 flex items-center justify-center rounded-full w-6 h-6 rq-transition",
             deal.is_priority
-              ? "rq-focus-ribbon--active"
-              : "rq-focus-ribbon--idle"
+              ? "text-amber-500 dark:text-amber-400"
+              : "text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-muted-foreground"
           )}
-          title={deal.is_priority ? "Remove focus" : "Focus this deal"}
-          aria-label={deal.is_priority ? "Remove focus from deal" : "Focus this deal"}
+          title={deal.is_priority ? "Remove priority" : "Prioritize deal"}
+          aria-label={deal.is_priority ? "Remove priority" : "Prioritize deal"}
           aria-pressed={deal.is_priority}
         >
-          {deal.is_priority ? (
-            <Zap className="h-3 w-3 text-white fill-current drop-shadow-sm" />
-          ) : (
-            <Crosshair className="h-3 w-3 text-muted-foreground" />
-          )}
+          <Star className={cn("h-3.5 w-3.5", deal.is_priority && "fill-current")} />
         </button>
       )}
 
@@ -560,20 +528,18 @@ export function DealCardOverlay({
   const days = daysInStage(deal.stage_entered_at);
   const alertLevel = getAlertLevel(days, stageConfig);
   const isClosed = deal.status === "won" || deal.status === "lost";
-  const glowing = shouldGlow(deal);
 
   return (
     <div
       className={cn(
         "w-72 text-left rounded-xl border bg-card relative overflow-hidden flex flex-col shadow-lg",
         "ring-2 ring-primary/50 cursor-grabbing",
-        isClosed && "opacity-60",
-        glowing && "ring-red-500/60 border-red-500/40"
+        isClosed && "opacity-60"
       )}
     >
       {deal.is_priority && (
-        <div className="rq-focus-ribbon rq-focus-ribbon--active" style={{ cursor: "default" }}>
-          <Zap className="h-3 w-3 text-white fill-current drop-shadow-sm" />
+        <div className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full w-6 h-6 text-amber-500 dark:text-amber-400">
+          <Star className="h-3.5 w-3.5 fill-current" />
         </div>
       )}
       <CardContent

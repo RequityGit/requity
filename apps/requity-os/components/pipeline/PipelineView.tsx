@@ -7,7 +7,6 @@ import { storeDealOrder } from "@/hooks/useDealNavigation";
 import { cn } from "@/lib/utils";
 import { DealFilters, type FilterState, type ClosingDateFilter } from "./DealFilters";
 import { filterByDateAdded } from "@/components/ui/date-added-filter";
-import { isUrgentDeal } from "./DealCard";
 import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
 import { MobileDealList } from "./MobileDealList";
@@ -55,12 +54,9 @@ function filterByClosingDate(dateStr: string | null, filter: ClosingDateFilter):
   }
 }
 
-/** Sort deals: priority first, then urgent, then by amount descending */
+/** Sort deals: priority first, then by amount descending */
 function sortDeals(a: UnifiedDeal, b: UnifiedDeal): number {
   if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1;
-  const aUrgent = isUrgentDeal(a);
-  const bUrgent = isUrgentDeal(b);
-  if (aUrgent !== bUrgent) return aUrgent ? -1 : 1;
   return (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
 }
 

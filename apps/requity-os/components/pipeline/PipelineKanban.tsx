@@ -17,7 +17,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { DealCard, DealCardOverlay, isUrgentDeal } from "./DealCard";
+import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import { advanceStageAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -124,15 +124,6 @@ export function PipelineKanban({
 
       if (deal.stage === newStage) return;
 
-      // Gate: closing date required to leave lead
-      if (deal.stage === "lead" && newStage !== "lead" && !deal.expected_close_date) {
-        showError(
-          "Could not move deal",
-          "Closing date is required to move past Intake. Set a closing date first."
-        );
-        return;
-      }
-
       // Save original stage for potential revert
       const originalStage = deal.stage;
 
@@ -167,13 +158,8 @@ export function PipelineKanban({
       const stageDeals = deals
         .filter((d) => d.stage === stage.key)
         .sort((a, b) => {
-          // Priority deals first
+          // Priority deals first, then by amount descending
           if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1;
-          // Then urgent deals (close date <= 14 days in early stages)
-          const aUrgent = isUrgentDeal(a);
-          const bUrgent = isUrgentDeal(b);
-          if (aUrgent !== bUrgent) return aUrgent ? -1 : 1;
-          // Then by amount descending
           return (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
         });
 
