@@ -24,6 +24,8 @@ import { formatDateInline } from "@/lib/format";
 interface InlineFieldBaseProps {
   /** Label shown above the value */
   label?: string;
+  /** Extra classes on the label element */
+  labelClassName?: string;
   /** Fires when the user commits a new value (blur / Enter / select change) */
   onSave: (value: string) => void;
   /** Disable editing */
@@ -51,6 +53,8 @@ interface InlineDateFieldProps extends InlineFieldBaseProps {
   /** ISO date string YYYY-MM-DD or null */
   value: string | null | undefined;
   placeholder?: string;
+  /** Custom display formatter for rest state (overrides default formatting) */
+  formatValue?: (value: string | null | undefined) => string;
 }
 
 interface InlineSelectFieldProps extends InlineFieldBaseProps {
@@ -103,6 +107,7 @@ export function InlineField(props: InlineFieldProps) {
 
 function InlineTextField({
   label,
+  labelClassName,
   type,
   value,
   placeholder = "Add...",
@@ -166,7 +171,7 @@ function InlineTextField({
   return (
     <div className={cn("group/field min-w-0", className)}>
       {label && (
-        <label className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">
+        <label className={cn("text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight", labelClassName)}>
           {label}
         </label>
       )}
@@ -219,18 +224,20 @@ function InlineTextField({
 
 function InlineDateField({
   label,
+  labelClassName,
   value,
   placeholder = "MM/DD/YYYY",
   onSave,
   disabled,
   className,
+  formatValue,
 }: InlineDateFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [justSaved, setJustSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayValue = formatDateInline(value);
+  const displayValue = formatValue ? formatValue(value) : formatDateInline(value);
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -265,7 +272,7 @@ function InlineDateField({
   return (
     <div className={cn("group/field min-w-0", className)}>
       {label && (
-        <label className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">
+        <label className={cn("text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight", labelClassName)}>
           {label}
         </label>
       )}
@@ -313,6 +320,7 @@ function InlineDateField({
 
 function InlineSelectField({
   label,
+  labelClassName,
   value,
   placeholder = "Select...",
   options,
@@ -338,7 +346,7 @@ function InlineSelectField({
   return (
     <div className={cn("group/field min-w-0", className)}>
       {label && (
-        <label className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">
+        <label className={cn("text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight", labelClassName)}>
           {label}
         </label>
       )}

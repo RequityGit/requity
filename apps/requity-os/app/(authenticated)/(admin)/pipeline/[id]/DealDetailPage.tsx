@@ -97,6 +97,7 @@ import {
   STAGES,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
+  ACTIVE_ASSET_CLASS_OPTIONS,
   type AssetClass,
   daysInStage,
 } from "@/components/pipeline/pipeline-types";
@@ -104,8 +105,10 @@ import {
   advanceStageAction,
   regressStageAction,
   updateDealStatusAction,
+  updateUwDataAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
+import { InlineField } from "@/components/ui/inline-field";
 import { ApprovalBanner } from "@/components/pipeline/ApprovalBanner";
 import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
@@ -359,11 +362,48 @@ function DealDetailPageInner({
   const currentStageIndex = STAGES.findIndex((s) => s.key === optimisticStage);
   const currentStageName = STAGES[currentStageIndex]?.label ?? optimisticStage;
   const uwData = deal.uw_data as Record<string, unknown> | null;
-  const loanAmount = (uwData?.loan_amount as number | null) ?? deal.amount ?? null;
-  const assetClass = deal.asset_class
-    ? (ASSET_CLASS_LABELS[deal.asset_class as AssetClass] ?? deal.asset_class)
+
+  // Optimistic header metrics state
+  const [optimisticLoanAmount, setOptimisticLoanAmount] = useState<number | null>(
+    (uwData?.loan_amount as number | null) ?? deal.amount ?? null
+  );
+  const [optimisticAssetClassKey, setOptimisticAssetClassKey] = useState<string | null>(
+    (uwData?.property_type as string | null) ?? deal.asset_class ?? null
+  );
+  const [optimisticCloseDate, setOptimisticCloseDate] = useState<string | null>(
+    (uwData?.close_date as string | null) ?? deal.close_date ?? null
+  );
+
+  // Sync from server data when deal prop changes
+  useEffect(() => {
+    const ud = deal.uw_data as Record<string, unknown> | null;
+    setOptimisticLoanAmount((ud?.loan_amount as number | null) ?? deal.amount ?? null);
+    setOptimisticAssetClassKey((ud?.property_type as string | null) ?? deal.asset_class ?? null);
+    setOptimisticCloseDate((ud?.close_date as string | null) ?? deal.close_date ?? null);
+  }, [deal.uw_data, deal.amount, deal.asset_class, deal.close_date]);
+
+  const handleMetricSave = useCallback(async (key: string, value: string) => {
+    // Optimistic update
+    if (key === "loan_amount") setOptimisticLoanAmount(Number(value) || null);
+    if (key === "property_type") setOptimisticAssetClassKey(value || null);
+    if (key === "close_date") setOptimisticCloseDate(value || null);
+
+    const res = await updateUwDataAction(deal.id, key, key === "loan_amount" ? Number(value) || 0 : value);
+    if (res?.error) {
+      showError(`Could not save field`);
+      // Rollback
+      const ud = deal.uw_data as Record<string, unknown> | null;
+      if (key === "loan_amount") setOptimisticLoanAmount((ud?.loan_amount as number | null) ?? deal.amount ?? null);
+      if (key === "property_type") setOptimisticAssetClassKey((ud?.property_type as string | null) ?? deal.asset_class ?? null);
+      if (key === "close_date") setOptimisticCloseDate((ud?.close_date as string | null) ?? deal.close_date ?? null);
+    }
+  }, [deal.id, deal.uw_data, deal.amount, deal.asset_class, deal.close_date]);
+
+  const loanAmount = optimisticLoanAmount;
+  const assetClass = optimisticAssetClassKey
+    ? (ASSET_CLASS_LABELS[optimisticAssetClassKey as AssetClass] ?? optimisticAssetClassKey)
     : null;
-  const expectedClose = deal.close_date;
+  const expectedClose = optimisticCloseDate;
 
   return (
     <div className="flex flex-col h-full -mb-20 md:-mb-6 lg:-mb-8 overflow-hidden">
@@ -387,8 +427,10 @@ function DealDetailPageInner({
           stageJumping={stageJumping}
           onStageChange={handleStageChange}
           assetClass={assetClass}
+          assetClassKey={optimisticAssetClassKey}
           loanAmount={loanAmount}
           expectedClose={expectedClose as string | null | undefined}
+          onMetricSave={handleMetricSave}
         />
 
         {/* Tab Bar */}
@@ -679,6 +721,13 @@ function buildDealEmailSubject(displayId: string, dealName: string | null): stri
   return `${displayId} ${name} - `;
 }
 
+// ─── Asset class dropdown maps (for header inline editing) ───
+const HEADER_AC_LABELS = ACTIVE_ASSET_CLASS_OPTIONS.map((o) => o.label);
+const HEADER_AC_LABEL_TO_KEY = Object.fromEntries(
+  ACTIVE_ASSET_CLASS_OPTIONS.map((o) => [o.label, o.key])
+);
+const HEADER_AC_KEY_TO_LABEL = ASSET_CLASS_LABELS as Record<string, string>;
+
 function DealHeader({
   deal,
   shortLabel,
@@ -696,8 +745,10 @@ function DealHeader({
   stageJumping,
   onStageChange,
   assetClass,
+  assetClassKey,
   loanAmount,
   expectedClose,
+  onMetricSave,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -715,8 +766,10 @@ function DealHeader({
   stageJumping: boolean;
   onStageChange: (stage: string) => void;
   assetClass: string | null;
+  assetClassKey: string | null;
   loanAmount: number | null;
   expectedClose: string | null | undefined;
+  onMetricSave: (key: string, value: string) => void;
 }) {
   const router = useRouter();
   const dealNav = useDealNavigation(deal.id, deal.deal_number);
@@ -1245,30 +1298,43 @@ function DealHeader({
         {/* D. Separator */}
         <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
 
-        {/* E. Metrics */}
-        <div className="hidden md:flex items-center gap-5 shrink-0">
-          {assetClass && (
-            <div className="flex flex-col items-center">
-              <span className="text-sm font-semibold">{assetClass}</span>
-              <span className="rq-micro-label">Asset</span>
-            </div>
-          )}
+        {/* E. Metrics (inline-editable) */}
+        <div className="hidden md:flex items-center gap-4 shrink-0">
           <div className="flex flex-col items-center">
-            <span className="text-sm font-semibold num">{formatCompactCurrency(loanAmount)}</span>
+            <InlineField
+              type="select"
+              value={HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? ""}
+              options={HEADER_AC_LABELS}
+              onSave={(v) => onMetricSave("property_type", HEADER_AC_LABEL_TO_KEY[v] ?? v)}
+              className="items-center text-center font-semibold"
+            />
+            <span className="rq-micro-label">Asset</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <InlineField
+              type="currency"
+              value={loanAmount}
+              formatValue={(v) => formatCompactCurrency(Number(v) || null)}
+              onSave={(v) => onMetricSave("loan_amount", v)}
+              className="items-center text-center font-semibold"
+            />
             <span className="rq-micro-label">Loan</span>
           </div>
-          {expectedClose && (
-            <div className="flex flex-col items-center">
-              <span className="text-sm font-semibold num">
-                {(() => {
-                  const [y, m, d] = String(expectedClose).split("T")[0].split("-");
-                  const dt = new Date(Number(y), Number(m) - 1, Number(d));
-                  return formatDateShort(dt.toISOString());
-                })()}
-              </span>
-              <span className="rq-micro-label">Close</span>
-            </div>
-          )}
+          <div className="flex flex-col items-center">
+            <InlineField
+              type="date"
+              value={expectedClose ? String(expectedClose).split("T")[0] : null}
+              onSave={(v) => onMetricSave("close_date", v)}
+              formatValue={(v) => {
+                if (!v) return "";
+                const [y, m, d] = String(v).split("-");
+                const dt = new Date(Number(y), Number(m) - 1, Number(d));
+                return formatDateShort(dt.toISOString());
+              }}
+              className="items-center text-center font-semibold"
+            />
+            <span className="rq-micro-label">Close</span>
+          </div>
         </div>
 
         {/* F. Separator + Contact Selection Bar */}
