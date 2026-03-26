@@ -1002,9 +1002,9 @@ export async function syncUserGmail(userId: string): Promise<SyncResult> {
   // Check if user has gmail.readonly scope
   const { data: tokenRecord } = await admin
     .from("gmail_tokens")
-    .select("scopes")
+    .select("scopes, refresh_token")
     .eq("user_id", userId)
-    .eq("is_active", true)
+    .not("refresh_token", "is", null)
     .maybeSingle();
 
   const scopes = (tokenRecord?.scopes as string[]) || [];
@@ -1114,11 +1114,12 @@ export async function syncUserGmail(userId: string): Promise<SyncResult> {
 export async function syncAllConnectedUsers(): Promise<SyncResult[]> {
   const admin = createAdminClient();
 
-  // Find all active Gmail tokens
+  // Find all connected Gmail tokens (has a valid refresh_token)
   const { data: tokens, error } = await admin
     .from("gmail_tokens")
     .select("user_id, email, scopes")
-    .eq("is_active", true);
+    .not("refresh_token", "is", null)
+    .neq("refresh_token", "");
 
   if (error || !tokens) {
     console.error("Failed to fetch active Gmail tokens:", error);

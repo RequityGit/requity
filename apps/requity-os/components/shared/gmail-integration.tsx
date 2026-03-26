@@ -20,6 +20,7 @@ interface GmailToken {
   id: string;
   email: string;
   is_active: boolean;
+  refresh_token: string | null;
   connected_at: string;
   scopes: string[] | null;
 }
@@ -49,12 +50,17 @@ export function GmailIntegration() {
 
       const { data } = await supabase
         .from("gmail_tokens")
-        .select("id, email, is_active, connected_at, scopes")
+        .select("id, email, is_active, refresh_token, connected_at, scopes")
         .eq("user_id", user.id)
-        .eq("is_active", true)
         .maybeSingle();
 
-      setGmailToken(data as GmailToken | null);
+      // Connected if a refresh_token exists (access token can always be refreshed).
+      // Don't rely on is_active alone — expired access tokens are normal and refreshable.
+      if (data?.refresh_token) {
+        setGmailToken(data as GmailToken);
+      } else {
+        setGmailToken(null);
+      }
     } catch (err) {
       console.error("Failed to fetch Gmail status:", err);
     } finally {
@@ -150,9 +156,8 @@ export function GmailIntegration() {
 
       const { error } = await supabase
         .from("gmail_tokens")
-        .update({ is_active: false })
-        .eq("user_id", user.id)
-        .eq("is_active", true);
+        .update({ is_active: false, refresh_token: "" })
+        .eq("user_id", user.id);
 
       if (error) {
         showError("Could not disconnect Gmail", "Please try again.");
