@@ -582,6 +582,16 @@
   .rq-stat-value {
     @apply text-xl font-bold tabular-nums;
   }
+
+  /* Stat / metric card padding — 16px top, 18px sides, 20px bottom.
+     Title-to-value spacing is 10px minimum.
+     Apply to CardContent or inner wrapper of any KPI / stat card. */
+  .rq-stat-card {
+    padding: 16px 18px 20px 18px;
+  }
+  .rq-stat-card .rq-stat-card-title {
+    @apply mb-[10px];
+  }
 }
 
 /* ============================

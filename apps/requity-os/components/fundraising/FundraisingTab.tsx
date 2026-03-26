@@ -793,7 +793,7 @@ function FundraiseDashboard({
   ];
 
   return (
-    <div className="rq-tab-content space-y-6">
+    <div className="rq-tab-content space-y-4">
       {/* Fully Committed Alert */}
       {fundraiseHardCap && fundraiseHardCap > 0 && stats.totalActive >= fundraiseHardCap && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40 p-4 flex items-center gap-3">
