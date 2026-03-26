@@ -28,6 +28,7 @@ import {
   Braces,
   ShieldCheck,
 } from "lucide-react";
+import { MultiEmailCombobox } from "@/components/crm/multi-email-combobox";
 import { formatCurrency } from "@/lib/format";
 import type { SoftCommitment } from "@/lib/fundraising/types";
 import type { Database } from "@/lib/supabase/types";
@@ -97,6 +98,10 @@ export function BulkEmailComposer({
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [ccEmails, setCcEmails] = useState("");
+
+  // Internal recipients (initialized from prop, removable within composer)
+  const [activeRecipients, setActiveRecipients] = useState<SoftCommitment[]>(recipients);
 
   // Preview state
   const [mode, setMode] = useState<"compose" | "preview">("compose");
@@ -126,14 +131,20 @@ export function BulkEmailComposer({
       setSubject("");
       setBody("");
       setAttachments([]);
+      setCcEmails("");
       setMode("compose");
       setPreviewIndex(0);
       setSendProgress(null);
       setRecipientsExpanded(false);
+      setActiveRecipients(recipients);
     }
   }, [open]);
 
-  const isDirty = subject.trim() !== "" || body.trim() !== "";
+  const isDirty = subject.trim() !== "" || body.trim() !== "" || ccEmails.trim() !== "";
+
+  function removeRecipient(id: string) {
+    setActiveRecipients((prev) => prev.filter((r) => r.id !== id));
+  }
 
   // Insert merge token at cursor position
   const insertToken = useCallback(
@@ -164,7 +175,7 @@ export function BulkEmailComposer({
   );
 
   // Preview data
-  const previewRecipient = recipients[previewIndex] ?? recipients[0];
+  const previewRecipient = activeRecipients[previewIndex] ?? activeRecipients[0];
   const resolvedSubject = previewRecipient
     ? resolveTokens(subject, previewRecipient)
     : subject;
@@ -213,20 +224,25 @@ export function BulkEmailComposer({
       showWarning("Message is required");
       return;
     }
-    if (recipients.length === 0) {
+    if (activeRecipients.length === 0) {
       showWarning("No recipients selected");
       return;
     }
 
+    const parsedCc = ccEmails
+      .split(/[,;]+/)
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0);
+
     const ok = await confirm({
-      title: `Send ${recipients.length} individual email${recipients.length > 1 ? "s" : ""}?`,
-      description: `Each investor will receive a personalized email. This cannot be undone.`,
-      confirmLabel: `Send ${recipients.length} email${recipients.length > 1 ? "s" : ""}`,
+      title: `Send ${activeRecipients.length} individual email${activeRecipients.length > 1 ? "s" : ""}?`,
+      description: `Each investor will receive a personalized email.${parsedCc.length > 0 ? ` CC: ${parsedCc.join(", ")}` : ""} This cannot be undone.`,
+      confirmLabel: `Send ${activeRecipients.length} email${activeRecipients.length > 1 ? "s" : ""}`,
     });
     if (!ok) return;
 
     setSending(true);
-    setSendProgress({ current: 0, total: recipients.length });
+    setSendProgress({ current: 0, total: activeRecipients.length });
 
     try {
       const supabase = createClient();
@@ -254,7 +270,7 @@ export function BulkEmailComposer({
 
       // Create individual crm_emails records for each recipient
       const emailIds: string[] = [];
-      for (const recipient of recipients) {
+      for (const recipient of activeRecipients) {
         const resolvedSub = resolveTokens(subject, recipient);
         const resolvedBod = resolveTokens(body, recipient);
         const bodyHtml = `<pre style="font-family: sans-serif; white-space: pre-wrap;">${escapeHtml(resolvedBod)}</pre>`;
@@ -272,6 +288,7 @@ export function BulkEmailComposer({
             attachments:
               attachmentMeta.length > 0 ? attachmentMeta : null,
             postmark_status: "queued",
+            ...(parsedCc.length > 0 ? { cc_emails: parsedCc } : {}),
             ...(gmailEmail ? { from_email: gmailEmail } : {}),
           };
 
@@ -390,7 +407,7 @@ export function BulkEmailComposer({
     <EmailComposerShell
       open={open}
       onClose={() => onOpenChange(false)}
-      title={`Email ${recipients.length} investor${recipients.length !== 1 ? "s" : ""}`}
+      title={`Email ${activeRecipients.length} investor${activeRecipients.length !== 1 ? "s" : ""}`}
       subtitle={`from ${senderEmail}`}
       isDirty={isDirty}
       footer={
@@ -442,7 +459,7 @@ export function BulkEmailComposer({
             </Button>
             <Button
               size="sm"
-              disabled={sending || recipients.length === 0}
+              disabled={sending || activeRecipients.length === 0}
               className="gap-1.5"
               onClick={handleSend}
             >
@@ -453,7 +470,7 @@ export function BulkEmailComposer({
               )}
               {sending && sendProgress
                 ? `Sending...`
-                : `Send to ${recipients.length}`}
+                : `Send to ${activeRecipients.length}`}
             </Button>
           </div>
         </>
@@ -462,16 +479,23 @@ export function BulkEmailComposer({
       {/* Recipients bar */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-xs text-muted-foreground shrink-0">To:</span>
-        {(recipientsExpanded ? recipients : recipients.slice(0, 8)).map((r) => (
+        {(recipientsExpanded ? activeRecipients : activeRecipients.slice(0, 8)).map((r) => (
           <Badge
             key={r.id}
             variant="secondary"
-            className="text-xs font-normal"
+            className="gap-1 pl-2 pr-1 py-0.5 text-xs font-normal"
           >
             {r.name}
+            <button
+              type="button"
+              onClick={() => removeRecipient(r.id)}
+              className="ml-0.5 rounded-sm hover:bg-muted-foreground/20"
+            >
+              <X className="h-3 w-3" />
+            </button>
           </Badge>
         ))}
-        {recipients.length > 8 && (
+        {activeRecipients.length > 8 && (
           <button
             type="button"
             onClick={() => setRecipientsExpanded((v) => !v)}
@@ -480,14 +504,25 @@ export function BulkEmailComposer({
             <Badge variant="outline" className="text-xs font-normal cursor-pointer hover:bg-muted">
               {recipientsExpanded
                 ? "Show less"
-                : `+${recipients.length - 8} more`}
+                : `+${activeRecipients.length - 8} more`}
             </Badge>
           </button>
         )}
       </div>
 
+      {/* CC field */}
+      <div className="flex items-start gap-1.5">
+        <span className="text-xs text-muted-foreground shrink-0 mt-2">CC:</span>
+        <MultiEmailCombobox
+          value={ccEmails}
+          onChange={setCcEmails}
+          placeholder="Add CC recipients..."
+          className="flex-1 min-h-[32px] text-xs"
+        />
+      </div>
+
       {/* Individual send indicator */}
-      {recipients.length > 1 && (
+      {activeRecipients.length > 1 && (
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
           <span>Each investor receives a separate, private email. Recipients cannot see each other.</span>
@@ -546,24 +581,24 @@ export function BulkEmailComposer({
                 className="h-7 w-7"
                 onClick={() =>
                   setPreviewIndex(
-                    (i) => (i - 1 + recipients.length) % recipients.length
+                    (i) => (i - 1 + activeRecipients.length) % activeRecipients.length
                   )
                 }
-                disabled={recipients.length <= 1}
+                disabled={activeRecipients.length <= 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {previewIndex + 1} / {recipients.length}
+                {previewIndex + 1} / {activeRecipients.length}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
                 onClick={() =>
-                  setPreviewIndex((i) => (i + 1) % recipients.length)
+                  setPreviewIndex((i) => (i + 1) % activeRecipients.length)
                 }
-                disabled={recipients.length <= 1}
+                disabled={activeRecipients.length <= 1}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
