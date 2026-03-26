@@ -1,5 +1,3 @@
-import Script from "next/script";
-
 export default function LendingLayout({
   children,
 }: {
@@ -8,11 +6,12 @@ export default function LendingLayout({
   return (
     <>
       {children}
-      <Script
+      {/* eslint-disable-next-line @next/next/no-sync-scripts -- module scripts are async by spec; plain <script> needed for SSR */}
+      <script
         id="retell-widget"
         src="https://dashboard.retellai.com/retell-widget.js"
         type="module"
-        strategy="beforeInteractive"
+        async
         data-public-key="public_key_b2e3b961e5076c4619ab6"
         data-agent-id="agent_b392bf026c0c3af8395b9e9c2d"
         data-agent-version="0"
