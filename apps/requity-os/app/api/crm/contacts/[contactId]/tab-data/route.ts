@@ -104,11 +104,9 @@ export async function GET(
         outcome: (a.call_disposition as string | null) ?? null,
         direction: (a.direction as string | null) ?? null,
         call_duration_seconds: (a.call_duration_seconds as number | null) ?? null,
-        created_by_name: a.performed_by
-          ? ((a.performed_by_name as string | null) ||
-              profileLookup[a.performed_by as string] ||
-              null)
-          : null,
+        created_by_name: (a.performed_by_name as string | null)
+          || (a.performed_by ? profileLookup[a.performed_by as string] : null)
+          || null,
         created_at: a.created_at as string,
       }));
 

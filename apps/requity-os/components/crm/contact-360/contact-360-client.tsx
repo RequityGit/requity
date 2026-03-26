@@ -10,7 +10,6 @@ import {
   Briefcase,
   Users,
   FileText,
-  MessageSquare,
   Activity,
   ChevronLeft,
   MoreHorizontal,
@@ -37,9 +36,8 @@ import { InvestmentsTab } from "./tabs/investments-tab";
 import { ServicingTab } from "./tabs/servicing-tab";
 import { ReferralsTab } from "./tabs/referrals-tab";
 import { DocumentsTab } from "./tabs/documents-tab";
-import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { ContactCommitmentsSection } from "@/components/fundraising/ContactCommitmentsSection";
-import { ActivityTab } from "./tabs/activity-tab";
+import { EntityActivityStream } from "@/components/shared/EntityActivityStream";
 import { ContactDetailsSidebar } from "./sidebar/contact-details-sidebar";
 import { RecentEmailsSidebar } from "./sidebar/recent-emails-sidebar";
 
@@ -66,7 +64,6 @@ const TAB_CONFIG: TabConfig[] = [
     icon: FileText,
     showWhen: ["borrower", "investor", "lender"],
   },
-  { id: "notes", label: "Notes", icon: MessageSquare, showWhen: "always" },
   { id: "activity", label: "Activity", icon: Activity, showWhen: "always" },
 ];
 
@@ -300,20 +297,15 @@ export function Contact360Client({
               </TabsContent>
             )}
 
-            <TabsContent value="notes" className="mt-4">
-              <UnifiedNotes
-                entityType="contact"
-                entityId={contact.id}
-              />
-            </TabsContent>
-
             <TabsContent value="activity" className="mt-4">
-              <ActivityTab
-                contactId={contact.id}
-                activities={activities}
-                emails={emails}
-                currentUserId={currentUserId}
-              />
+              <div className="rounded-xl border bg-card overflow-hidden" style={{ height: "calc(100vh - 300px)", minHeight: "500px" }}>
+                <EntityActivityStream
+                  entityType="contact"
+                  entityId={contact.id}
+                  currentUserId={currentUserId}
+                  currentUserName={currentUserName}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </div>

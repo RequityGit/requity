@@ -430,6 +430,8 @@ function DealCardInner({
   }, [deal.stage_entered_at, stageConfig]);
 
   const isClosed = deal.status === "won" || deal.status === "lost";
+  const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
+  const glowing = closeDateStatus === "urgent" || closeDateStatus === "overdue";
 
   return (
     <div
@@ -452,7 +454,8 @@ function DealCardInner({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected && "ring-2 ring-primary/40",
         isDragging && "opacity-50",
-        isClosed && "opacity-60"
+        isClosed && "opacity-60",
+        glowing && "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow"
       )}
     >
       <CardContent
@@ -499,12 +502,16 @@ export function DealCardOverlay({
   const days = daysInStage(deal.stage_entered_at);
   const alertLevel = getAlertLevel(days, stageConfig);
   const isClosed = deal.status === "won" || deal.status === "lost";
+  const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
+  const glowing = closeDateStatus === "urgent" || closeDateStatus === "overdue";
 
   return (
     <div
       className={cn(
         "w-72 text-left rounded-xl border bg-card relative overflow-hidden flex flex-col shadow-lg",
-        "ring-2 ring-primary/50 cursor-grabbing",
+        glowing
+          ? "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow cursor-grabbing"
+          : "ring-2 ring-primary/50 cursor-grabbing",
         isClosed && "opacity-60"
       )}
     >
