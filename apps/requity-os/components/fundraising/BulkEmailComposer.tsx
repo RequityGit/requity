@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Braces,
+  ShieldCheck,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import type { SoftCommitment } from "@/lib/fundraising/types";
@@ -128,6 +129,7 @@ export function BulkEmailComposer({
       setMode("compose");
       setPreviewIndex(0);
       setSendProgress(null);
+      setRecipientsExpanded(false);
     }
   }, [open]);
 
@@ -350,6 +352,7 @@ export function BulkEmailComposer({
     }
   }
 
+  const [recipientsExpanded, setRecipientsExpanded] = useState(false);
   const senderEmail = gmailEmail ?? "info@requitylending.com";
 
   // ─── Token Insert Buttons (shared between subject and body) ───
@@ -459,7 +462,7 @@ export function BulkEmailComposer({
       {/* Recipients bar */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-xs text-muted-foreground shrink-0">To:</span>
-        {recipients.slice(0, 8).map((r) => (
+        {(recipientsExpanded ? recipients : recipients.slice(0, 8)).map((r) => (
           <Badge
             key={r.id}
             variant="secondary"
@@ -469,11 +472,27 @@ export function BulkEmailComposer({
           </Badge>
         ))}
         {recipients.length > 8 && (
-          <Badge variant="outline" className="text-xs font-normal">
-            +{recipients.length - 8} more
-          </Badge>
+          <button
+            type="button"
+            onClick={() => setRecipientsExpanded((v) => !v)}
+            className="text-xs text-muted-foreground hover:text-foreground rq-transition"
+          >
+            <Badge variant="outline" className="text-xs font-normal cursor-pointer hover:bg-muted">
+              {recipientsExpanded
+                ? "Show less"
+                : `+${recipients.length - 8} more`}
+            </Badge>
+          </button>
         )}
       </div>
+
+      {/* Individual send indicator */}
+      {recipients.length > 1 && (
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+          <span>Each investor receives a separate, private email. Recipients cannot see each other.</span>
+        </div>
+      )}
 
       {mode === "compose" ? (
         <>
