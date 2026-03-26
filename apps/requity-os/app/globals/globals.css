@@ -523,6 +523,23 @@
     @apply flex items-center px-5 py-2 border-b border-border last:border-b-0
       hover:bg-muted/40 rq-transition;
   }
+
+  /* Overview-style card — clean body with no header bar.
+     Pair with .rq-section-label placed ABOVE the card. */
+  .rq-overview-card {
+    @apply rounded-lg border border-border bg-card p-4 px-5;
+  }
+
+  /* Section label row — icon + uppercase micro label, placed above a card.
+     Combine with flex justify-between wrapper when actions are needed on the right. */
+  .rq-section-label {
+    @apply flex items-center gap-1.5 mb-2;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+  }
 }
 
 /* ============================
