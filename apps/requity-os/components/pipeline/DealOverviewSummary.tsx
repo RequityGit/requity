@@ -90,7 +90,6 @@ import {
   Building2,
   DollarSign,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 // ── Helpers ──
 
@@ -99,17 +98,6 @@ function daysAgo(dateString: string | null | undefined): number | null {
   const d = new Date(dateString);
   if (isNaN(d.getTime())) return null;
   return Math.floor((Date.now() - d.getTime()) / 86_400_000);
-}
-
-// ── Section label ──
-
-function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
-  return (
-    <div className="rq-section-label">
-      <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
-      {children}
-    </div>
-  );
 }
 
 // ── Read-only field (for computed values) ──
@@ -127,16 +115,6 @@ function ReadOnlyField({ label, children, className }: { label: string; children
 
 function Placeholder() {
   return <span className="text-muted-foreground/40">Add...</span>;
-}
-
-// ── Card wrapper ──
-
-function OverviewCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn("rq-overview-card", className)}>
-      {children}
-    </div>
-  );
 }
 
 // ── Props ──
@@ -266,11 +244,16 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
   const daysInStage = deal.days_in_stage ?? daysAgo(deal.stage_entered_at);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {/* ── Section 1: Property ── */}
-      <div>
-        <SectionLabel icon={Building2}>Property</SectionLabel>
-        <OverviewCard>
+      <div className="rq-card-wrapper">
+        <div className="rq-card-header">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <h4 className="rq-micro-label">Property</h4>
+          </div>
+        </div>
+        <div className="p-4 px-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1">
             <InlineField
               label="Property name"
@@ -315,15 +298,20 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               onSave={(v) => saveField("total_sqft", v)}
             />
           </div>
-        </OverviewCard>
+        </div>
       </div>
 
       {/* ── Section 2: Deal Summary (merged with Loan Terms) ── */}
-      <div>
-        <SectionLabel icon={DollarSign}>Deal Summary</SectionLabel>
-        <div className={cn("grid gap-4", showProposedTerms ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
-          {/* Deal info */}
-          <OverviewCard>
+      <div className={cn("grid gap-3", showProposedTerms ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
+        {/* Deal info */}
+        <div className="rq-card-wrapper">
+          <div className="rq-card-header">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+              <h4 className="rq-micro-label">Deal Summary</h4>
+            </div>
+          </div>
+          <div className="p-4 px-5">
             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
               {/* Always shown */}
               <InlineField
@@ -439,11 +427,13 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
 
             {/* Refinance Overview & Existing Loans (refi deals only) */}
             {isRefi && <CostBasisSection dealId={dealId} loanPurpose={loanPurpose} />}
-          </OverviewCard>
+          </div>
+        </div>
 
-          {/* Proposed Terms (only if not early stage) */}
-          {showProposedTerms && (
-            <OverviewCard className="border-blue-300 dark:border-blue-700 border-2">
+        {/* Proposed Terms (only if not early stage) */}
+        {showProposedTerms && (
+          <div className="rq-card-wrapper border-blue-300 dark:border-blue-700 border-2">
+            <div className="p-4 px-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-[11px] font-medium text-muted-foreground">Proposed terms</div>
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Active</Badge>
@@ -566,9 +556,9 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                   />
                 )}
               </div>
-            </OverviewCard>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>
