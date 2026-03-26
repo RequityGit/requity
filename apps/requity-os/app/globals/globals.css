@@ -583,14 +583,18 @@
     @apply text-xl font-bold tabular-nums;
   }
 
-  /* Stat / metric card padding — 16px top, 18px sides, 20px bottom.
-     Title-to-value spacing is 10px minimum.
-     Apply to CardContent or inner wrapper of any KPI / stat card. */
+  /* Stat/metric cards: min padding 16px top, 18px sides, 20px bottom. Title-to-value spacing 10px min. */
   .rq-stat-card {
-    padding: 16px 18px 20px 18px;
+    @apply pt-4 px-[18px] pb-5 relative;
   }
-  .rq-stat-card .rq-stat-card-title {
-    @apply mb-[10px];
+  .rq-stat-card-title {
+    @apply text-[11px] uppercase tracking-[0.05em] font-semibold text-muted-foreground;
+  }
+  .rq-stat-card-value {
+    @apply text-[22px] md:text-[26px] font-bold tracking-tight text-foreground tabular-nums mt-2.5;
+  }
+  .rq-stat-card-icon {
+    @apply absolute top-4 right-[18px] text-muted-foreground;
   }
 }
 
