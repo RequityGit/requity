@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -205,7 +204,7 @@ export function UwField({
   if (field.type === "boolean") {
     return (
       <div className="flex items-center justify-between py-2">
-        <Label className="text-xs">{field.label}</Label>
+        <span className="inline-field-label">{field.label}</span>
         <Switch
           checked={!!value}
           onCheckedChange={(checked) => {
@@ -220,8 +219,8 @@ export function UwField({
 
   if (field.type === "flood_risk") {
     return (
-      <div className="space-y-1.5">
-        <Label className="text-xs">{field.label}</Label>
+      <div className="space-y-1">
+        <span className="inline-field-label">{field.label}</span>
         <FloodRiskControl
           value={value as string | null}
           onChange={(val) => {
@@ -238,7 +237,7 @@ export function UwField({
   if (mode === "read") {
     return (
       <div className="space-y-0">
-        <Label className="text-[11px] font-medium text-muted-foreground leading-tight">{field.label}</Label>
+        <span className="inline-field-label">{field.label}</span>
         <div className="flex items-center -mx-0.5">
           <ReadValue
             value={value}
@@ -254,7 +253,7 @@ export function UwField({
   // ── Edit mode ──
   return (
     <div className="space-y-0.5">
-      <Label className="text-[11px] font-medium text-muted-foreground leading-tight">{field.label}</Label>
+      <span className="inline-field-label">{field.label}</span>
       <EditInput
         field={field}
         value={value}

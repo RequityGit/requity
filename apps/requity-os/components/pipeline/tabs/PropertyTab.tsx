@@ -440,33 +440,27 @@ function PropertyDetailsContent({
     );
   }
 
-  const enrichButton = (
-    <div className="flex items-center justify-between">
-      <div />
-      {enriching ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Enriching property data...
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={enrichFromAddress}
-          disabled={!hasAddress || !hasState || pending}
-        >
-          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-          Enrich Property
-        </Button>
-      )}
+  const enrichButtonInline = enriching ? (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <Loader2 className="h-3 w-3 animate-spin" />
+      Enriching...
     </div>
+  ) : (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+      onClick={enrichFromAddress}
+      disabled={!hasAddress || !hasState || pending}
+    >
+      <Sparkles className="h-3 w-3 mr-1" />
+      Enrich Property
+    </Button>
   );
 
   if (useLayoutSections || (isEditing && effectiveSections.length > 0)) {
     return (
       <div className="space-y-4">
-        {enrichButton}
-
         {effectiveSections.map((section, sectionIdx) => {
           const layoutFields = (effectiveFieldsBySection[section.id] ?? [])
             .filter((f) => f.is_visible)
@@ -474,6 +468,7 @@ function PropertyDetailsContent({
           if (layoutFields.length === 0 && !isEditing) return null;
 
           const isCollapsed = !isEditing && collapsedSections.has(section.id);
+          const isFirstSection = sectionIdx === 0;
 
           return (
             <EditableSection
@@ -482,37 +477,40 @@ function PropertyDetailsContent({
               sectionIndex={sectionIdx}
               totalSections={effectiveSections.length}
             >
-              <div className="rounded-xl border bg-card p-5">
-                <button
-                  type="button"
-                  className={cn(
-                    "flex w-full items-center gap-1.5 text-left",
-                    !isEditing && "cursor-pointer"
-                  )}
-                  onClick={() => !isEditing && toggleSection(section.id)}
-                  disabled={isEditing}
-                >
-                  {!isEditing && (
-                    <ChevronRight
-                      className={cn(
-                        "h-3.5 w-3.5 text-muted-foreground rq-transition-transform",
-                        !isCollapsed && "rotate-90"
-                      )}
-                    />
-                  )}
-                  <h4 className="rq-micro-label">
-                    {section.section_label}
-                  </h4>
-                </button>
+              <div className="rq-card-wrapper">
+                <div className="rq-card-header">
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex items-center gap-1.5 text-left",
+                      !isEditing && "cursor-pointer"
+                    )}
+                    onClick={() => !isEditing && toggleSection(section.id)}
+                    disabled={isEditing}
+                  >
+                    {!isEditing && (
+                      <ChevronRight
+                        className={cn(
+                          "h-3.5 w-3.5 text-muted-foreground rq-transition-transform",
+                          !isCollapsed && "rotate-90"
+                        )}
+                      />
+                    )}
+                    <h4 className="rq-micro-label">
+                      {section.section_label}
+                    </h4>
+                  </button>
+                  {isFirstSection && enrichButtonInline}
+                </div>
                 {!isCollapsed && (
-                  <div className="mt-3">
-                    <div className="grid grid-cols-12 gap-x-5 gap-y-2">
+                  <div className="rq-card">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1">
                       {layoutFields.map((lf, idx) => {
                         const fieldDef = uwFieldMap.get(lf.field_key);
                         if (!fieldDef) return null;
-                        const spanClass = SPAN_CLASS[lf.column_span] || SPAN_CLASS.half;
+                        const isFullWidth = lf.column_span === "full";
                         return (
-                          <div key={lf.id ?? lf.field_key} className={spanClass}>
+                          <div key={lf.id ?? lf.field_key} className={isFullWidth ? "col-span-2 sm:col-span-3" : undefined}>
                             <EditableFieldSlot
                               fieldId={lf.id}
                               fieldLabel={fieldDef.label}
@@ -572,32 +570,35 @@ function PropertyDetailsContent({
 
   return (
     <div className="space-y-4">
-      {enrichButton}
-
-      {Array.from(fallbackSectionGroups.entries()).map(([groupName, fields]) => (
-        <div key={groupName} className="rounded-xl border bg-card p-5">
-          <h4 className="rq-micro-label mb-3">
-            {groupName}
-          </h4>
-          <div className="grid grid-cols-12 gap-x-5 gap-y-2">
-            {fields.map((field) => (
-              <div key={field.key} className="col-span-12 sm:col-span-6">
-                {field.key === ADDRESS_FIELD_KEY ? (
-                  renderAddressField(field, field.key)
-                ) : (
-                  <UwField
-                    field={field}
-                    value={localData[field.key] ?? null}
-                    onChange={(val) => handleFieldChange(field.key, val)}
-                    onBlur={() => handleFieldBlur(field.key)}
-                    disabled={pending}
-                    mode={editingFieldKey === field.key ? "edit" : "read"}
-                    onStartEdit={() => setEditingFieldKey(field.key)}
-                    onEndEdit={() => setEditingFieldKey(null)}
-                  />
-                )}
-              </div>
-            ))}
+      {Array.from(fallbackSectionGroups.entries()).map(([groupName, fields], groupIdx) => (
+        <div key={groupName} className="rq-card-wrapper">
+          <div className="rq-card-header">
+            <h4 className="rq-micro-label">
+              {groupName}
+            </h4>
+            {groupIdx === 0 && enrichButtonInline}
+          </div>
+          <div className="rq-card">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1">
+              {fields.map((field) => (
+                <div key={field.key}>
+                  {field.key === ADDRESS_FIELD_KEY ? (
+                    renderAddressField(field, field.key)
+                  ) : (
+                    <UwField
+                      field={field}
+                      value={localData[field.key] ?? null}
+                      onChange={(val) => handleFieldChange(field.key, val)}
+                      onBlur={() => handleFieldBlur(field.key)}
+                      disabled={pending}
+                      mode={editingFieldKey === field.key ? "edit" : "read"}
+                      onStartEdit={() => setEditingFieldKey(field.key)}
+                      onEndEdit={() => setEditingFieldKey(null)}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ))}

@@ -17,13 +17,8 @@ export function ReadValue({ value, fieldType, onClick, className, placeholder }:
   const formatted = empty ? "" : formatFieldValue(value, fieldType);
   const isFinancial = isFinancialFieldType(fieldType);
 
-  // Field-type-aware placeholder
-  const emptyText = placeholder ?? (
-    fieldType === "currency" ? "$0"
-    : fieldType === "percent" || fieldType === "percentage" ? "0%"
-    : fieldType === "number" ? "0"
-    : "Add..."
-  );
+  // Field-type-aware placeholder — show dash for numeric types (0 is not real data)
+  const emptyText = placeholder ?? "Add...";
 
   return (
     <div
