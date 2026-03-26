@@ -80,7 +80,17 @@ const kanbanCollisionDetection: CollisionDetection = (args) => {
   }
 
   // 3. Fallback for fast pointer movement: use rect intersection
-  return rectIntersection(args);
+  const rectHits = rectIntersection(args);
+  if (rectHits.length > 0) return rectHits;
+
+  // 4. Last resort: closestCenter across stage columns only so drops
+  //    never silently fail when the pointer is near the kanban area
+  return closestCenter({
+    ...args,
+    droppableContainers: args.droppableContainers.filter((c) =>
+      STAGE_KEY_SET.has(String(c.id))
+    ),
+  });
 };
 
 interface PipelineKanbanProps {
@@ -160,6 +170,7 @@ export function PipelineKanban({
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
+    console.log("[DnD] dragStart", event.active.id);
     setActiveId(event.active.id as string);
   }, []);
 
@@ -190,6 +201,7 @@ export function PipelineKanban({
       setOverStage(null);
 
       const { active, over } = event;
+      console.log("[DnD] dragEnd", { activeId: active.id, overId: over?.id });
       if (!over) return;
 
       const currentDeals = dealsRef.current;

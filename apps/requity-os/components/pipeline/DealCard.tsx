@@ -408,17 +408,17 @@ function DealCardInner({
   };
 
   // PointerSensor calls preventDefault() on pointerdown, which suppresses the
-  // browser click event. Detect clicks manually via pointer position tracking.
+  // native click event. We detect clicks via pointer position tracking.
+  // IMPORTANT: Use onPointerDownCapture (capture phase) so we record position
+  // WITHOUT overriding dnd-kit's onPointerDown from {...listeners}. Overriding
+  // and forwarding programmatically breaks PointerSensor activation.
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handlePointerDown = useCallback(
+  const handlePointerDownCapture = useCallback(
     (e: React.PointerEvent) => {
       pointerStartRef.current = { x: e.clientX, y: e.clientY };
-      // Forward to dnd-kit's PointerSensor handler so dragging still works
-      (listeners as Record<string, (e: React.PointerEvent) => void> | undefined)
-        ?.onPointerDown?.(e);
     },
-    [listeners]
+    []
   );
 
   const handlePointerUp = useCallback(
@@ -471,7 +471,7 @@ function DealCardInner({
       style={sortableStyle}
       {...attributes}
       {...listeners}
-      onPointerDown={handlePointerDown}
+      onPointerDownCapture={handlePointerDownCapture}
       onPointerUp={handlePointerUp}
       onPointerEnter={prefetchDeal}
       onKeyDown={handleKeyDown}
