@@ -307,9 +307,68 @@ All spacing follows an 8px grid. These are the minimum padding values:
 - **Segmented controls / toggle groups** may use `p-1` for their outer wrapper.
 - **Use Tailwind classes, not inline styles**, for widths and spacing on layout containers.
 
+### Empty / Null Field Display
+All field display components must handle null/empty states consistently:
+
+| Field State | Display | Class |
+|-------------|---------|-------|
+| Numeric field with no value or 0 | Em-dash | `.rq-field-empty` |
+| Optional text field, unset | "Add..." in muted italic | `.rq-field-placeholder` |
+| Date field, unset | Em-dash | `.rq-field-empty` |
+| Required field, missing | Red outline + helper text | Standard form validation |
+
+**Rule:** Never display `0` for an unfilled numeric field (Sq Ft, Year Built, Total Sq Ft, FICO).
+Zero is a valid data value; if the field was never filled, show an em-dash.
+Never display format strings as placeholders ("MM/DD/YY..."); use an em-dash or "Not Set".
+
+---
+
+## Activity Feed Patterns
+
+### Content Hierarchy
+The Action Center feed must visually distinguish between content types:
+
+| Content Type | Treatment | Class |
+|-------------|-----------|-------|
+| AI Summary | Highlighted card with left border accent, light info background | `.rq-ai-summary` |
+| User notes (with avatar) | Standard message bubble | `.activity-message` (existing) |
+| Emails | Standard message with email icon | `.activity-message` (existing) |
+| System events | Smaller, muted, reduced padding | `.rq-system-event` |
+| Repeated system events | Collapsed group with count + time range | `.rq-system-event-group` |
+| Extracted fields | 2-col key-value grid | `.rq-field-grid` + `.rq-kv-label` / `.rq-kv-value` |
+
+**Rules:**
+- System events must never have the same visual weight as user-authored content
+- Identical consecutive system events must be collapsed into a single grouped row
+- "Unknown" is never an acceptable display name; show the actual user or "System"
+
+---
+
+## Section Headers with Actions
+
+When a collapsible section has an associated action button (e.g., "Enrich Property"):
+
+- Button sits **inside the section header row**, right-aligned via `.rq-section-header`
+- Use `.rq-section-header-action` (ghost/outline style, small)
+- Button remains visible when section is collapsed
+- Do NOT float action buttons outside the card container
+
 ---
 
 ## Shared Components
+
+### Key-Value Field Display
+All detail page field sections (Property Details, Borrowing Entity, Land and Parcel, etc.)
+must use the standardized key-value layout:
+- Parent grid: `.rq-field-grid` (2-col) or `.rq-field-grid-3` (3-col)
+- Label: `.rq-kv-label` (11px, uppercase, medium weight, muted)
+- Value: `.rq-kv-value` (14px / text-sm, medium weight, foreground)
+- Gap: `gap-x-6 gap-y-4` (built into the grid classes)
+
+This ensures Property, People, Overview, and Underwriting tabs all share
+identical field rendering.
+
+### PageHeader (`components/shared/page-header.tsx`)
 
 ### PageHeader (`components/shared/page-header.tsx`)
 
