@@ -353,6 +353,47 @@ export async function advanceStageAction(
   }
 }
 
+// ─── Simple Stage Move (drag-and-drop, no gating) ───
+
+export async function updateDealStageAction(
+  dealId: string,
+  newStage: string,
+  sortOrder?: number
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const update: Record<string, unknown> = {
+      stage: newStage,
+      stage_entered_at: new Date().toISOString(),
+    };
+    if (sortOrder !== undefined) {
+      update.sort_order = sortOrder;
+    }
+
+    const { error } = await admin
+      .from("unified_deals" as never)
+      .update(update as never)
+      .eq("id" as never, dealId as never);
+
+    if (error) {
+      console.error("updateDealStageAction error:", error);
+      return { error: error.message };
+    }
+
+    revalidatePath(`/pipeline/${dealId}`);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("updateDealStageAction error:", err);
+    return {
+      error: err instanceof Error ? err.message : "Failed to move deal",
+    };
+  }
+}
+
 // ─── Reorder Deals (within a stage column) ───
 
 export async function reorderDealsAction(
