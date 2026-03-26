@@ -404,16 +404,17 @@ function DealCardInner({
   const sortableStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
+    touchAction: "none" as const,
   };
 
-  // dnd-kit's onPointerDown calls preventDefault(), which suppresses the
+  // PointerSensor calls preventDefault() on pointerdown, which suppresses the
   // browser click event. Detect clicks manually via pointer position tracking.
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       pointerStartRef.current = { x: e.clientX, y: e.clientY };
-      // Forward to dnd-kit's handler so dragging still works
+      // Forward to dnd-kit's PointerSensor handler so dragging still works
       (listeners as Record<string, (e: React.PointerEvent) => void> | undefined)
         ?.onPointerDown?.(e);
     },
@@ -439,6 +440,20 @@ function DealCardInner({
     [onClick]
   );
 
+  // Merge dnd-kit's keyboard handler with Enter/Space click navigation
+  const dndKeyDown = (listeners as Record<string, (e: React.KeyboardEvent) => void> | undefined)?.onKeyDown;
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.key === "Enter" || e.key === " ") && !isDragging) {
+        e.preventDefault();
+        onClick();
+        return;
+      }
+      dndKeyDown?.(e);
+    },
+    [onClick, isDragging, dndKeyDown]
+  );
+
   const { days, alertLevel } = useMemo(() => {
     const d = daysInStage(deal.stage_entered_at);
     const al = getAlertLevel(d, stageConfig);
@@ -454,14 +469,12 @@ function DealCardInner({
       ref={setNodeRef}
       data-deal-id={deal.id}
       style={sortableStyle}
+      {...attributes}
       {...listeners}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      {...attributes}
       onPointerEnter={prefetchDeal}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onClick();
-      }}
+      onKeyDown={handleKeyDown}
       className={cn(
         "group w-full text-left rounded-xl border bg-card relative overflow-hidden flex flex-col",
         "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)]",
