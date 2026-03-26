@@ -16110,7 +16110,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           deal_number: string | null
-          expected_close_date: string | null
+          close_date: string | null
           fundraise_amount_options: Json | null
           fundraise_deck_url: string | null
           fundraise_description: string | null
@@ -16153,7 +16153,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          expected_close_date?: string | null
+          close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
@@ -16196,7 +16196,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          expected_close_date?: string | null
+          close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null

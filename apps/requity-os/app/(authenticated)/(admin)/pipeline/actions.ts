@@ -943,7 +943,7 @@ export async function updateDealStatusAction(
       const closingDate = new Date().toISOString().split("T")[0];
       const { error: closeErr } = await admin
         .from("unified_deals")
-        .update({ expected_close_date: closingDate })
+        .update({ close_date: closingDate })
         .eq("id", dealId);
       if (closeErr) {
         console.error("updateDealStatusAction closing_date error:", closeErr);

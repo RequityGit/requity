@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       term: get(uwFields, "loan_term"),
       dscr: getNum(uwFields, "dscr"),
       rehabBudget: getNum(uwFields, "rehab_budget"),
-      closingDate: get(dealFields, "expected_close_date"),
+      closingDate: get(dealFields, "close_date") || get(dealFields, "expected_close_date"),
       notes: queueItem.extraction_summary || queueItem.subject || undefined,
     };
 
