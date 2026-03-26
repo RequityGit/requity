@@ -25,7 +25,7 @@ export function RetellWidget() {
     script.setAttribute('data-logo-url', '/images/requity-chat-logo.png');
     script.setAttribute(
       'data-popup-message',
-      'Hi there! I can help you get a term sheet today. Click here to chat with our team.'
+      'Hi there! I am here to help with any question you may have. Click here to chat with our team.'
     );
     script.setAttribute('data-show-ai-popup', 'true');
     script.setAttribute('data-show-ai-popup-time', '5');
