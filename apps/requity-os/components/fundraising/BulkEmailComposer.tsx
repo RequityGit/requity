@@ -108,11 +108,10 @@ export function BulkEmailComposer({
       const supabase = createClient();
       const { data } = await supabase
         .from("gmail_tokens")
-        .select("email")
+        .select("email, refresh_token")
         .eq("user_id", currentUserId)
-        .eq("is_active", true)
         .maybeSingle();
-      if (data?.email) setGmailEmail(data.email);
+      if (data?.email && data?.refresh_token) setGmailEmail(data.email);
     }
     checkGmail();
   }, [currentUserId]);

@@ -31,7 +31,6 @@ const PUBLIC_ROUTES = [
   "/upload",
   "/api/upload-link", // token-based upload (no auth required)
   "/api/deal-messages", // token-based borrower messaging (auth handled in route)
-  "/api/gmail/auth/callback", // OAuth redirect - handles own auth via state param
 ];
 
 // Routes accessible to BOTH authenticated and unauthenticated users.
