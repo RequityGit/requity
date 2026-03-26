@@ -897,67 +897,6 @@
   animation: rq-pulse-once var(--duration-slow) var(--ease-in-out) 1;
 }
 
-/* ─── Urgent deal glow (pipeline cards) ─── */
-.rq-urgent-glow {
-  animation: rq-urgent-pulse 2s ease-in-out infinite;
-}
-@keyframes rq-urgent-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
-  50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.4); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rq-urgent-glow {
-    animation: none;
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
-  }
-}
-
-/* ─── Focus ribbon (pipeline card corner badge) ─── */
-.rq-focus-ribbon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 44px;
-  height: 44px;
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
-  z-index: 10;
-  cursor: pointer;
-  display: flex;
-  align-items: start;
-  justify-content: end;
-  padding: 5px 5px 0 0;
-  transition: opacity var(--duration-fast) var(--ease-out),
-              background-color var(--duration-fast) var(--ease-out);
-}
-
-.rq-focus-ribbon--idle {
-  opacity: 0;
-  background-color: hsl(var(--muted-foreground) / 0.12);
-}
-.group:hover .rq-focus-ribbon--idle {
-  opacity: 1;
-}
-.rq-focus-ribbon--idle:hover {
-  background-color: hsl(var(--muted-foreground) / 0.2);
-}
-
-.rq-focus-ribbon--active {
-  opacity: 1;
-  background: linear-gradient(135deg, #ef4444, #f97316);
-  animation: rq-focus-shimmer 2s ease-in-out infinite;
-}
-.rq-focus-ribbon--active:hover {
-  background: linear-gradient(135deg, #f87171, #fb923c);
-}
-
-@keyframes rq-focus-shimmer {
-  0%, 100% { opacity: 0.85; }
-  50% { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rq-focus-ribbon--active { animation: none; opacity: 1; }
-}
 
 /* ─── Like button animations ─── */
 @keyframes like-pulse {
