@@ -18,7 +18,7 @@ export function KpiCard({
 }: KpiCardProps) {
   return (
     <Card className={cn("rounded-xl", className)}>
-      <CardContent className="rq-stat-card">
+      <CardContent className="!p-0 rq-stat-card">
         <span className="rq-stat-card-title">{title}</span>
         {icon && <div className="rq-stat-card-icon">{icon}</div>}
         <div className="rq-stat-card-value">{value}</div>
