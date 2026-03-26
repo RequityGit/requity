@@ -508,13 +508,13 @@
   /* Card shell — rounded container with border + background.
      Use alone for cards with custom internals, or combine with .rq-card for padded content. */
   .rq-card-wrapper {
-    @apply rounded-xl border border-border bg-card overflow-hidden;
+    @apply rounded-lg border border-border bg-card overflow-hidden;
   }
 
   /* Card header bar — sits at top of .rq-card-wrapper with bottom border.
      Typically contains flex row with icon + title + optional action button. */
   .rq-card-header {
-    @apply flex items-center justify-between px-5 py-3.5 border-b border-border;
+    @apply flex items-center justify-between px-5 py-2.5 border-b border-border;
   }
 
   /* List item row — repeated rows inside cards (team members, contacts, deals).
@@ -522,23 +522,6 @@
   .rq-list-row {
     @apply flex items-center px-5 py-2 border-b border-border last:border-b-0
       hover:bg-muted/40 rq-transition;
-  }
-
-  /* Overview-style card — clean body with no header bar.
-     Pair with .rq-section-label placed ABOVE the card. */
-  .rq-overview-card {
-    @apply rounded-lg border border-border bg-card p-4 px-5;
-  }
-
-  /* Section label row — icon + uppercase micro label, placed above a card.
-     Combine with flex justify-between wrapper when actions are needed on the right. */
-  .rq-section-label {
-    @apply flex items-center gap-1.5 mb-2;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: hsl(var(--muted-foreground));
   }
 }
 
