@@ -26,10 +26,12 @@ import {
 } from "./ExtractedFieldsReview";
 import {
   createUnifiedDealAction,
-  createTempExtractionUploadUrl,
-  cleanupTempExtraction,
   addDealNoteAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import {
+  createTempExtractionUploadUrl,
+  cleanupTempExtraction,
+} from "@/lib/actions/extraction-actions";
 import {
   ACTIVE_ASSET_CLASS_OPTIONS,
   type AssetClass,
