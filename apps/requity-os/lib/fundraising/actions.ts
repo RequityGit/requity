@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidatePath } from "next/cache";
 import type { CommitmentStatus } from "./types";
+import { ensureInvestorRelationship } from "@/lib/crm/ensure-investor-relationship";
 
 export async function updateCommitmentStatus(
   commitmentId: string,
@@ -91,6 +92,11 @@ export async function addManualCommitment(data: {
     .maybeSingle();
 
   const contactId = (contact as { id: string } | null)?.id ?? null;
+
+  // Auto-tag matched contact as investor
+  if (contactId) {
+    await ensureInvestorRelationship(admin, contactId);
+  }
 
   const { data: scData, error } = await admin
     .from("soft_commitments" as never)
