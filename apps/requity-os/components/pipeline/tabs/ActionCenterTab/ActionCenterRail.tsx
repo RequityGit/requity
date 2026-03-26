@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef, useCallback } from "react";
-import { ChevronDown, ClipboardCheck, Link2, Loader2, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, ClipboardCheck, Link2, Loader2, Plus } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RailConditionItem } from "./RailConditionItem";
 import { ConditionDetailPanel } from "./ConditionDetailPanel";
@@ -49,6 +49,31 @@ const DEAL_STAGES = [
 ] as const;
 
 const STAGE_KEYS = DEAL_STAGES.map((s) => s.key);
+
+// ── Category labels (matches SecureUploadLinkDialog) ──
+
+const CATEGORY_LABELS: Record<string, string> = {
+  borrower_documents: "Borrower Documents",
+  non_us_citizen: "Non-US Citizen",
+  entity_documents: "Entity Documents",
+  deal_level_items: "Deal Level Items",
+  appraisal_request: "Appraisal",
+  insurance_request: "Insurance",
+  title_request: "Title",
+  title_fraud_protection: "Title / Fraud Protection",
+  fundraising: "Fundraising",
+  prior_to_funding: "Prior to Funding",
+  closing_prep: "Closing Prep",
+  lender_package: "Lender Package",
+  prior_to_approval: "Prior to Approval",
+  post_closing_items: "Post Closing",
+  note_sell_process: "Note Sell",
+  post_loan_payoff: "Post Loan Payoff",
+};
+
+function isConditionCleared(status: string): boolean {
+  return status === "approved" || status === "waived" || status === "not_applicable";
+}
 
 /** Default to ALL stages so the full condition picture is always visible. */
 function getDefaultStages(_dealStage: string): Set<string> {
@@ -145,13 +170,7 @@ export function ActionCenterRail({
   }, []);
 
   const clearedConditions = useMemo(
-    () =>
-      filteredConditions.filter(
-        (c) =>
-          c.status === "approved" ||
-          c.status === "waived" ||
-          c.status === "not_applicable"
-      ).length,
+    () => filteredConditions.filter((c) => isConditionCleared(c.status)).length,
     [filteredConditions]
   );
 
@@ -215,7 +234,7 @@ export function ActionCenterRail({
                 <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
                   {clearedConditions}/{filteredConditions.length}
                 </span>
-                <div className="w-12 h-1 rounded-full bg-border overflow-hidden">
+                <div className="w-16 h-1.5 rounded-full bg-border overflow-hidden">
                   <div
                     className="h-full rounded-full bg-emerald-500 transition-all duration-normal"
                     style={{
@@ -301,7 +320,7 @@ export function ActionCenterRail({
               </div>
             </div>
 
-            {/* Scrollable list */}
+            {/* Scrollable list grouped by category */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
@@ -321,18 +340,14 @@ export function ActionCenterRail({
                       compact
                     />
                   ) : (
-                    filteredConditions.map((c) => (
-                      <RailConditionItem
-                        key={c.id}
-                        condition={c}
-                        documents={conditionDocs}
-                        dealId={dealId}
-                        onStatusChange={onConditionStatusChange}
-                        onOpenDetail={handleConditionClick}
-                        assignedProfile={c.assigned_to ? conditionProfiles[c.assigned_to] ?? null : null}
-                        approverProfile={c.approver_id ? conditionProfiles[c.approver_id] ?? null : null}
-                      />
-                    ))
+                    <ConditionCategoryAccordion
+                      conditions={filteredConditions}
+                      conditionDocs={conditionDocs}
+                      conditionProfiles={conditionProfiles}
+                      dealId={dealId}
+                      onStatusChange={onConditionStatusChange}
+                      onOpenDetail={handleConditionClick}
+                    />
                   )}
                 </div>
               )}
@@ -450,5 +465,109 @@ export function ActionCenterRail({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// ── Condition Category Accordion ──
+
+interface ConditionCategoryAccordionProps {
+  conditions: DealConditionRow[];
+  conditionDocs: ConditionDocument[];
+  conditionProfiles: Record<string, ConditionProfile>;
+  dealId: string;
+  onStatusChange: (conditionId: string, newStatus: string) => void;
+  onOpenDetail: (conditionId: string) => void;
+}
+
+function ConditionCategoryAccordion({
+  conditions,
+  conditionDocs,
+  conditionProfiles,
+  dealId,
+  onStatusChange,
+  onOpenDetail,
+}: ConditionCategoryAccordionProps) {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Group conditions by category, preserving sort_order within each group
+  const grouped = useMemo(() => {
+    const map = new Map<string, DealConditionRow[]>();
+    for (const c of conditions) {
+      const cat = c.category || "other";
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(c);
+    }
+    // Sort categories by their first condition's sort_order
+    return Array.from(map.entries()).sort((a, b) => {
+      const aFirst = a[1][0]?.sort_order ?? 0;
+      const bFirst = b[1][0]?.sort_order ?? 0;
+      return aFirst - bFirst;
+    });
+  }, [conditions]);
+
+  const toggleCategory = useCallback((cat: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) {
+        next.delete(cat);
+      } else {
+        next.add(cat);
+      }
+      return next;
+    });
+  }, []);
+
+  return (
+    <div>
+      {grouped.map(([category, items]) => {
+        const cleared = items.filter((c) => isConditionCleared(c.status)).length;
+        const total = items.length;
+        const isExpanded = expandedCategories.has(category);
+        const allCleared = cleared === total;
+        const label = CATEGORY_LABELS[category] ?? category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+        return (
+          <div key={category}>
+            {/* Category header */}
+            <button
+              type="button"
+              onClick={() => toggleCategory(category)}
+              className="flex w-full items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border/50 hover:bg-muted/50 rq-transition cursor-pointer"
+            >
+              <ChevronRight
+                className={`h-3 w-3 shrink-0 text-muted-foreground/60 rq-transition-transform ${isExpanded ? "rotate-90" : ""}`}
+              />
+              <span className="text-[11px] font-semibold text-foreground flex-1 text-left truncate">
+                {label}
+              </span>
+              <span className={`text-[10px] font-medium tabular-nums shrink-0 ${allCleared ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                {cleared}/{total}
+              </span>
+              {/* Mini progress bar */}
+              <div className="w-8 h-1 rounded-full bg-border overflow-hidden shrink-0">
+                <div
+                  className={`h-full rounded-full transition-all duration-normal ${allCleared ? "bg-emerald-500" : "bg-primary/50"}`}
+                  style={{ width: total > 0 ? `${Math.round((cleared / total) * 100)}%` : "0%" }}
+                />
+              </div>
+            </button>
+
+            {/* Expanded condition items */}
+            {isExpanded && items.map((c) => (
+              <RailConditionItem
+                key={c.id}
+                condition={c}
+                documents={conditionDocs}
+                dealId={dealId}
+                onStatusChange={onStatusChange}
+                onOpenDetail={onOpenDetail}
+                assignedProfile={c.assigned_to ? conditionProfiles[c.assigned_to] ?? null : null}
+                approverProfile={c.approver_id ? conditionProfiles[c.approver_id] ?? null : null}
+              />
+            ))}
+          </div>
+        );
+      })}
+    </div>
   );
 }

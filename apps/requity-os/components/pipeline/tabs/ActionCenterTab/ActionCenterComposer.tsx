@@ -75,11 +75,11 @@ export function ActionCenterComposer({
 
   if (!expanded) {
     return (
-      <div className="border-t px-3 py-2">
+      <div className="border-t-2 border-border/60 px-3 py-3 bg-muted/10">
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="w-full flex items-center gap-2 rounded-lg border border-border bg-transparent px-3 py-1.5 text-[13px] text-muted-foreground hover:border-border hover:bg-muted/30 rq-transition cursor-text text-left"
+          className="w-full flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-muted-foreground hover:border-border hover:bg-muted/30 rq-transition cursor-text text-left"
         >
           {mode === "note"
             ? "Write a note... use @mention to tag team members"
@@ -90,7 +90,7 @@ export function ActionCenterComposer({
   }
 
   return (
-    <div ref={containerRef} className="border-t bg-muted/20 px-3 py-2">
+    <div ref={containerRef} className="border-t-2 border-border/60 bg-muted/20 px-3 py-3">
       {/* Mode toggle */}
       {showMessageMode && (
         <div className="flex items-center gap-1 mb-2">
