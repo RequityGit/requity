@@ -162,6 +162,30 @@ function sanitizeStreetAddress(
   return address.trim().replace(/,\s*$/, "");
 }
 
+/**
+ * Extract unit/apartment number from a street address.
+ * Matches patterns like "Apt 103B", "Unit 5", "Suite 200", "#12".
+ * Returns the stripped number (no prefix) or undefined.
+ */
+function extractUnitNumber(address: string): { street: string; unit?: string } {
+  const unitPattern = /[,\s]+(?:apt|apartment|unit|suite|ste|#)\s*([a-z0-9-]+)\s*$/i;
+  const match = address.match(unitPattern);
+  if (match) {
+    return {
+      street: address.slice(0, match.index).trim(),
+      unit: match[1],
+    };
+  }
+  return { street: address };
+}
+
+/**
+ * Strip " County" suffix from a county name (case-insensitive).
+ */
+function stripCountySuffix(county: string): string {
+  return county.replace(/\s+County$/i, "").trim();
+}
+
 function normalizeRealie(raw: RealieProperty): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
@@ -453,13 +477,18 @@ export async function POST(req: NextRequest) {
       body.zip
     );
 
+    // Extract unit number from the street address (e.g. "123 Main St Apt 4B" → unit "4B")
+    const { street: streetOnly, unit } = extractUnitNumber(streetAddress);
+
+    // Realie expects: address (street only), state (2-letter), city, county (no suffix), unitNumberStripped
+    // NOTE: Realie does NOT accept a "zip" parameter — omit it.
     const params = new URLSearchParams({
-      address: streetAddress,
+      address: streetOnly,
       state: body.state.trim().toUpperCase(),
     });
     if (body.city) params.set("city", body.city.trim());
-    if (body.zip) params.set("zip", body.zip.trim());
-    if (body.county) params.set("county", body.county.trim());
+    if (body.county) params.set("county", stripCountySuffix(body.county.trim()));
+    if (unit) params.set("unitNumberStripped", unit);
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
 
