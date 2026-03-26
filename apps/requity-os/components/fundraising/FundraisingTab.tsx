@@ -812,7 +812,7 @@ function FundraiseDashboard({
       {/* Progress Bar */}
       {fundraiseTarget && fundraiseTarget > 0 && (
         <Card>
-          <CardContent className="p-5">
+          <CardContent className="!p-0 px-5 pt-4 pb-5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">
                 {formatCurrency(stats.totalActive)} committed
