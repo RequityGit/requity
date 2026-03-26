@@ -193,19 +193,12 @@ export async function getEsignTemplates(): Promise<{
 
   const admin = createAdminClient();
   const { data, error } = await admin
-    .from("esign_templates" as never)
-    .select("id, name, document_type, business_line" as never)
-    .eq("is_active" as never, true as never)
-    .order("name" as never);
+    .from("esign_templates")
+    .select("id, name, document_type, business_line")
+    .eq("is_active", true)
+    .order("name");
 
   if (error) return { error: error.message };
 
-  return {
-    templates: (data ?? []) as {
-      id: number;
-      name: string;
-      document_type: string;
-      business_line: string;
-    }[],
-  };
+  return { templates: data ?? [] };
 }
