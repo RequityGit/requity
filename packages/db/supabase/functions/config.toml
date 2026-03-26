@@ -9,3 +9,6 @@ verify_jwt = false
 
 [send-notification-batches]
 verify_jwt = false
+
+[track-activity]
+verify_jwt = false
