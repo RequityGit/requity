@@ -19,7 +19,7 @@ import {
   getDealDisplayConfig,
   isCommercialAssetClass,
 } from "@/lib/pipeline/deal-display-config";
-import { formatDateShort } from "@/lib/format";
+import { formatDateShort, formatAddress } from "@/lib/format";
 
 // ─── Types ───
 
@@ -50,23 +50,26 @@ export function getDealAddress(deal: UnifiedDeal): string {
   // Check property_data first
   const pd = deal.property_data;
   if (pd) {
+    // Pre-composed full address takes priority
     if (typeof pd.address === "string" && pd.address) return pd.address;
-    const pdParts = [pd.street_address, pd.city, pd.state].filter(Boolean);
-    if (pdParts.length > 0) {
-      let addr = pdParts.join(", ");
-      if (pd.zip) addr += ` ${pd.zip}`;
-      return addr;
-    }
+    const result = formatAddress({
+      street: pd.street_address as string | undefined,
+      city: pd.city as string | undefined,
+      state: pd.state as string | undefined,
+      zip: pd.zip as string | undefined,
+    });
+    if (result) return result;
   }
   // Fall back to uw_data address fields
   const uw = deal.uw_data;
   if (uw) {
-    const uwParts = [uw.property_address, uw.property_city, uw.property_state].filter(Boolean);
-    if (uwParts.length > 0) {
-      let addr = uwParts.join(", ");
-      if (uw.property_zip) addr += ` ${uw.property_zip}`;
-      return addr;
-    }
+    const result = formatAddress({
+      street: uw.property_address as string | undefined,
+      city: uw.property_city as string | undefined,
+      state: uw.property_state as string | undefined,
+      zip: uw.property_zip as string | undefined,
+    });
+    if (result) return result;
   }
   return "";
 }
