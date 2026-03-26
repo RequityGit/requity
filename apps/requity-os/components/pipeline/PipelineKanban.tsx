@@ -1,24 +1,27 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
   useDroppable,
-  MouseSensor,
-  TouchSensor,
+  PointerSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  pointerWithin,
+  closestCenter,
+  rectIntersection,
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
+  type CollisionDetection,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
   arrayMove,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { showSuccess, showError } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -41,6 +44,44 @@ import type { IntakeItem } from "@/lib/intake/types";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Layers } from "lucide-react";
 import type { ConditionsProgress } from "@/stores/pipeline-store";
+
+// Static set of stage keys for collision detection (module-level, stable reference)
+const STAGE_KEY_SET = new Set<string>(STAGES.map((s) => s.key));
+
+/**
+ * Custom collision detection that prioritises card-level droppables over
+ * stage-column droppables. Without this, closestCorners can resolve to the
+ * large column container instead of the sibling card the user is dragging
+ * over, which silently discards within-column reorders.
+ */
+const kanbanCollisionDetection: CollisionDetection = (args) => {
+  // 1. Find all droppables whose rect contains the pointer
+  const pointerCollisions = pointerWithin(args);
+
+  if (pointerCollisions.length > 0) {
+    // 2. Prefer card-level droppables (IDs NOT in STAGE_KEY_SET)
+    const cardCollisions = pointerCollisions.filter(
+      (c) => !STAGE_KEY_SET.has(String(c.id))
+    );
+
+    if (cardCollisions.length > 0) {
+      // Among card droppables, pick the closest by center distance
+      const cardIds = new Set(cardCollisions.map((c) => String(c.id)));
+      return closestCenter({
+        ...args,
+        droppableContainers: args.droppableContainers.filter((c) =>
+          cardIds.has(String(c.id))
+        ),
+      });
+    }
+
+    // Only container-level hits (empty column or whitespace) — return those
+    return pointerCollisions;
+  }
+
+  // 3. Fallback for fast pointer movement: use rect intersection
+  return rectIntersection(args);
+};
 
 interface PipelineKanbanProps {
   deals: UnifiedDeal[];
@@ -109,10 +150,13 @@ export function PipelineKanban({
     [stageConfigs]
   );
 
+  // Keep a ref to the latest deals to avoid stale closures in drag handlers
+  const dealsRef = useRef(deals);
+  dealsRef.current = deals;
+
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-    useSensor(KeyboardSensor)
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -129,16 +173,15 @@ export function PipelineKanban({
       // Determine which stage the cursor is over
       // over.id could be a deal id or a stage key (droppable column)
       const overId = over.id as string;
-      const stageKeys = STAGES.map((s) => s.key) as string[];
-      if (stageKeys.includes(overId)) {
+      if (STAGE_KEY_SET.has(overId)) {
         setOverStage(overId as UnifiedStage);
       } else {
         // It's a deal card - find which stage that deal belongs to
-        const overDeal = deals.find((d) => d.id === overId);
+        const overDeal = dealsRef.current.find((d) => d.id === overId);
         if (overDeal) setOverStage(overDeal.stage);
       }
     },
-    [deals]
+    []
   );
 
   const handleDragEnd = useCallback(
@@ -149,15 +192,15 @@ export function PipelineKanban({
       const { active, over } = event;
       if (!over) return;
 
+      const currentDeals = dealsRef.current;
       const dealId = active.id as string;
       const overId = over.id as string;
-      const deal = deals.find((d) => d.id === dealId);
+      const deal = currentDeals.find((d) => d.id === dealId);
       if (!deal) return;
 
       // Determine if we dropped on a stage column or on another deal
-      const stageKeys = STAGES.map((s) => s.key) as string[];
-      const isDropOnStage = stageKeys.includes(overId);
-      const overDeal = !isDropOnStage ? deals.find((d) => d.id === overId) : null;
+      const isDropOnStage = STAGE_KEY_SET.has(overId);
+      const overDeal = !isDropOnStage ? currentDeals.find((d) => d.id === overId) : null;
       const targetStage = isDropOnStage
         ? (overId as UnifiedStage)
         : overDeal
@@ -170,7 +213,7 @@ export function PipelineKanban({
       if (sameColumn && dealId === overId) return; // Dropped on self
 
       // Build the ordered list for the target stage
-      const stageDeals = deals
+      const stageDeals = currentDeals
         .filter((d) => d.stage === targetStage)
         .sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
 
@@ -233,7 +276,7 @@ export function PipelineKanban({
         }
       }
     },
-    [deals, moveDeal, reorderDeal]
+    [moveDeal, reorderDeal]
   );
 
   const handleDragCancel = useCallback(() => {
@@ -265,7 +308,7 @@ export function PipelineKanban({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={kanbanCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
