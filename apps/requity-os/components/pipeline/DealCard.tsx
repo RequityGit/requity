@@ -158,7 +158,7 @@ function CardContent({
   const propertyName = deal.name;
   const displayAddress = address || (isCommercial ? "" : deal.name);
   const loanType = getLoanTypeLabel(deal);
-  const closeDateStatus = getCloseDateStatus(deal.expected_close_date);
+  const closeDateStatus = getCloseDateStatus(deal.close_date);
   const condPct = conditionsProgress && conditionsProgress.total > 0
     ? Math.round((conditionsProgress.completed / conditionsProgress.total) * 100)
     : 0;
@@ -336,7 +336,7 @@ function CardContent({
               </span>
             </>
           )}
-          {deal.expected_close_date && (
+          {deal.close_date && (
             <span
               className={cn(
                 "flex items-center gap-1 text-[10px] font-medium",
@@ -346,7 +346,7 @@ function CardContent({
               )}
             >
               <Calendar className={cn("h-2.5 w-2.5", closeDateStatus === "normal" ? "opacity-50" : "opacity-80")} />
-              {formatDateShort(deal.expected_close_date)}
+              {formatDateShort(deal.close_date)}
               {closeDateStatus === "overdue" && " (overdue)"}
             </span>
           )}
@@ -505,7 +505,7 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.asset_class === next.deal.asset_class &&
     prev.deal.capital_side === next.deal.capital_side &&
     prev.deal.status === next.deal.status &&
-    prev.deal.expected_close_date === next.deal.expected_close_date &&
+    prev.deal.close_date === next.deal.close_date &&
     prev.deal.is_priority === next.deal.is_priority &&
     prev.deal.assigned_to === next.deal.assigned_to &&
     prev.deal.primary_contact_id === next.deal.primary_contact_id &&

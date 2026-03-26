@@ -109,7 +109,7 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
       if (filters.dateAdded !== "all" && !filterByDateAdded(d.created_at, filters.dateAdded))
         return false;
 
-      if (filters.closingDate !== "all" && !filterByClosingDate(d.expected_close_date, filters.closingDate))
+      if (filters.closingDate !== "all" && !filterByClosingDate(d.close_date, filters.closingDate))
         return false;
 
       if (filters.search) {

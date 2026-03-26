@@ -64,7 +64,7 @@ const FIELD_OPTIONS: { value: string; label: string }[] = [
   { value: "assigned_to", label: "Assigned To" },
   { value: "primary_contact_id", label: "Primary Contact" },
   { value: "company_id", label: "Company" },
-  { value: "expected_close_date", label: "Expected Close Date" },
+  { value: "close_date", label: "Close Date" },
   { value: "capital_side", label: "Capital Side" },
   // Common uw_data fields
   { value: "uw:loan_amount", label: "UW — Loan Amount" },

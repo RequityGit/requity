@@ -138,7 +138,7 @@ export function DealPreviewVitals({ data, teamMemberNames }: DealPreviewVitalsPr
         <FieldRow icon={TrendingUp} label="Purpose" value={uw.loan_purpose as string} />
         <FieldRow icon={Calendar} label="Term" value={uw.term_months ? `${uw.term_months} mo` : null} />
         <FieldRow label="Orig. Fee" value={uw.origination_fee_pct != null ? `${uw.origination_fee_pct}%` : null} />
-        <FieldRow icon={Calendar} label="Est. Close" value={deal.expected_close_date ? formatDate(deal.expected_close_date) : null} />
+        <FieldRow icon={Calendar} label="Est. Close" value={deal.close_date ? formatDate(deal.close_date) : null} />
         <FieldRow icon={Hash} label="Source" value={deal.source} />
       </div>
 

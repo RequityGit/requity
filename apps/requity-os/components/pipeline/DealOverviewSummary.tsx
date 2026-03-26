@@ -420,8 +420,8 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               <InlineField
                 label="Closing date"
                 type="date"
-                value={deal.expected_close_date}
-                onSave={(v) => saveField("expected_close_date", v)}
+                value={deal.close_date}
+                onSave={(v) => saveField("close_date", v)}
               />
               <InlineField
                 label="Lead source"

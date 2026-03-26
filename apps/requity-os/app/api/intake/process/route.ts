@@ -30,7 +30,7 @@ You do not know the specific deal type yet, so extract all information you can f
 Standard deal fields to extract:
 - name (text): Deal name, property address, or project name
 - amount (currency): Loan amount, deal size, or investment amount
-- expected_close_date (date, YYYY-MM-DD format): Expected closing date
+- close_date (date, YYYY-MM-DD format): Expected closing date
 - asset_class (select from: sfr, duplex_fourplex, multifamily, mhc, rv_park, campground, commercial, mixed_use, land): Property/asset type
 - borrower_name (text): Borrower or sponsor name
 - borrower_email (text): Borrower email address

@@ -108,7 +108,7 @@ export interface UnifiedDeal {
   assigned_to: string | null;
   amount: number | null;
   probability: number;
-  expected_close_date: string | null;
+  close_date: string | null;
   status: DealStatus;
   loss_reason: string | null;
   source: string | null;
