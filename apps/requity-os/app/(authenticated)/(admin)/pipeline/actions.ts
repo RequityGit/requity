@@ -353,6 +353,41 @@ export async function advanceStageAction(
   }
 }
 
+// ─── Reorder Deals (within a stage column) ───
+
+export async function reorderDealsAction(
+  orderedDealIds: string[],
+  stage: string
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const updates = orderedDealIds.map((id, i) =>
+      admin
+        .from("unified_deals" as never)
+        .update({ sort_order: i } as never)
+        .eq("id" as never, id as never)
+        .eq("stage" as never, stage as never)
+    );
+
+    const results = await Promise.all(updates);
+    const failed = results.filter((r) => r.error);
+
+    if (failed.length > 0) {
+      console.error("reorderDealsAction errors:", failed.map((r) => r.error));
+      return { error: "Failed to save deal order" };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("reorderDealsAction error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to reorder deals" };
+  }
+}
+
 // ─── Regress Stage (backward jump, no validation) ───
 
 export async function regressStageAction(

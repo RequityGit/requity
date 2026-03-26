@@ -4,7 +4,8 @@ import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { User, Users, Calendar, Clock, AlertTriangle } from "lucide-react";
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   type UnifiedDeal,
   type StageConfig,
@@ -385,10 +386,22 @@ function DealCardInner({
     onHover?.();
   }, [router, dealHref, onHover]);
 
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: deal.id,
     data: { stage: deal.stage },
   });
+
+  const sortableStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   // dnd-kit's onPointerDown calls preventDefault(), which suppresses the
   // browser click event. Detect clicks manually via pointer position tracking.
@@ -435,6 +448,7 @@ function DealCardInner({
     <div
       ref={setNodeRef}
       data-deal-id={deal.id}
+      style={sortableStyle}
       {...listeners}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
@@ -479,6 +493,7 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.status === next.deal.status &&
     prev.deal.close_date === next.deal.close_date &&
     prev.deal.assigned_to === next.deal.assigned_to &&
+    prev.deal.sort_order === next.deal.sort_order &&
     prev.deal.primary_contact_id === next.deal.primary_contact_id &&
     prev.deal.broker_contact_id === next.deal.broker_contact_id &&
     prev.stageConfig?.stage === next.stageConfig?.stage &&
