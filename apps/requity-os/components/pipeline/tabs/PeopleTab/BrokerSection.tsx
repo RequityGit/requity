@@ -155,7 +155,7 @@ export function BrokerSection({
     .join("")
     .toUpperCase()
     .slice(0, 2);
-  const company = localBroker.broker_company?.name || localBroker.company_name || "";
+  const company = localBroker.company_name || localBroker.broker_company?.name || "";
 
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">

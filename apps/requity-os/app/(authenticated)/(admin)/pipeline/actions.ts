@@ -689,9 +689,17 @@ export async function updateContactFieldAction(
     if (!allowedFields.includes(field)) return { error: `Field '${field}' not allowed` };
 
     const admin = createAdminClient();
+
+    // When company_name is edited directly, clear the company_id FK
+    // so the stale joined company record doesn't override the new text value
+    const updatePayload =
+      field === "company_name"
+        ? { company_name: value, company_id: null }
+        : { [field]: value };
+
     const { error } = await admin
       .from("crm_contacts")
-      .update({ [field]: value } as never)
+      .update(updatePayload as never)
       .eq("id", contactId);
 
     if (error) return { error: error.message };
