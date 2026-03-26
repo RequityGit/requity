@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback, useRef } from "react";
+import React, { useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { User, Users, Calendar, Clock, AlertTriangle } from "lucide-react";
@@ -413,9 +413,17 @@ function DealCardInner({
   // WITHOUT overriding dnd-kit's onPointerDown from {...listeners}. Overriding
   // and forwarding programmatically breaks PointerSensor activation.
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  // Track whether a drag occurred during this pointer session to suppress
+  // click navigation after delay-based drag activation + release.
+  const didDragRef = useRef(false);
+
+  useEffect(() => {
+    if (isDragging) didDragRef.current = true;
+  }, [isDragging]);
 
   const handlePointerDownCapture = useCallback(
     (e: React.PointerEvent) => {
+      didDragRef.current = false;
       pointerStartRef.current = { x: e.clientX, y: e.clientY };
     },
     []
@@ -426,6 +434,9 @@ function DealCardInner({
       const start = pointerStartRef.current;
       pointerStartRef.current = null;
       if (!start) return;
+
+      // If a drag was activated during this pointer session, suppress click
+      if (didDragRef.current) return;
 
       // If the pointer landed on the focus ribbon, skip navigation
       const target = e.target as HTMLElement;
