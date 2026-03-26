@@ -10,7 +10,7 @@ import type { LayoutSection } from "@/hooks/useDealLayout";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { showSuccess, showError, showInfo } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, ChevronRight } from "lucide-react";
+import { Loader2, Sparkles, ChevronRight, Search, Check } from "lucide-react";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { useOptionalInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
 import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
@@ -93,6 +93,8 @@ function PropertyDetailsContent({
   const [pending, startTransition] = useTransition();
   const [enriching, setEnriching] = useState(false);
   const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
+  const [searchValue, setSearchValue] = useState("");
+  const [searchSelected, setSearchSelected] = useState(false);
 
   const layoutSections = useMemo(() => {
     if (layout.loading) return [];
@@ -170,6 +172,44 @@ function PropertyDetailsContent({
     [dealId]
   );
 
+  // Search bar: on address select, fill fields then auto-trigger enrichment
+  const handleSearchAddressSelect = useCallback(
+    (parsed: ParsedAddress) => {
+      // Show green checkmark briefly
+      setSearchSelected(true);
+      setTimeout(() => setSearchSelected(false), 2000);
+
+      // Fill address fields
+      handleAddressSelect(parsed);
+
+      // Store lat/lng if available
+      if (parsed.lat != null && parsed.lng != null) {
+        setLocalData((prev) => ({ ...prev, latitude: parsed.lat, longitude: parsed.lng }));
+        startTransition(async () => {
+          await updatePropertyDataAction(dealId, "latitude", parsed.lat);
+          await updatePropertyDataAction(dealId, "longitude", parsed.lng);
+        });
+      }
+
+      // Clear the search bar after selection
+      setSearchValue("");
+
+      // Auto-trigger enrichment with the parsed address values directly
+      // (avoids stale state since localData hasn't updated yet)
+      setTimeout(() => {
+        enrichFromAddress({
+          address: parsed.address_line1,
+          state: parsed.state,
+          city: parsed.city,
+          zip: parsed.zip,
+          county: parsed.county,
+        });
+      }, 100);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dealId, handleAddressSelect]
+  );
+
   // Fields that live in uw_data (shared with Overview tab) rather than property_data
   const UW_DATA_FIELDS = new Set(["purchase_price", "appraised_value"]);
 
@@ -199,14 +239,24 @@ function PropertyDetailsContent({
     return labels;
   }, [enrichFieldMap]);
 
-  async function enrichFromAddress() {
-    const address = localData.property_address ?? localData.address_line1;
-    const state = localData.property_state ?? localData.state;
+  async function enrichFromAddress(overrides?: {
+    address?: string;
+    state?: string;
+    city?: string;
+    zip?: string;
+    county?: string;
+  }) {
+    const address = overrides?.address ?? localData.property_address ?? localData.address_line1;
+    const state = overrides?.state ?? localData.property_state ?? localData.state;
 
     if (!address || !state) {
       showError("Address and state are required for enrichment");
       return;
     }
+
+    const city = overrides?.city ?? localData.property_city ?? localData.city;
+    const zip = overrides?.zip ?? localData.property_zip ?? localData.zip;
+    const county = overrides?.county ?? localData.property_county ?? localData.county;
 
     setEnriching(true);
     try {
@@ -216,23 +266,17 @@ function PropertyDetailsContent({
         body: JSON.stringify({
           address: String(address).trim(),
           state: String(state).trim(),
-          ...(localData.property_city ?? localData.city
-            ? { city: String(localData.property_city ?? localData.city).trim() }
-            : {}),
-          ...(localData.property_zip ?? localData.zip
-            ? { zip: String(localData.property_zip ?? localData.zip).trim() }
-            : {}),
-          ...(localData.property_county ?? localData.county
-            ? { county: String(localData.property_county ?? localData.county).trim() }
-            : {}),
+          ...(city ? { city: String(city).trim() } : {}),
+          ...(zip ? { zip: String(zip).trim() } : {}),
+          ...(county ? { county: String(county).trim() } : {}),
         }),
       });
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         const searched = data.searched;
-        const cityStr = searched?.city ?? localData.property_city ?? localData.city;
-        const zipStr = searched?.zip ?? localData.property_zip ?? localData.zip;
+        const cityStr = searched?.city ?? city;
+        const zipStr = searched?.zip ?? zip;
         const addrParts = [
           String(address).trim(),
           cityStr ? String(cityStr).trim() : null,
@@ -450,7 +494,7 @@ function PropertyDetailsContent({
       variant="ghost"
       size="sm"
       className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground"
-      onClick={enrichFromAddress}
+      onClick={() => enrichFromAddress()}
       disabled={!hasAddress || !hasState || pending}
     >
       <Sparkles className="h-3 w-3 mr-1" />
@@ -458,9 +502,30 @@ function PropertyDetailsContent({
     </Button>
   );
 
+  const addressSearchBar = !isEditing && (
+    <div className="relative">
+      <Search className={cn(
+        "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground rq-transition",
+        searchSelected && "text-emerald-500 dark:text-emerald-400"
+      )} />
+      {searchSelected && (
+        <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 dark:text-emerald-400 rq-animate-fade-in" />
+      )}
+      <AddressAutocomplete
+        value={searchValue}
+        onChange={setSearchValue}
+        onAddressSelect={handleSearchAddressSelect}
+        placeholder="Search address..."
+        className="pl-9 pr-9 h-10 w-full rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        disabled={enriching}
+      />
+    </div>
+  );
+
   if (useLayoutSections || (isEditing && effectiveSections.length > 0)) {
     return (
       <div className="space-y-4">
+        {addressSearchBar}
         {effectiveSections.map((section, sectionIdx) => {
           const layoutFields = (effectiveFieldsBySection[section.id] ?? [])
             .filter((f) => f.is_visible)
@@ -570,6 +635,7 @@ function PropertyDetailsContent({
 
   return (
     <div className="space-y-4">
+      {addressSearchBar}
       {Array.from(fallbackSectionGroups.entries()).map(([groupName, fields], groupIdx) => (
         <div key={groupName} className="rq-card-wrapper">
           <div className="rq-card-header">
