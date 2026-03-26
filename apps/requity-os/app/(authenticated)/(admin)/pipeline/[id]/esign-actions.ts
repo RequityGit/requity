@@ -15,8 +15,6 @@ import type {
   EsignSubmission,
 } from "@/lib/esign/esign-types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // ---------------------------------------------------------------------------
 // Server actions for e-signature operations on deal detail pages
 // ---------------------------------------------------------------------------
@@ -161,19 +159,18 @@ export async function resendSignatureRequest(
   const admin = createAdminClient();
 
   const { data: signer } = await admin
-    .from("esign_signers" as never)
-    .select("docuseal_submitter_id" as never)
-    .eq("submission_id" as never, submissionId as never)
-    .eq("email" as never, signerEmail as never)
+    .from("esign_signers")
+    .select("docuseal_submitter_id")
+    .eq("submission_id", submissionId)
+    .eq("email", signerEmail)
     .single();
 
-  const s = signer as any;
-  if (!s?.docuseal_submitter_id) {
+  if (!signer?.docuseal_submitter_id) {
     return { error: "Signer not found" };
   }
 
   try {
-    await docuseal.updateSubmitter(s.docuseal_submitter_id, {
+    await docuseal.updateSubmitter(signer.docuseal_submitter_id, {
       send_email: true,
     });
     return { success: true };

@@ -7928,6 +7928,210 @@ export type Database = {
           },
         ]
       }
+      esign_documents: {
+        Row: {
+          audit_trail: Json | null
+          certificate_url: string | null
+          content_type: string | null
+          created_at: string | null
+          docuseal_document_url: string | null
+          file_name: string
+          file_size: number | null
+          id: number
+          storage_path: string | null
+          submission_id: number
+        }
+        Insert: {
+          audit_trail?: Json | null
+          certificate_url?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          docuseal_document_url?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: never
+          storage_path?: string | null
+          submission_id: number
+        }
+        Update: {
+          audit_trail?: Json | null
+          certificate_url?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          docuseal_document_url?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: never
+          storage_path?: string | null
+          submission_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_documents_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "esign_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_signers: {
+        Row: {
+          contact_id: number | null
+          created_at: string | null
+          docuseal_submitter_id: number | null
+          email: string
+          id: number
+          ip_address: unknown
+          name: string
+          role: string
+          sign_order: number | null
+          signed_at: string | null
+          status: string
+          submission_id: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_id?: number | null
+          created_at?: string | null
+          docuseal_submitter_id?: number | null
+          email: string
+          id?: never
+          ip_address?: unknown
+          name: string
+          role?: string
+          sign_order?: number | null
+          signed_at?: string | null
+          status?: string
+          submission_id: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_id?: number | null
+          created_at?: string | null
+          docuseal_submitter_id?: number | null
+          email?: string
+          id?: never
+          ip_address?: unknown
+          name?: string
+          role?: string
+          sign_order?: number | null
+          signed_at?: string | null
+          status?: string
+          submission_id?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_signers_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "esign_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_submissions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          deal_id: number | null
+          document_name: string
+          docuseal_submission_id: number | null
+          expiration_date: string | null
+          id: number
+          metadata: Json | null
+          requested_by: string | null
+          status: string
+          template_id: number | null
+          updated_at: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: number | null
+          document_name: string
+          docuseal_submission_id?: number | null
+          expiration_date?: string | null
+          id?: never
+          metadata?: Json | null
+          requested_by?: string | null
+          status?: string
+          template_id?: number | null
+          updated_at?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: number | null
+          document_name?: string
+          docuseal_submission_id?: number | null
+          expiration_date?: string | null
+          id?: never
+          metadata?: Json | null
+          requested_by?: string | null
+          status?: string
+          template_id?: number | null
+          updated_at?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_submissions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "esign_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_templates: {
+        Row: {
+          business_line: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          document_type: string
+          docuseal_template_id: number
+          field_mapping: Json | null
+          id: number
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_line: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_type: string
+          docuseal_template_id: number
+          field_mapping?: Json | null
+          id?: never
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_line?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_type?: string
+          docuseal_template_id?: number
+          field_mapping?: Json | null
+          id?: never
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       field_configurations: {
         Row: {
           blocks_stage_progression: boolean
@@ -12076,6 +12280,8 @@ export type Database = {
           baths_range: string | null
           beds_range: string | null
           city: string
+          contact_email: string | null
+          contact_phone: string | null
           core_property_id: string | null
           created_at: string
           description_html: string | null
@@ -12097,6 +12303,8 @@ export type Database = {
           baths_range?: string | null
           beds_range?: string | null
           city: string
+          contact_email?: string | null
+          contact_phone?: string | null
           core_property_id?: string | null
           created_at?: string
           description_html?: string | null
@@ -12118,6 +12326,8 @@ export type Database = {
           baths_range?: string | null
           beds_range?: string | null
           city?: string
+          contact_email?: string | null
+          contact_phone?: string | null
           core_property_id?: string | null
           created_at?: string
           description_html?: string | null
@@ -16102,19 +16312,24 @@ export type Database = {
       unified_deals: {
         Row: {
           amount: number | null
+          approval_requested_at: string | null
+          approval_requested_by: string | null
+          approval_status: string | null
           asset_class: string | null
           assigned_to: string | null
           broker_contact_id: string | null
           capital_side: string
+          close_date: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
           deal_number: string | null
-          close_date: string | null
+          expected_close_date: string | null
           fundraise_amount_options: Json | null
           fundraise_deck_url: string | null
           fundraise_description: string | null
           fundraise_enabled: boolean | null
+          fundraise_hard_cap: number | null
           fundraise_hero_image_url: string | null
           fundraise_slug: string | null
           fundraise_target: number | null
@@ -16133,9 +16348,9 @@ export type Database = {
           probability: number | null
           property_data: Json | null
           property_id: string | null
+          sort_order: number | null
           source: string | null
           source_detail: string | null
-          sort_order: number | null
           stage: string
           stage_entered_at: string
           status: string
@@ -16146,19 +16361,24 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
           asset_class?: string | null
           assigned_to?: string | null
           broker_contact_id?: string | null
           capital_side: string
+          close_date?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          close_date?: string | null
+          expected_close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
           fundraise_enabled?: boolean | null
+          fundraise_hard_cap?: number | null
           fundraise_hero_image_url?: string | null
           fundraise_slug?: string | null
           fundraise_target?: number | null
@@ -16190,19 +16410,24 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
           asset_class?: string | null
           assigned_to?: string | null
           broker_contact_id?: string | null
           capital_side?: string
+          close_date?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          close_date?: string | null
+          expected_close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
           fundraise_enabled?: boolean | null
+          fundraise_hard_cap?: number | null
           fundraise_hero_image_url?: string | null
           fundraise_slug?: string | null
           fundraise_target?: number | null

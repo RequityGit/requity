@@ -8,12 +8,7 @@ import type {
 // ---------------------------------------------------------------------------
 // Core E-Signature Service
 // Bridges document generation with DocuSeal for signing workflows.
-//
-// Note: esign_* tables are not yet in generated Supabase types (migration pending).
-// All table references use `as never` casts until types are regenerated.
 // ---------------------------------------------------------------------------
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Create a submission from a pre-registered DocuSeal template.
@@ -24,32 +19,30 @@ export async function createFromTemplate(
   const admin = createAdminClient();
 
   const { data: template, error: templateErr } = await admin
-    .from("esign_templates" as never)
-    .select("docuseal_template_id, field_mapping" as never)
-    .eq("id" as never, input.templateId as never)
+    .from("esign_templates")
+    .select("docuseal_template_id, field_mapping")
+    .eq("id", input.templateId)
     .single();
 
   if (templateErr || !template) {
     return { submissionId: 0, error: "Template not found" };
   }
 
-  const t = template as any;
-
   try {
     const dsSubmission = await docuseal.createSubmission({
-      template_id: t.docuseal_template_id,
+      template_id: template.docuseal_template_id,
       send_email: true,
       message: input.message ? { body: input.message } : undefined,
       submitters: input.signers.map((s) => ({
         email: s.email,
         name: s.name,
         role: s.role === "signer" ? "First Party" : s.role,
-        values: (t.field_mapping as Record<string, string>) ?? {},
+        values: (template.field_mapping as Record<string, string>) ?? {},
       })),
     });
 
     const { data: submission, error: subErr } = await admin
-      .from("esign_submissions" as never)
+      .from("esign_submissions")
       .insert({
         docuseal_submission_id: dsSubmission.id,
         deal_id: input.dealId,
@@ -61,33 +54,31 @@ export async function createFromTemplate(
           ? new Date(Date.now() + input.expirationDays * 86400000).toISOString()
           : null,
         metadata: {},
-      } as never)
-      .select("id" as never)
+      })
+      .select("id")
       .single();
 
     if (subErr || !submission) {
       return { submissionId: 0, error: subErr?.message ?? "Could not create submission record" };
     }
 
-    const sub = submission as any;
-
     const signerRows = dsSubmission.submitters.map(
-      (submitter: any, idx: number) => ({
-        submission_id: sub.id,
+      (submitter, idx) => ({
+        submission_id: submission.id,
         docuseal_submitter_id: submitter.id,
         contact_id: input.signers[idx]?.contactId ?? null,
         user_id: input.signers[idx]?.userId ?? null,
         name: input.signers[idx]?.name ?? "",
-        email: submitter.email,
+        email: submitter.email ?? input.signers[idx]?.email ?? "",
         role: input.signers[idx]?.role ?? "signer",
-        status: "sent",
+        status: "sent" as const,
         sign_order: input.signers[idx]?.signOrder ?? idx + 1,
       })
     );
 
-    await admin.from("esign_signers" as never).insert(signerRows as never);
+    await admin.from("esign_signers").insert(signerRows);
 
-    return { submissionId: sub.id as number };
+    return { submissionId: submission.id };
   } catch (err) {
     return {
       submissionId: 0,
@@ -117,15 +108,16 @@ export async function createFromGenerated(
     });
 
     // Response can be array of submitters or an object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dsResult = dsSubmission as any;
-    const submissionId = Array.isArray(dsResult)
+    const dsSubmissionId = Array.isArray(dsResult)
       ? dsResult[0]?.submission_id
       : dsResult.id ?? null;
 
     const { data: submission, error: subErr } = await admin
-      .from("esign_submissions" as never)
+      .from("esign_submissions")
       .insert({
-        docuseal_submission_id: submissionId,
+        docuseal_submission_id: dsSubmissionId,
         deal_id: input.dealId,
         requested_by: null,
         status: "pending",
@@ -134,22 +126,20 @@ export async function createFromGenerated(
           ? new Date(Date.now() + input.expirationDays * 86400000).toISOString()
           : null,
         metadata: {},
-      } as never)
-      .select("id" as never)
+      })
+      .select("id")
       .single();
 
     if (subErr || !submission) {
       return { submissionId: 0, error: subErr?.message ?? "Could not create submission record" };
     }
 
-    const sub = submission as any;
-
     const submitters = Array.isArray(dsResult)
       ? dsResult
       : dsResult.submitters ?? [];
 
     const signerRows = input.signers.map((s, idx) => ({
-      submission_id: sub.id,
+      submission_id: submission.id,
       docuseal_submitter_id: submitters[idx]?.id ?? null,
       contact_id: s.contactId ?? null,
       user_id: s.userId ?? null,
@@ -160,9 +150,9 @@ export async function createFromGenerated(
       sign_order: s.signOrder ?? idx + 1,
     }));
 
-    await admin.from("esign_signers" as never).insert(signerRows as never);
+    await admin.from("esign_signers").insert(signerRows);
 
-    return { submissionId: sub.id as number };
+    return { submissionId: submission.id };
   } catch (err) {
     return {
       submissionId: 0,
@@ -181,19 +171,19 @@ export async function getSigningUrl(
   const admin = createAdminClient();
 
   const { data: signer } = await admin
-    .from("esign_signers" as never)
-    .select("docuseal_submitter_id" as never)
-    .eq("submission_id" as never, submissionId as never)
-    .eq("email" as never, signerEmail as never)
+    .from("esign_signers")
+    .select("docuseal_submitter_id")
+    .eq("submission_id", submissionId)
+    .eq("email", signerEmail)
     .single();
 
-  const s = signer as any;
-  if (!s?.docuseal_submitter_id) {
+  if (!signer?.docuseal_submitter_id) {
     return { slug: null, error: "Signer not found" };
   }
 
   try {
-    const submitter = await docuseal.getSubmitter(s.docuseal_submitter_id);
+    const submitter = await docuseal.getSubmitter(signer.docuseal_submitter_id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return { slug: (submitter as any).slug ?? null };
   } catch (err) {
     return {
@@ -212,9 +202,9 @@ export async function getSubmissionStatus(
   const admin = createAdminClient();
 
   const { data, error } = await admin
-    .from("esign_submissions" as never)
-    .select("*, signers:esign_signers(*), documents:esign_documents(*)" as never)
-    .eq("id" as never, submissionId as never)
+    .from("esign_submissions")
+    .select("*, signers:esign_signers(*), documents:esign_documents(*)")
+    .eq("id", submissionId)
     .single();
 
   if (error) return { submission: null, error: error.message };
@@ -230,10 +220,10 @@ export async function getSubmissionsForDeal(
   const admin = createAdminClient();
 
   const { data, error } = await admin
-    .from("esign_submissions" as never)
-    .select("*, signers:esign_signers(*), documents:esign_documents(*)" as never)
-    .eq("deal_id" as never, dealId as never)
-    .order("created_at" as never, { ascending: false });
+    .from("esign_submissions")
+    .select("*, signers:esign_signers(*), documents:esign_documents(*)")
+    .eq("deal_id", dealId)
+    .order("created_at", { ascending: false });
 
   if (error) return { submissions: [], error: error.message };
   return { submissions: (data ?? []) as unknown as EsignSubmission[] };
@@ -249,36 +239,35 @@ export async function voidSubmission(
   const admin = createAdminClient();
 
   const { data: submission } = await admin
-    .from("esign_submissions" as never)
-    .select("docuseal_submission_id" as never)
-    .eq("id" as never, submissionId as never)
+    .from("esign_submissions")
+    .select("docuseal_submission_id")
+    .eq("id", submissionId)
     .single();
 
-  const sub = submission as any;
-  if (sub?.docuseal_submission_id) {
+  if (submission?.docuseal_submission_id) {
     try {
-      await docuseal.archiveSubmission(sub.docuseal_submission_id);
+      await docuseal.archiveSubmission(submission.docuseal_submission_id);
     } catch {
       // Continue even if DocuSeal archive fails
     }
   }
 
   const { error } = await admin
-    .from("esign_submissions" as never)
+    .from("esign_submissions")
     .update({
       status: "voided",
       voided_at: new Date().toISOString(),
       metadata: reason ? { void_reason: reason } : {},
-    } as never)
-    .eq("id" as never, submissionId as never);
+    })
+    .eq("id", submissionId);
 
   if (error) return { success: false, error: error.message };
 
   await admin
-    .from("esign_signers" as never)
-    .update({ status: "declined" } as never)
-    .eq("submission_id" as never, submissionId as never)
-    .in("status" as never, ["pending", "sent", "opened"] as never);
+    .from("esign_signers")
+    .update({ status: "declined" })
+    .eq("submission_id", submissionId)
+    .in("status", ["pending", "sent", "opened"]);
 
   return { success: true };
 }
@@ -292,24 +281,25 @@ export async function downloadAndStoreSignedDocument(
   const admin = createAdminClient();
 
   const { data: submission } = await admin
-    .from("esign_submissions" as never)
-    .select("docuseal_submission_id, document_name, deal_id" as never)
-    .eq("id" as never, submissionId as never)
+    .from("esign_submissions")
+    .select("docuseal_submission_id, document_name, deal_id")
+    .eq("id", submissionId)
     .single();
 
-  const sub = submission as any;
-  if (!sub?.docuseal_submission_id) {
+  if (!submission?.docuseal_submission_id) {
     return { storagePath: null, error: "Submission not found" };
   }
 
   try {
-    const docs = await docuseal.getSubmissionDocuments(sub.docuseal_submission_id);
+    const docs = await docuseal.getSubmissionDocuments(submission.docuseal_submission_id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const docList = Array.isArray(docs) ? docs : (docs as any).documents ?? [];
 
     if (docList.length === 0) {
       return { storagePath: null, error: "No signed documents available" };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const firstDoc = docList[0] as any;
     if (!firstDoc.url) {
       return { storagePath: null, error: "Document URL not available" };
@@ -321,8 +311,8 @@ export async function downloadAndStoreSignedDocument(
     }
 
     const pdfBuffer = await response.arrayBuffer();
-    const fileName = `${String(sub.document_name).replace(/[^a-zA-Z0-9_-]/g, "_")}_signed.pdf`;
-    const storagePath = `deals/${sub.deal_id ?? "general"}/${submissionId}/${fileName}`;
+    const fileName = `${String(submission.document_name).replace(/[^a-zA-Z0-9_-]/g, "_")}_signed.pdf`;
+    const storagePath = `deals/${submission.deal_id ?? "general"}/${submissionId}/${fileName}`;
 
     const { error: uploadErr } = await admin.storage
       .from("signed-documents")
@@ -335,7 +325,7 @@ export async function downloadAndStoreSignedDocument(
       return { storagePath: null, error: uploadErr.message };
     }
 
-    await admin.from("esign_documents" as never).insert({
+    await admin.from("esign_documents").insert({
       submission_id: submissionId,
       docuseal_document_url: firstDoc.url,
       storage_path: storagePath,
@@ -344,7 +334,7 @@ export async function downloadAndStoreSignedDocument(
       content_type: "application/pdf",
       audit_trail: {},
       certificate_url: null,
-    } as never);
+    });
 
     return { storagePath };
   } catch (err) {
