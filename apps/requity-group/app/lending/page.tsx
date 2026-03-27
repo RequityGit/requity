@@ -408,13 +408,14 @@ export default async function LendingPage() {
                   {[
                     { name: "DSCR Rental", tagline: "Long-term rental loans qualified on property cash flow, 30-year fixed available" },
                   ].map((item) => (
-                    <div key={item.name} className="program-row program-row-static">
+                    <Link key={item.name} href={item.href} className="program-row">
                       <div className="program-row-content">
                         <span className="program-row-name">{item.name}</span>
                         <span className="program-row-divider" />
                         <span className="program-row-tagline">{item.tagline}</span>
                       </div>
-                    </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -444,15 +445,16 @@ export default async function LendingPage() {
                     </Link>
                   ))}
                   {[
-                    { name: "Capital Advisory", tagline: "Permanent takeout financing placement, connecting borrowers with long-term capital partners" },
+                    { name: "Capital Advisory", tagline: "Permanent takeout financing placement, connecting borrowers with long-term capital partners", href: "/lending/capital-advisory" },
                   ].map((item) => (
-                    <div key={item.name} className="program-row program-row-static">
+                    <Link key={item.name} href={item.href} className="program-row">
                       <div className="program-row-content">
                         <span className="program-row-name">{item.name}</span>
                         <span className="program-row-divider" />
                         <span className="program-row-tagline">{item.tagline}</span>
                       </div>
-                    </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
                   ))}
                 </div>
               </div>
