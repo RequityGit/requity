@@ -13,6 +13,7 @@ import {
   closestCenter,
   rectIntersection,
   type DragStartEvent,
+  type DragOverEvent,
   type DragEndEvent,
   type CollisionDetection,
 } from "@dnd-kit/core";
@@ -135,6 +136,15 @@ export function PipelineKanban({
 }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
+  // During drag, track which stage the dragged card is visually in.
+  // This lets SortableContext items update so the target column makes room.
+  const [dragStageOverride, setDragStageOverride] = useState<{
+    dealId: string;
+    stage: UnifiedStage;
+  } | null>(null);
+  const dragStageOverrideRef = useRef(dragStageOverride);
+  dragStageOverrideRef.current = dragStageOverride;
+
   // Store actions for optimistic updates
   const moveDeal = usePipelineStore((s) => s.moveDeal);
   const reorderDeal = usePipelineStore((s) => s.reorderDeal);
@@ -159,7 +169,9 @@ export function PipelineKanban({
   dealsRef.current = deals;
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -174,9 +186,49 @@ export function PipelineKanban({
     [setDraggingDealId]
   );
 
+  /** Move a card between columns visually during drag (before drop). */
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const dragId = active.id as string;
+    const overId = over.id as string;
+
+    // Determine target stage from the over element
+    const isOverStage = STAGE_KEY_SET.has(overId);
+    let targetStage: UnifiedStage | null = null;
+
+    if (isOverStage) {
+      targetStage = overId as UnifiedStage;
+    } else {
+      const overDeal = dealsRef.current.find((d) => d.id === overId);
+      if (overDeal) targetStage = overDeal.stage;
+    }
+
+    if (!targetStage) return;
+
+    // Get the deal's current effective stage (with any existing override)
+    const deal = dealsRef.current.find((d) => d.id === dragId);
+    if (!deal) return;
+
+    const currentEffective = dragStageOverrideRef.current?.dealId === dragId
+      ? dragStageOverrideRef.current.stage
+      : deal.stage;
+
+    if (currentEffective === targetStage) return;
+
+    const override = { dealId: dragId, stage: targetStage };
+    dragStageOverrideRef.current = override;
+    setDragStageOverride(override);
+  }, []);
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
+      // Capture the override before clearing — this is the visual destination
+      const override = dragStageOverrideRef.current;
       setActiveId(null);
+      setDragStageOverride(null);
+      dragStageOverrideRef.current = null;
 
       const { active, over } = event;
       if (!over) {
@@ -193,16 +245,17 @@ export function PipelineKanban({
         return;
       }
 
-      // Determine target: dropped on a stage column or on another card
+      // Determine target: use override stage if we have one, otherwise derive from over element
       const isDropOnStage = STAGE_KEY_SET.has(overId);
       const overDeal = !isDropOnStage
         ? currentDeals.find((d) => d.id === overId)
         : null;
-      const targetStage = isDropOnStage
-        ? (overId as UnifiedStage)
-        : overDeal
-          ? overDeal.stage
-          : deal.stage;
+      const targetStage = override?.stage
+        ?? (isDropOnStage
+          ? (overId as UnifiedStage)
+          : overDeal
+            ? overDeal.stage
+            : deal.stage);
 
       const sameColumn = deal.stage === targetStage;
 
@@ -303,6 +356,8 @@ export function PipelineKanban({
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
+    setDragStageOverride(null);
+    dragStageOverrideRef.current = null;
     setDraggingDealId(null);
   }, [setDraggingDealId]);
 
@@ -311,11 +366,18 @@ export function PipelineKanban({
     ? deals.find((d) => d.id === activeId)
     : null;
 
-  // Memoize stage calculations
+  // Memoize stage calculations — apply dragStageOverride so the dragged
+  // card visually appears in the target column during drag.
   const stageData = useMemo(() => {
     return STAGES.map((stage) => {
       const stageDeals = deals
-        .filter((d) => d.stage === stage.key)
+        .filter((d) => {
+          // During drag, use the override stage for the dragged card
+          if (dragStageOverride && d.id === dragStageOverride.dealId) {
+            return dragStageOverride.stage === stage.key;
+          }
+          return d.stage === stage.key;
+        })
         .sort(
           (a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity)
         );
@@ -330,13 +392,14 @@ export function PipelineKanban({
 
       return { stage, stageDeals, totalAmount, isLead, columnCount };
     });
-  }, [deals, intakeItems.length]);
+  }, [deals, intakeItems.length, dragStageOverride]);
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={kanbanCollisionDetection}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
@@ -417,7 +480,7 @@ export function PipelineKanban({
       </ScrollArea>
 
       {/* DragOverlay outside ScrollArea so it's not clipped by scroll container */}
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeDeal ? (
           <DealCardOverlay
             deal={activeDeal}
