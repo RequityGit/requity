@@ -47,6 +47,11 @@ interface PipelineState {
   // Drag-in-progress guard — prevents realtime from overwriting optimistic state
   draggingDealId: string | null;
 
+  // Version counter — increments on structural changes (add/remove/stage move/hydrate).
+  // Sort-order-only changes do NOT bump this, so downstream selectors like
+  // useAllDeals() skip expensive array rebuilds for reorder-only updates.
+  dealsVersion: number;
+
   // Actions
   hydrate: (data: PipelineHydratePayload) => void;
   setDraggingDealId: (id: string | null) => void;
@@ -76,6 +81,7 @@ export const usePipelineStore = create<PipelineState>()(
     conditionsMap: new Map(),
     hydrated: false,
     draggingDealId: null,
+    dealsVersion: 0,
 
     setDraggingDealId: (id) =>
       set((state) => {
@@ -93,6 +99,7 @@ export const usePipelineStore = create<PipelineState>()(
         state.currentUserId = data.currentUserId;
         state.conditionsMap = data.conditionsMap;
         state.hydrated = true;
+        state.dealsVersion++;
       }),
 
     moveDeal: (dealId, newStage) =>
@@ -101,6 +108,7 @@ export const usePipelineStore = create<PipelineState>()(
         if (deal) {
           deal.stage = newStage;
           deal.stage_entered_at = new Date().toISOString();
+          state.dealsVersion++; // Stage change is structural
         }
       }),
 
@@ -112,28 +120,36 @@ export const usePipelineStore = create<PipelineState>()(
             deal.sort_order = index;
           }
         });
+        state.dealsVersion++;
       }),
 
     updateDeal: (dealId, patch) =>
       set((state) => {
         const deal = state.deals.get(dealId);
-        if (deal) Object.assign(deal, patch);
+        if (deal) {
+          const stageChanged = patch.stage !== undefined && patch.stage !== deal.stage;
+          Object.assign(deal, patch);
+          if (stageChanged) state.dealsVersion++;
+        }
       }),
 
     addDeal: (deal) =>
       set((state) => {
         state.deals.set(deal.id, deal);
+        state.dealsVersion++; // Add is structural
       }),
 
     removeDeal: (dealId) =>
       set((state) => {
         state.deals.delete(dealId);
+        state.dealsVersion++; // Remove is structural
       }),
 
     // Realtime patches are authoritative (server truth)
     applyRealtimeInsert: (deal) =>
       set((state) => {
         state.deals.set(deal.id, deal);
+        state.dealsVersion++;
       }),
 
     applyRealtimeUpdate: (dealId, newRecord) =>
@@ -144,17 +160,21 @@ export const usePipelineStore = create<PipelineState>()(
 
         const existing = state.deals.get(dealId);
         if (existing) {
+          const stageChanged = newRecord.stage !== existing.stage;
           // Shallow merge: realtime fields overwrite, but existing fields
           // not present in the enrichment are preserved (e.g. broker_contact)
           state.deals.set(dealId, { ...existing, ...newRecord });
+          if (stageChanged) state.dealsVersion++;
         } else {
           state.deals.set(dealId, newRecord);
+          state.dealsVersion++;
         }
       }),
 
     applyRealtimeDelete: (dealId) =>
       set((state) => {
         state.deals.delete(dealId);
+        state.dealsVersion++;
       }),
   }))
 );

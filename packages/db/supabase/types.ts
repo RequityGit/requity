@@ -5951,6 +5951,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          docuseal_template_id: number | null
           gdrive_file_id: string | null
           gdrive_folder_id: string | null
           id: string
@@ -5970,6 +5971,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          docuseal_template_id?: number | null
           gdrive_file_id?: string | null
           gdrive_folder_id?: string | null
           id?: string
@@ -5989,6 +5991,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          docuseal_template_id?: number | null
           gdrive_file_id?: string | null
           gdrive_folder_id?: string | null
           id?: string
@@ -7927,6 +7930,210 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      esign_documents: {
+        Row: {
+          audit_trail: Json | null
+          certificate_url: string | null
+          content_type: string | null
+          created_at: string | null
+          docuseal_document_url: string | null
+          file_name: string
+          file_size: number | null
+          id: number
+          storage_path: string | null
+          submission_id: number
+        }
+        Insert: {
+          audit_trail?: Json | null
+          certificate_url?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          docuseal_document_url?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: never
+          storage_path?: string | null
+          submission_id: number
+        }
+        Update: {
+          audit_trail?: Json | null
+          certificate_url?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          docuseal_document_url?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: never
+          storage_path?: string | null
+          submission_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_documents_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "esign_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_signers: {
+        Row: {
+          contact_id: number | null
+          created_at: string | null
+          docuseal_submitter_id: number | null
+          email: string
+          id: number
+          ip_address: unknown
+          name: string
+          role: string
+          sign_order: number | null
+          signed_at: string | null
+          status: string
+          submission_id: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_id?: number | null
+          created_at?: string | null
+          docuseal_submitter_id?: number | null
+          email: string
+          id?: never
+          ip_address?: unknown
+          name: string
+          role?: string
+          sign_order?: number | null
+          signed_at?: string | null
+          status?: string
+          submission_id: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_id?: number | null
+          created_at?: string | null
+          docuseal_submitter_id?: number | null
+          email?: string
+          id?: never
+          ip_address?: unknown
+          name?: string
+          role?: string
+          sign_order?: number | null
+          signed_at?: string | null
+          status?: string
+          submission_id?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_signers_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "esign_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_submissions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          deal_id: number | null
+          document_name: string
+          docuseal_submission_id: number | null
+          expiration_date: string | null
+          id: number
+          metadata: Json | null
+          requested_by: string | null
+          status: string
+          template_id: number | null
+          updated_at: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: number | null
+          document_name: string
+          docuseal_submission_id?: number | null
+          expiration_date?: string | null
+          id?: never
+          metadata?: Json | null
+          requested_by?: string | null
+          status?: string
+          template_id?: number | null
+          updated_at?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          deal_id?: number | null
+          document_name?: string
+          docuseal_submission_id?: number | null
+          expiration_date?: string | null
+          id?: never
+          metadata?: Json | null
+          requested_by?: string | null
+          status?: string
+          template_id?: number | null
+          updated_at?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esign_submissions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "esign_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esign_templates: {
+        Row: {
+          business_line: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          document_type: string
+          docuseal_template_id: number
+          field_mapping: Json | null
+          id: number
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_line: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_type: string
+          docuseal_template_id: number
+          field_mapping?: Json | null
+          id?: never
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_line?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_type?: string
+          docuseal_template_id?: number
+          field_mapping?: Json | null
+          id?: never
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       field_configurations: {
         Row: {
@@ -12070,158 +12277,40 @@ export type Database = {
         }
         Relationships: []
       }
-      pm_communities: {
-        Row: {
-          address_display: string | null
-          baths_range: string | null
-          beds_range: string | null
-          city: string
-          core_property_id: string | null
-          created_at: string
-          description_html: string | null
-          featured_media_id: string | null
-          headline: string | null
-          id: string
-          metadata: Json | null
-          name: string
-          region_id: string | null
-          slug: string
-          starting_price: string | null
-          state_code: string | null
-          status: string | null
-          updated_at: string
-          zip_code: string | null
-        }
-        Insert: {
-          address_display?: string | null
-          baths_range?: string | null
-          beds_range?: string | null
-          city: string
-          core_property_id?: string | null
-          created_at?: string
-          description_html?: string | null
-          featured_media_id?: string | null
-          headline?: string | null
-          id?: string
-          metadata?: Json | null
-          name: string
-          region_id?: string | null
-          slug: string
-          starting_price?: string | null
-          state_code?: string | null
-          status?: string | null
-          updated_at?: string
-          zip_code?: string | null
-        }
-        Update: {
-          address_display?: string | null
-          baths_range?: string | null
-          beds_range?: string | null
-          city?: string
-          core_property_id?: string | null
-          created_at?: string
-          description_html?: string | null
-          featured_media_id?: string | null
-          headline?: string | null
-          id?: string
-          metadata?: Json | null
-          name?: string
-          region_id?: string | null
-          slug?: string
-          starting_price?: string | null
-          state_code?: string | null
-          status?: string | null
-          updated_at?: string
-          zip_code?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pm_communities_core_property_id_fkey"
-            columns: ["core_property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pm_communities_featured_media_id_fkey"
-            columns: ["featured_media_id"]
-            isOneToOne: false
-            referencedRelation: "pm_media"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pm_communities_region_id_fkey"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "pm_regions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pm_community_amenities: {
-        Row: {
-          amenity_id: string
-          community_id: string
-        }
-        Insert: {
-          amenity_id: string
-          community_id: string
-        }
-        Update: {
-          amenity_id?: string
-          community_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pm_community_amenities_amenity_id_fkey"
-            columns: ["amenity_id"]
-            isOneToOne: false
-            referencedRelation: "pm_amenities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pm_community_amenities_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "pm_communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pm_gallery: {
         Row: {
           alt_text: string | null
-          community_id: string
           created_at: string
           id: string
           media_id: string
+          property_id: string
           sort_order: number | null
           updated_at: string
         }
         Insert: {
           alt_text?: string | null
-          community_id: string
           created_at?: string
           id?: string
           media_id: string
+          property_id: string
           sort_order?: number | null
           updated_at?: string
         }
         Update: {
           alt_text?: string | null
-          community_id?: string
           created_at?: string
           id?: string
           media_id?: string
+          property_id?: string
           sort_order?: number | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "pm_gallery_community_id_fkey"
-            columns: ["community_id"]
+            columns: ["property_id"]
             isOneToOne: false
-            referencedRelation: "pm_communities"
+            referencedRelation: "pm_properties"
             referencedColumns: ["id"]
           },
           {
@@ -12235,37 +12324,37 @@ export type Database = {
       }
       pm_leads: {
         Row: {
-          community_id: string | null
           created_at: string
           email: string
           full_name: string
           id: string
           message: string | null
           phone: string | null
+          property_id: string | null
           source_url: string | null
           status: string | null
           updated_at: string
         }
         Insert: {
-          community_id?: string | null
           created_at?: string
           email: string
           full_name: string
           id?: string
           message?: string | null
           phone?: string | null
+          property_id?: string | null
           source_url?: string | null
           status?: string | null
           updated_at?: string
         }
         Update: {
-          community_id?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
           message?: string | null
           phone?: string | null
+          property_id?: string | null
           source_url?: string | null
           status?: string | null
           updated_at?: string
@@ -12273,9 +12362,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pm_leads_community_id_fkey"
-            columns: ["community_id"]
+            columns: ["property_id"]
             isOneToOne: false
-            referencedRelation: "pm_communities"
+            referencedRelation: "pm_properties"
             referencedColumns: ["id"]
           },
         ]
@@ -12357,11 +12446,11 @@ export type Database = {
       pm_posts: {
         Row: {
           body_html: string
-          community_id: string | null
           created_at: string
           excerpt: string | null
           featured_media_id: string | null
           id: string
+          property_id: string | null
           published_at: string | null
           slug: string
           status: string | null
@@ -12370,11 +12459,11 @@ export type Database = {
         }
         Insert: {
           body_html: string
-          community_id?: string | null
           created_at?: string
           excerpt?: string | null
           featured_media_id?: string | null
           id?: string
+          property_id?: string | null
           published_at?: string | null
           slug: string
           status?: string | null
@@ -12383,11 +12472,11 @@ export type Database = {
         }
         Update: {
           body_html?: string
-          community_id?: string | null
           created_at?: string
           excerpt?: string | null
           featured_media_id?: string | null
           id?: string
+          property_id?: string | null
           published_at?: string | null
           slug?: string
           status?: string | null
@@ -12397,9 +12486,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pm_posts_community_id_fkey"
-            columns: ["community_id"]
+            columns: ["property_id"]
             isOneToOne: false
-            referencedRelation: "pm_communities"
+            referencedRelation: "pm_properties"
             referencedColumns: ["id"]
           },
           {
@@ -12411,35 +12500,176 @@ export type Database = {
           },
         ]
       }
+      pm_properties: {
+        Row: {
+          address_display: string | null
+          baths_range: string | null
+          beds_range: string | null
+          city: string
+          contact_email: string | null
+          contact_phone: string | null
+          core_property_id: string | null
+          created_at: string
+          description_html: string | null
+          featured_media_id: string | null
+          headline: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          property_type: string | null
+          region_id: string | null
+          slug: string
+          starting_price: string | null
+          state_code: string | null
+          status: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address_display?: string | null
+          baths_range?: string | null
+          beds_range?: string | null
+          city: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          core_property_id?: string | null
+          created_at?: string
+          description_html?: string | null
+          featured_media_id?: string | null
+          headline?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          property_type?: string | null
+          region_id?: string | null
+          slug: string
+          starting_price?: string | null
+          state_code?: string | null
+          status?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address_display?: string | null
+          baths_range?: string | null
+          beds_range?: string | null
+          city?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          core_property_id?: string | null
+          created_at?: string
+          description_html?: string | null
+          featured_media_id?: string | null
+          headline?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          property_type?: string | null
+          region_id?: string | null
+          slug?: string
+          starting_price?: string | null
+          state_code?: string | null
+          status?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_communities_core_property_id_fkey"
+            columns: ["core_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_communities_featured_media_id_fkey"
+            columns: ["featured_media_id"]
+            isOneToOne: false
+            referencedRelation: "pm_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_communities_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "pm_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_property_amenities: {
+        Row: {
+          amenity_id: string
+          property_id: string
+        }
+        Insert: {
+          amenity_id: string
+          property_id: string
+        }
+        Update: {
+          amenity_id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_community_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "pm_amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_community_amenities_community_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "pm_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pm_regions: {
         Row: {
           created_at: string
+          description_html: string | null
+          featured_media_id: string | null
           id: string
-          is_active: boolean | null
           name: string
           slug: string
           sort_order: number | null
+          status: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          description_html?: string | null
+          featured_media_id?: string | null
           id?: string
-          is_active?: boolean | null
           name: string
           slug: string
           sort_order?: number | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          description_html?: string | null
+          featured_media_id?: string | null
           id?: string
-          is_active?: boolean | null
           name?: string
           slug?: string
           sort_order?: number | null
+          status?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pm_regions_featured_media_id_fkey"
+            columns: ["featured_media_id"]
+            isOneToOne: false
+            referencedRelation: "pm_media"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pm_site_settings: {
         Row: {
@@ -13356,6 +13586,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sarah_app_spaces: {
+        Row: {
+          space_name: string
+          updated_at: string | null
+          user_email: string
+        }
+        Insert: {
+          space_name: string
+          updated_at?: string | null
+          user_email: string
+        }
+        Update: {
+          space_name?: string
+          updated_at?: string | null
+          user_email?: string
+        }
+        Relationships: []
+      }
+      sarah_conversations: {
+        Row: {
+          id: string
+          pending_task: Json | null
+          state: string
+          updated_at: string | null
+          user_email: string
+        }
+        Insert: {
+          id?: string
+          pending_task?: Json | null
+          state?: string
+          updated_at?: string | null
+          user_email: string
+        }
+        Update: {
+          id?: string
+          pending_task?: Json | null
+          state?: string
+          updated_at?: string | null
+          user_email?: string
+        }
+        Relationships: []
       }
       secure_upload_link_conditions: {
         Row: {
@@ -16102,19 +16374,24 @@ export type Database = {
       unified_deals: {
         Row: {
           amount: number | null
+          approval_requested_at: string | null
+          approval_requested_by: string | null
+          approval_status: string | null
           asset_class: string | null
           assigned_to: string | null
           broker_contact_id: string | null
           capital_side: string
+          close_date: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
           deal_number: string | null
-          close_date: string | null
+          expected_close_date: string | null
           fundraise_amount_options: Json | null
           fundraise_deck_url: string | null
           fundraise_description: string | null
           fundraise_enabled: boolean | null
+          fundraise_hard_cap: number | null
           fundraise_hero_image_url: string | null
           fundraise_slug: string | null
           fundraise_target: number | null
@@ -16133,6 +16410,7 @@ export type Database = {
           probability: number | null
           property_data: Json | null
           property_id: string | null
+          sort_order: number | null
           source: string | null
           source_detail: string | null
           stage: string
@@ -16145,19 +16423,24 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
           asset_class?: string | null
           assigned_to?: string | null
           broker_contact_id?: string | null
           capital_side: string
+          close_date?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          close_date?: string | null
+          expected_close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
           fundraise_enabled?: boolean | null
+          fundraise_hard_cap?: number | null
           fundraise_hero_image_url?: string | null
           fundraise_slug?: string | null
           fundraise_target?: number | null
@@ -16176,6 +16459,7 @@ export type Database = {
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          sort_order?: number | null
           source?: string | null
           source_detail?: string | null
           stage?: string
@@ -16188,19 +16472,24 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
           asset_class?: string | null
           assigned_to?: string | null
           broker_contact_id?: string | null
           capital_side?: string
+          close_date?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          close_date?: string | null
+          expected_close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
           fundraise_enabled?: boolean | null
+          fundraise_hard_cap?: number | null
           fundraise_hero_image_url?: string | null
           fundraise_slug?: string | null
           fundraise_target?: number | null
@@ -16219,6 +16508,7 @@ export type Database = {
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          sort_order?: number | null
           source?: string | null
           source_detail?: string | null
           stage?: string
@@ -17902,6 +18192,10 @@ export type Database = {
         }
         Returns: string
       }
+      bulk_reorder_deals: {
+        Args: { p_deal_ids: string[]; p_stage: string }
+        Returns: undefined
+      }
       calculate_funded_balance: {
         Args: { p_as_of_date: string; p_loan_id: string }
         Returns: number
@@ -19055,4 +19349,3 @@ export const Constants = {
     },
   },
 } as const
-
