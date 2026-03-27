@@ -303,7 +303,7 @@ export async function updateDealStageAction(
       return { error: error.message };
     }
 
-    revalidatePath(`/pipeline/${dealId}`);
+    await revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateDealStageAction error:", err);
@@ -341,6 +341,7 @@ export async function reorderDealsAction(
       return { error: "Failed to save deal order" };
     }
 
+    revalidatePath("/pipeline", "layout");
     return { success: true };
   } catch (err: unknown) {
     console.error("reorderDealsAction error:", err);
