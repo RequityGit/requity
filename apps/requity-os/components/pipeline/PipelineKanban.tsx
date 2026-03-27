@@ -484,7 +484,11 @@ export function PipelineKanban({
         {activeDeal ? (
           <DealCardOverlay
             deal={activeDeal}
-            stageConfig={stageConfigMap.get(activeDeal.stage)}
+            stageConfig={stageConfigMap.get(
+              dragStageOverride?.dealId === activeDeal.id
+                ? dragStageOverride.stage
+                : activeDeal.stage
+            )}
             conditionsProgress={conditionsMap.get(activeDeal.id) ?? null}
             assigneeName={
               activeDeal.assigned_to

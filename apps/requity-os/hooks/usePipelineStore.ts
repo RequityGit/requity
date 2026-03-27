@@ -12,14 +12,19 @@ import type {
 import type { IntakeItem } from "@/lib/intake/types";
 import type { ConditionsProgress } from "@/stores/pipeline-store";
 
-/** All deals as an array (for filtering in PipelineView) */
+/** All deals as an array (for filtering in PipelineView).
+ *  Uses dealsVersion (bumped on every mutation) as the memo trigger
+ *  instead of the raw Map reference, giving the store explicit control
+ *  over when downstream components re-render. */
 export function useAllDeals(): UnifiedDeal[] {
   const deals = usePipelineStore((s) => s.deals);
+  const version = usePipelineStore((s) => s.dealsVersion);
   return useMemo(() => {
     const result: UnifiedDeal[] = [];
     deals.forEach((deal) => result.push(deal));
     return result;
-  }, [deals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
 }
 
 /** Deals for a specific stage, sorted by amount desc */

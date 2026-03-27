@@ -303,7 +303,9 @@ export async function updateDealStageAction(
       return { error: error.message };
     }
 
-    await revalidatePipeline(dealId);
+    // No revalidation — Realtime handles board sync for DnD moves.
+    // revalidatePath is ignored by the Zustand store (hydration-only),
+    // so calling it here just adds server load for zero benefit.
     return { success: true };
   } catch (err: unknown) {
     console.error("updateDealStageAction error:", err);
@@ -325,23 +327,19 @@ export async function reorderDealsAction(
 
     const admin = createAdminClient();
 
-    const updates = orderedDealIds.map((id, i) =>
-      admin
-        .from("unified_deals" as never)
-        .update({ sort_order: i } as never)
-        .eq("id" as never, id as never)
-        .eq("stage" as never, stage as never)
-    );
+    // Single RPC call replaces N individual UPDATE queries.
+    // This reduces realtime event noise and eliminates partial-failure risk.
+    const { error } = await admin.rpc("bulk_reorder_deals", {
+      p_deal_ids: orderedDealIds,
+      p_stage: stage,
+    });
 
-    const results = await Promise.all(updates);
-    const failed = results.filter((r) => r.error);
-
-    if (failed.length > 0) {
-      console.error("reorderDealsAction errors:", failed.map((r) => r.error));
+    if (error) {
+      console.error("reorderDealsAction error:", error);
       return { error: "Failed to save deal order" };
     }
 
-    revalidatePath("/pipeline", "layout");
+    // No revalidation — Realtime handles board sync for DnD reorders.
     return { success: true };
   } catch (err: unknown) {
     console.error("reorderDealsAction error:", err);
