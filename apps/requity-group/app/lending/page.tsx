@@ -423,17 +423,6 @@ export default async function LendingPage() {
                   {[
                     { name: "Guarantor Support", tagline: "Balance sheet and experience support, 1.5-2.5% of loan balance for non-recourse", href: "/lending/guarantor-support" },
                     { name: "Transactional Funding", tagline: "Same-day capital for wholesale double closes, 1-2% of loan balance", href: "/lending/transactional-funding" },
-                  ].map((item) => (
-                    <Link key={item.name} href={item.href} className="program-row">
-                      <div className="program-row-content">
-                        <span className="program-row-name">{item.name}</span>
-                        <span className="program-row-divider" />
-                        <span className="program-row-tagline">{item.tagline}</span>
-                      </div>
-                      <ArrowRight size={16} className="program-row-arrow" />
-                    </Link>
-                  ))}
-                  {[
                     { name: "Capital Advisory", tagline: "Permanent takeout financing placement, connecting borrowers with long-term capital partners", href: "/lending/capital-advisory" },
                   ].map((item) => (
                     <Link key={item.name} href={item.href} className="program-row">
