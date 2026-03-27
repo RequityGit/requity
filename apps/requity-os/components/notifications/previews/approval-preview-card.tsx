@@ -42,7 +42,7 @@ export function ApprovalPreviewCard({
         onClick={onNavigate}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-foreground/[0.06] text-[11px] font-medium text-foreground hover:bg-foreground/10 rq-transition"
       >
-        Go to Approval
+        Go to Deal
         <ExternalLink className="h-3 w-3" />
       </button>
     </div>

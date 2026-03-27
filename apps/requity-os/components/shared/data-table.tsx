@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { EmptyState } from "./EmptyState";
@@ -28,6 +29,12 @@ interface DataTableProps<T> {
   emptyMessage?: string;
   emptyState?: React.ReactNode;
   onRowClick?: (row: T) => void;
+  /** Enable checkbox row selection */
+  selectable?: boolean;
+  /** Currently selected row IDs (controlled) */
+  selectedIds?: Set<string>;
+  /** Called when selection changes */
+  onSelectionChange?: (ids: Set<string>) => void;
 }
 
 export function DataTable<T extends { id?: string }>({
@@ -36,6 +43,9 @@ export function DataTable<T extends { id?: string }>({
   emptyMessage = "No data found.",
   emptyState,
   onRowClick,
+  selectable,
+  selectedIds,
+  onSelectionChange,
 }: DataTableProps<T>) {
   const [showSwipeHint, setShowSwipeHint] = useState(false);
 
@@ -53,6 +63,36 @@ export function DataTable<T extends { id?: string }>({
       }
     }
   }, [columns.length]);
+
+  // Selection helpers
+  const allVisibleIds = selectable
+    ? data.map((row) => row.id).filter((id): id is string => !!id)
+    : [];
+  const allSelected = selectable && allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds?.has(id));
+  const someSelected = selectable && !allSelected && allVisibleIds.some((id) => selectedIds?.has(id));
+
+  const toggleAll = useCallback(() => {
+    if (!onSelectionChange) return;
+    if (allSelected) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(allVisibleIds));
+    }
+  }, [allSelected, allVisibleIds, onSelectionChange]);
+
+  const toggleRow = useCallback(
+    (id: string) => {
+      if (!onSelectionChange || !selectedIds) return;
+      const next = new Set(selectedIds);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      onSelectionChange(next);
+    },
+    [selectedIds, onSelectionChange]
+  );
 
   return (
     <div className="rounded-md border bg-card relative">
@@ -74,12 +114,21 @@ export function DataTable<T extends { id?: string }>({
         <Table>
           <TableHeader>
             <TableRow>
+              {selectable && (
+                <TableHead className="w-10 px-3">
+                  <Checkbox
+                    checked={someSelected ? "indeterminate" : allSelected}
+                    onCheckedChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+              )}
               {columns.map((col, colIdx) => (
                 <TableHead
                   key={col.key}
                   className={cn(
                     col.className,
-                    colIdx === 0 && "lg:static sticky left-0 z-[1] bg-card shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] lg:shadow-none"
+                    colIdx === 0 && !selectable && "lg:static sticky left-0 z-[1] bg-card shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] lg:shadow-none"
                   )}
                 >
                   {col.header}
@@ -91,7 +140,7 @@ export function DataTable<T extends { id?: string }>({
             {data.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={columns.length + (selectable ? 1 : 0)}
                   className="h-24 text-center"
                 >
                   {emptyState ?? (
@@ -100,29 +149,44 @@ export function DataTable<T extends { id?: string }>({
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((row, idx) => (
-                <TableRow
-                  key={row.id || idx}
-                  className={cn(
-                    onRowClick ? "cursor-pointer hover:bg-muted" : "",
-                    "min-h-[56px] md:min-h-0"
-                  )}
-                  onClick={() => onRowClick?.(row)}
-                >
-                  {columns.map((col, colIdx) => (
-                    <TableCell
-                      key={col.key}
-                      className={cn(
-                        col.className,
-                        "py-3 md:py-4",
-                        colIdx === 0 && "lg:static sticky left-0 z-[1] bg-card shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] lg:shadow-none"
-                      )}
-                    >
-                      {col.cell(row)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              data.map((row, idx) => {
+                const rowId = row.id || String(idx);
+                const isSelected = selectable && selectedIds?.has(rowId);
+                return (
+                  <TableRow
+                    key={rowId}
+                    className={cn(
+                      onRowClick ? "cursor-pointer hover:bg-muted" : "",
+                      "min-h-[56px] md:min-h-0",
+                      isSelected && "bg-primary/5"
+                    )}
+                    onClick={() => onRowClick?.(row)}
+                  >
+                    {selectable && (
+                      <TableCell className="w-10 px-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleRow(rowId)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select row ${idx + 1}`}
+                        />
+                      </TableCell>
+                    )}
+                    {columns.map((col, colIdx) => (
+                      <TableCell
+                        key={col.key}
+                        className={cn(
+                          col.className,
+                          "py-3 md:py-4",
+                          colIdx === 0 && !selectable && "lg:static sticky left-0 z-[1] bg-card shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] lg:shadow-none"
+                        )}
+                      >
+                        {col.cell(row)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

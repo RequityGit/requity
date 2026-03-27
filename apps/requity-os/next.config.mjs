@@ -76,7 +76,7 @@ const nextConfig = {
                 {
                   key: "Content-Security-Policy",
                   value:
-                    "upgrade-insecure-requests; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://accounts.google.com https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://gmail.googleapis.com https://*.twil.io https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://docs.google.com; worker-src 'self' blob:",
+                    "upgrade-insecure-requests; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://accounts.google.com https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://maps.googleapis.com https://gmail.googleapis.com https://*.twil.io https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://docs.google.com https://*.supabase.co; worker-src 'self' blob:",
                 },
               ]
             : []),

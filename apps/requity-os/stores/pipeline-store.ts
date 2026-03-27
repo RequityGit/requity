@@ -44,9 +44,14 @@ interface PipelineState {
   // Hydration flag
   hydrated: boolean;
 
+  // Drag-in-progress guard — prevents realtime from overwriting optimistic state
+  draggingDealId: string | null;
+
   // Actions
   hydrate: (data: PipelineHydratePayload) => void;
+  setDraggingDealId: (id: string | null) => void;
   moveDeal: (dealId: string, newStage: UnifiedStage) => void;
+  reorderDeal: (orderedIds: string[], stage: UnifiedStage) => void;
   updateDeal: (dealId: string, patch: Partial<UnifiedDeal>) => void;
   addDeal: (deal: UnifiedDeal) => void;
   removeDeal: (dealId: string) => void;
@@ -70,6 +75,12 @@ export const usePipelineStore = create<PipelineState>()(
     currentUserId: null,
     conditionsMap: new Map(),
     hydrated: false,
+    draggingDealId: null,
+
+    setDraggingDealId: (id) =>
+      set((state) => {
+        state.draggingDealId = id;
+      }),
 
     hydrate: (data) =>
       set((state) => {
@@ -91,6 +102,16 @@ export const usePipelineStore = create<PipelineState>()(
           deal.stage = newStage;
           deal.stage_entered_at = new Date().toISOString();
         }
+      }),
+
+    reorderDeal: (orderedIds, stage) =>
+      set((state) => {
+        orderedIds.forEach((id, index) => {
+          const deal = state.deals.get(id);
+          if (deal && deal.stage === stage) {
+            deal.sort_order = index;
+          }
+        });
       }),
 
     updateDeal: (dealId, patch) =>
@@ -117,6 +138,10 @@ export const usePipelineStore = create<PipelineState>()(
 
     applyRealtimeUpdate: (dealId, newRecord) =>
       set((state) => {
+        // Skip realtime updates for the deal currently being dragged —
+        // optimistic state takes priority until drag completes
+        if (state.draggingDealId === dealId) return;
+
         const existing = state.deals.get(dealId);
         if (existing) {
           // Shallow merge: realtime fields overwrite, but existing fields

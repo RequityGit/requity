@@ -54,6 +54,7 @@ import {
   AlertTriangle,
   XCircle,
   RotateCcw,
+  Check,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -91,10 +92,12 @@ import { reorderTabs } from "@/lib/actions/layout-actions";
 
 import {
   type UnifiedDeal,
+  type UnifiedStage,
   type StageConfig,
   STAGES,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
+  ACTIVE_ASSET_CLASS_OPTIONS,
   type AssetClass,
   daysInStage,
 } from "@/components/pipeline/pipeline-types";
@@ -102,8 +105,10 @@ import {
   advanceStageAction,
   regressStageAction,
   updateDealStatusAction,
+  updateUwDataAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
+import { InlineField } from "@/components/ui/inline-field";
 import { ApprovalBanner } from "@/components/pipeline/ApprovalBanner";
 import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
@@ -323,49 +328,82 @@ function DealDetailPageInner({
   const dealConfig = getDealDisplayConfig(deal);
   const shortLabel = dealConfig.shortLabel;
 
-  // Stage double-click navigation
+  // Stage change with optimistic update
   const [stageJumping, startStageJump] = useTransition();
+  const [optimisticStage, setOptimisticStage] = useState(deal.stage);
+  useEffect(() => { setOptimisticStage(deal.stage); }, [deal.stage]);
 
-  const handleStageDoubleClick = useCallback(
+  const handleStageChange = useCallback(
     (targetStage: string) => {
-      if (targetStage === deal.stage) return;
+      if (targetStage === optimisticStage) return;
 
-      const currentIdx = STAGES.findIndex((s) => s.key === deal.stage);
+      const previousStage = optimisticStage;
+      const currentIdx = STAGES.findIndex((s) => s.key === previousStage);
       const targetIdx = STAGES.findIndex((s) => s.key === targetStage);
       const label = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
 
+      setOptimisticStage(targetStage as UnifiedStage);
+
       startStageJump(async () => {
-        if (targetIdx < currentIdx) {
-          const res = await regressStageAction(deal.id, targetStage);
-          if (res.error) {
-            showError(`Cannot move stage: ${res.error}`);
-          } else {
-            showSuccess(`Moved to ${label}`);
-            router.refresh();
-          }
+        const action = targetIdx < currentIdx ? regressStageAction : advanceStageAction;
+        const res = await action(deal.id, targetStage);
+        if (res.error) {
+          setOptimisticStage(previousStage);
+          showError(`Could not change stage: ${res.error}`);
         } else {
-          const res = await advanceStageAction(deal.id, targetStage);
-          if (res.error) {
-            showError(`Cannot advance: ${res.error}`);
-          } else {
-            showSuccess(`Advanced to ${label}`);
-            router.refresh();
-          }
+          showSuccess(`Moved to ${label}`);
         }
       });
     },
-    [deal.id, deal.stage, router]
+    [deal.id, optimisticStage]
   );
 
   // Derive metrics for condensed header
-  const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
-  const currentStageName = STAGES[currentStageIndex]?.label ?? deal.stage;
+  const currentStageIndex = STAGES.findIndex((s) => s.key === optimisticStage);
+  const currentStageName = optimisticStage === "closed" ? "Closed Won" : (STAGES[currentStageIndex]?.label ?? optimisticStage);
   const uwData = deal.uw_data as Record<string, unknown> | null;
-  const loanAmount = (uwData?.loan_amount as number | null) ?? deal.amount ?? null;
-  const assetClass = deal.asset_class
-    ? (ASSET_CLASS_LABELS[deal.asset_class as AssetClass] ?? deal.asset_class)
+
+  // Optimistic header metrics state
+  const [optimisticLoanAmount, setOptimisticLoanAmount] = useState<number | null>(
+    (uwData?.loan_amount as number | null) ?? deal.amount ?? null
+  );
+  const [optimisticAssetClassKey, setOptimisticAssetClassKey] = useState<string | null>(
+    (uwData?.property_type as string | null) ?? deal.asset_class ?? null
+  );
+  const [optimisticCloseDate, setOptimisticCloseDate] = useState<string | null>(
+    (uwData?.close_date as string | null) ?? deal.close_date ?? null
+  );
+
+  // Sync from server data when deal prop changes
+  useEffect(() => {
+    const ud = deal.uw_data as Record<string, unknown> | null;
+    setOptimisticLoanAmount((ud?.loan_amount as number | null) ?? deal.amount ?? null);
+    setOptimisticAssetClassKey((ud?.property_type as string | null) ?? deal.asset_class ?? null);
+    setOptimisticCloseDate((ud?.close_date as string | null) ?? deal.close_date ?? null);
+  }, [deal.uw_data, deal.amount, deal.asset_class, deal.close_date]);
+
+  const handleMetricSave = useCallback(async (key: string, value: string) => {
+    // Optimistic update
+    if (key === "loan_amount") setOptimisticLoanAmount(Number(value) || null);
+    if (key === "property_type") setOptimisticAssetClassKey(value || null);
+    if (key === "close_date") setOptimisticCloseDate(value || null);
+
+    const res = await updateUwDataAction(deal.id, key, key === "loan_amount" ? Number(value) || 0 : value);
+    if (res?.error) {
+      showError(`Could not save field`);
+      // Rollback
+      const ud = deal.uw_data as Record<string, unknown> | null;
+      if (key === "loan_amount") setOptimisticLoanAmount((ud?.loan_amount as number | null) ?? deal.amount ?? null);
+      if (key === "property_type") setOptimisticAssetClassKey((ud?.property_type as string | null) ?? deal.asset_class ?? null);
+      if (key === "close_date") setOptimisticCloseDate((ud?.close_date as string | null) ?? deal.close_date ?? null);
+    }
+  }, [deal.id, deal.uw_data, deal.amount, deal.asset_class, deal.close_date]);
+
+  const loanAmount = optimisticLoanAmount;
+  const assetClass = optimisticAssetClassKey
+    ? (ASSET_CLASS_LABELS[optimisticAssetClassKey as AssetClass] ?? optimisticAssetClassKey)
     : null;
-  const expectedClose = uwData?.expected_close_date ?? uwData?.closing_date ?? deal.expected_close_date;
+  const expectedClose = optimisticCloseDate;
 
   return (
     <div className="flex flex-col h-full -mb-20 md:-mb-6 lg:-mb-8 overflow-hidden">
@@ -387,14 +425,16 @@ function DealDetailPageInner({
           currentStageIndex={currentStageIndex}
           currentStageName={currentStageName}
           stageJumping={stageJumping}
-          onStageDoubleClick={handleStageDoubleClick}
+          onStageChange={handleStageChange}
           assetClass={assetClass}
+          assetClassKey={optimisticAssetClassKey}
           loanAmount={loanAmount}
           expectedClose={expectedClose as string | null | undefined}
+          onMetricSave={handleMetricSave}
         />
 
         {/* Tab Bar */}
-        <div className="flex items-center justify-between px-3 md:px-6 py-1.5 border-b flex-shrink-0 overflow-hidden">
+        <div className="flex items-center justify-between px-3 md:px-6 py-2 flex-shrink-0 overflow-hidden">
           <div className="flex gap-0.5 rounded-[10px] p-[3px] bg-muted border rq-scroll-x">
             {tabs.map((tab) => {
               const tabButton = (
@@ -513,6 +553,9 @@ function DealDetailPageInner({
 
         </div>
 
+        {/* Tab bar separator — inset to match content padding, with spacing below */}
+        <div className="mx-3 md:mx-6 border-b mb-4" />
+
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
@@ -574,6 +617,7 @@ function DealDetailPageInner({
               <Suspense fallback={<TabLoadingFallback />}>
                 <PropertyTab
                   dealId={deal.id}
+                  propertyId={deal.property_id}
                   propertyData={{
                     ...((deal.property_data as Record<string, unknown>) ?? {}),
                     ...Object.fromEntries(
@@ -647,10 +691,13 @@ function DealDetailPageInner({
                   fundraiseSlug={deal.fundraise_slug ?? null}
                   fundraiseEnabled={deal.fundraise_enabled ?? false}
                   fundraiseTarget={deal.fundraise_target ?? null}
+                  fundraiseHardCap={deal.fundraise_hard_cap ?? null}
                   fundraiseDescription={deal.fundraise_description ?? null}
                   fundraiseAmountOptions={deal.fundraise_amount_options ?? null}
                   fundraiseHeroImageUrl={deal.fundraise_hero_image_url ?? null}
                   fundraiseDeckUrl={deal.fundraise_deck_url ?? null}
+                  currentUserId={currentUserId}
+                  currentUserName={currentUserName}
                 />
               </Suspense>
               </SectionErrorBoundary>
@@ -680,6 +727,13 @@ function buildDealEmailSubject(displayId: string, dealName: string | null): stri
   return `${displayId} ${name} - `;
 }
 
+// ─── Asset class dropdown maps (for header inline editing) ───
+const HEADER_AC_LABELS = ACTIVE_ASSET_CLASS_OPTIONS.map((o) => o.label);
+const HEADER_AC_LABEL_TO_KEY = Object.fromEntries(
+  ACTIVE_ASSET_CLASS_OPTIONS.map((o) => [o.label, o.key])
+);
+const HEADER_AC_KEY_TO_LABEL = ASSET_CLASS_LABELS as Record<string, string>;
+
 function DealHeader({
   deal,
   shortLabel,
@@ -695,10 +749,12 @@ function DealHeader({
   currentStageIndex,
   currentStageName,
   stageJumping,
-  onStageDoubleClick,
+  onStageChange,
   assetClass,
+  assetClassKey,
   loanAmount,
   expectedClose,
+  onMetricSave,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -714,10 +770,12 @@ function DealHeader({
   currentStageIndex: number;
   currentStageName: string;
   stageJumping: boolean;
-  onStageDoubleClick: (stage: string) => void;
+  onStageChange: (stage: string) => void;
   assetClass: string | null;
+  assetClassKey: string | null;
   loanAmount: number | null;
   expectedClose: string | null | undefined;
+  onMetricSave: (key: string, value: string) => void;
 }) {
   const router = useRouter();
   const dealNav = useDealNavigation(deal.id, deal.deal_number);
@@ -1191,54 +1249,142 @@ function DealHeader({
           </div>
         </div>
 
-        {/* C. Stage dots */}
-        <div className={cn("flex items-center gap-1 px-4 shrink-0", deal.status === "lost" && "opacity-40")}>
-          {STAGES.map((stage, i) => (
-            <div
-              key={stage.key}
+        {/* C. Stage selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
               className={cn(
-                "h-2 w-2 rounded-full",
-                currentStageIndex > i && "bg-emerald-500",
-                currentStageIndex === i && "bg-foreground ring-2 ring-foreground/15",
-                currentStageIndex < i && "bg-muted border border-border"
+                "flex items-center gap-1.5 px-2 py-1 rounded-md shrink-0",
+                "border border-transparent rq-transition",
+                "hover:border-border hover:bg-muted/40",
+                "focus:border-primary/60 focus:bg-background focus:ring-1 focus:ring-primary/20 focus:outline-none",
+                deal.status === "lost" && "opacity-40 pointer-events-none",
+                stageJumping && "pointer-events-none"
               )}
-              title={stage.label}
-              onDoubleClick={() => onStageDoubleClick(stage.key)}
-            />
-          ))}
-          <span className="text-xs font-semibold ml-1.5 hidden sm:inline">{currentStageName}</span>
-          <span className="text-[10.5px] text-muted-foreground ml-0.5 hidden sm:inline">({days}d)</span>
-          {stageJumping && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
-        </div>
+              disabled={deal.status === "lost"}
+            >
+              <div className={cn(
+                "h-2 w-2 rounded-full shrink-0",
+                currentStageIndex > 0 ? "bg-emerald-500" : "bg-foreground"
+              )} />
+              <span className="text-xs font-semibold">{currentStageName}</span>
+              <span className="text-[10.5px] text-muted-foreground">({days}d)</span>
+              {stageJumping
+                ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                : <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              }
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {STAGES.map((stage, i) => {
+              const isCurrent = i === currentStageIndex;
+              const isCompleted = i < currentStageIndex;
+              const isFuture = i > currentStageIndex;
+              const isClosed = stage.key === "closed";
+              return (
+                <DropdownMenuItem
+                  key={stage.key}
+                  disabled={isCurrent || stageJumping}
+                  onSelect={() => onStageChange(stage.key)}
+                  className={cn(
+                    "gap-2",
+                    isCurrent && "font-semibold bg-muted/50",
+                    isClosed && "text-emerald-600 dark:text-emerald-400"
+                  )}
+                >
+                  <div className={cn(
+                    "h-2 w-2 rounded-full shrink-0",
+                    isCompleted && "bg-emerald-500",
+                    isCurrent && "bg-foreground ring-2 ring-foreground/15",
+                    isFuture && !isClosed && "bg-muted border border-border",
+                    isClosed && !isCompleted && !isCurrent && "bg-emerald-500/40 border border-emerald-500/60"
+                  )} />
+                  {isClosed ? "Closed Won" : stage.label}
+                  {isCurrent && <Check className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={stageJumping || deal.status === "lost"}
+              onSelect={() => setClosedLostOpen(true)}
+              className="gap-2 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-500/10"
+            >
+              <div className="h-2 w-2 rounded-full shrink-0 bg-red-500/40 border border-red-500/60" />
+              Closed Lost
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* D. Separator */}
         <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
 
-        {/* E. Metrics */}
-        <div className="hidden md:flex items-center gap-5 shrink-0">
-          {assetClass && (
-            <div className="flex flex-col items-center">
-              <span className="text-sm font-semibold">{assetClass}</span>
-              <span className="rq-micro-label">Asset</span>
-            </div>
-          )}
-          <div className="flex flex-col items-center">
-            <span className="text-sm font-semibold num">{formatCompactCurrency(loanAmount)}</span>
-            <span className="rq-micro-label">Loan</span>
-          </div>
-          {expectedClose && (
-            <div className="flex flex-col items-center">
-              <span className="text-sm font-semibold num">
-                {(() => {
-                  const [y, m, d] = String(expectedClose).split("T")[0].split("-");
-                  const dt = new Date(Number(y), Number(m) - 1, Number(d));
-                  return formatDateShort(dt.toISOString());
-                })()}
-              </span>
-              <span className="rq-micro-label">Close</span>
-            </div>
-          )}
+        {/* E. Metrics (inline-editable) */}
+        <TooltipProvider>
+        <div className="hidden md:flex items-center gap-4 shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex flex-col items-center min-w-[90px]">
+                <InlineField
+                  type="select"
+                  value={HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? ""}
+                  options={HEADER_AC_LABELS}
+                  onSave={(v) => onMetricSave("property_type", HEADER_AC_LABEL_TO_KEY[v] ?? v)}
+                  className="items-center text-center font-semibold [&_span]:whitespace-nowrap"
+                />
+                <span className="rq-micro-label">Asset</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? "Not Set"}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex flex-col items-center min-w-[100px]">
+                <InlineField
+                  type="currency"
+                  value={loanAmount}
+                  formatValue={(v) => formatCompactCurrency(Number(v) || null)}
+                  onSave={(v) => onMetricSave("loan_amount", v)}
+                  className="items-center text-center font-semibold [&_span]:whitespace-nowrap"
+                />
+                <span className="rq-micro-label">Loan</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {loanAmount ? formatCompactCurrency(Number(loanAmount) || null) : "Not Set"}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex flex-col items-center min-w-[80px]">
+                <InlineField
+                  type="date"
+                  value={expectedClose ? String(expectedClose).split("T")[0] : null}
+                  onSave={(v) => onMetricSave("close_date", v)}
+                  formatValue={(v) => {
+                    if (!v) return "—";
+                    const [y, m, d] = String(v).split("-");
+                    const dt = new Date(Number(y), Number(m) - 1, Number(d));
+                    return formatDateShort(dt.toISOString());
+                  }}
+                  placeholder="—"
+                  className="items-center text-center font-semibold [&_span]:whitespace-nowrap"
+                />
+                <span className="rq-micro-label">Close</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {expectedClose ? (() => {
+                const [y, m, d] = String(expectedClose).split("T")[0].split("-");
+                const dt = new Date(Number(y), Number(m) - 1, Number(d));
+                return formatDateShort(dt.toISOString());
+              })() : "Not Set"}
+            </TooltipContent>
+          </Tooltip>
         </div>
+        </TooltipProvider>
 
         {/* F. Separator + Contact Selection Bar */}
         <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
@@ -2034,7 +2180,7 @@ function DocumentsTabWithData({
   currentUserName: string;
 }) {
   const googleDriveFolderId = (deal as unknown as Record<string, unknown>).google_drive_folder_id as string | null;
-  const { documents, conditions, loading } = useDocumentsTabData(deal.id, googleDriveFolderId);
+  const { documents, conditions, loading, refetch } = useDocumentsTabData(deal.id, googleDriveFolderId);
 
   if (loading) {
     return (
@@ -2054,6 +2200,7 @@ function DocumentsTabWithData({
       googleDriveFolderId={googleDriveFolderId}
       currentUserId={currentUserId}
       currentUserName={currentUserName}
+      onUploadComplete={refetch}
       dealDocData={{
         id: deal.id,
         name: (deal as { name?: string }).name ?? "Deal",

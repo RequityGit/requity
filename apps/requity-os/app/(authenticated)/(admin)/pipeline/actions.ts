@@ -141,87 +141,6 @@ export async function createUnifiedDealAction(data: {
   }
 }
 
-// ─── Temp Extraction Upload (for New Deal document auto-fill) ───
-
-export async function createTempExtractionUploadUrl(
-  fileName: string
-): Promise<{
-  signedUrl: string | null;
-  token: string | null;
-  storagePath: string | null;
-  error: string | null;
-}> {
-  try {
-    const auth = await requireAdmin();
-    if ("error" in auth)
-      return { signedUrl: null, token: null, storagePath: null, error: auth.error ?? "Unauthorized" };
-
-    if (!fileName)
-      return { signedUrl: null, token: null, storagePath: null, error: "Missing fileName" };
-
-    const admin = createAdminClient();
-    const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const storagePath = `temp-extractions/${auth.user.id}/${safeName}`;
-
-    const { data, error } = await admin.storage
-      .from("loan-documents")
-      .createSignedUploadUrl(storagePath);
-
-    if (error || !data) {
-      console.error("createTempExtractionUploadUrl error:", error);
-      return {
-        signedUrl: null,
-        token: null,
-        storagePath: null,
-        error: error?.message ?? "Failed to create upload URL",
-      };
-    }
-
-    return {
-      signedUrl: data.signedUrl,
-      token: data.token,
-      storagePath,
-      error: null,
-    };
-  } catch (err: unknown) {
-    console.error("createTempExtractionUploadUrl error:", err);
-    return {
-      signedUrl: null,
-      token: null,
-      storagePath: null,
-      error: err instanceof Error ? err.message : "Failed to create upload URL",
-    };
-  }
-}
-
-export async function cleanupTempExtraction(
-  storagePath: string
-): Promise<{ error: string | null }> {
-  try {
-    const auth = await requireAdmin();
-    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
-
-    if (!storagePath.startsWith("temp-extractions/")) {
-      return { error: "Invalid storage path" };
-    }
-
-    const admin = createAdminClient();
-    const { error } = await admin.storage
-      .from("loan-documents")
-      .remove([storagePath]);
-
-    if (error) {
-      console.error("cleanupTempExtraction error:", error);
-      return { error: error.message };
-    }
-
-    return { error: null };
-  } catch (err: unknown) {
-    console.error("cleanupTempExtraction error:", err);
-    return { error: err instanceof Error ? err.message : "Failed to cleanup temp file" };
-  }
-}
-
 // ─── Update Deal ───
 
 export async function updateUnifiedDealAction(
@@ -350,6 +269,83 @@ export async function advanceStageAction(
   } catch (err: unknown) {
     console.error("advanceStageAction error:", err);
     return { error: err instanceof Error ? err.message : "Failed to advance stage" };
+  }
+}
+
+// ─── Simple Stage Move (drag-and-drop, no gating) ───
+
+export async function updateDealStageAction(
+  dealId: string,
+  newStage: string,
+  sortOrder?: number
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const update: Record<string, unknown> = {
+      stage: newStage,
+      stage_entered_at: new Date().toISOString(),
+    };
+    if (sortOrder !== undefined) {
+      update.sort_order = sortOrder;
+    }
+
+    const { error } = await admin
+      .from("unified_deals" as never)
+      .update(update as never)
+      .eq("id" as never, dealId as never);
+
+    if (error) {
+      console.error("updateDealStageAction error:", error);
+      return { error: error.message };
+    }
+
+    await revalidatePipeline(dealId);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("updateDealStageAction error:", err);
+    return {
+      error: err instanceof Error ? err.message : "Failed to move deal",
+    };
+  }
+}
+
+// ─── Reorder Deals (within a stage column) ───
+
+export async function reorderDealsAction(
+  orderedDealIds: string[],
+  stage: string
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const updates = orderedDealIds.map((id, i) =>
+      admin
+        .from("unified_deals" as never)
+        .update({ sort_order: i } as never)
+        .eq("id" as never, id as never)
+        .eq("stage" as never, stage as never)
+    );
+
+    const results = await Promise.all(updates);
+    const failed = results.filter((r) => r.error);
+
+    if (failed.length > 0) {
+      console.error("reorderDealsAction errors:", failed.map((r) => r.error));
+      return { error: "Failed to save deal order" };
+    }
+
+    revalidatePath("/pipeline", "layout");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("reorderDealsAction error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to reorder deals" };
   }
 }
 
@@ -654,9 +650,17 @@ export async function updateContactFieldAction(
     if (!allowedFields.includes(field)) return { error: `Field '${field}' not allowed` };
 
     const admin = createAdminClient();
+
+    // When company_name is edited directly, clear the company_id FK
+    // so the stale joined company record doesn't override the new text value
+    const updatePayload =
+      field === "company_name"
+        ? { company_name: value, company_id: null }
+        : { [field]: value };
+
     const { error } = await admin
       .from("crm_contacts")
-      .update({ [field]: value } as never)
+      .update(updatePayload as never)
       .eq("id", contactId);
 
     if (error) return { error: error.message };
@@ -937,21 +941,16 @@ export async function updateDealStatusAction(
       return { error: error.message };
     }
 
-    // Closing Date is the single source of truth: expected until close, then actual once won.
+    // Closing date column is the single source of truth.
+    // When a deal is won, stamp today as the closing date.
     if (status === "won") {
       const closingDate = new Date().toISOString().split("T")[0];
-      const { data: deal } = await admin
+      const { error: closeErr } = await admin
         .from("unified_deals")
-        .select("uw_data")
-        .eq("id", dealId)
-        .single();
-      const uwData = (deal?.uw_data as Record<string, unknown>) || {};
-      const { error: uwError } = await admin
-        .from("unified_deals")
-        .update({ uw_data: { ...uwData, closing_date: closingDate, expected_close_date: closingDate } as Json })
+        .update({ close_date: closingDate })
         .eq("id", dealId);
-      if (uwError) {
-        console.error("updateDealStatusAction uw_data closing_date error:", uwError);
+      if (closeErr) {
+        console.error("updateDealStatusAction closing_date error:", closeErr);
       }
     }
 

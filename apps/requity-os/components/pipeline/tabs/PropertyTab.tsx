@@ -10,13 +10,14 @@ import type { LayoutSection } from "@/hooks/useDealLayout";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { showSuccess, showError, showInfo } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, ChevronRight } from "lucide-react";
+import { Loader2, Sparkles, ChevronRight, Search, Check } from "lucide-react";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { useOptionalInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
 import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
 import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
 import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import { ReadValue } from "../ReadValue";
 
@@ -51,6 +52,7 @@ function shouldShowSection(section: LayoutSection, rawAssetClass: string | null)
 
 interface PropertyTabProps {
   dealId: string;
+  propertyId?: string | null;
   propertyData: Record<string, unknown>;
   visibilityContext?: VisibilityContext | null;
   assetClass?: string | null;
@@ -58,6 +60,7 @@ interface PropertyTabProps {
 
 export function PropertyTab({
   dealId,
+  propertyId,
   propertyData,
   visibilityContext,
   assetClass,
@@ -65,6 +68,7 @@ export function PropertyTab({
   return (
     <PropertyDetailsContent
       dealId={dealId}
+      propertyId={propertyId}
       propertyData={propertyData}
       visibilityContext={visibilityContext}
       assetClass={assetClass}
@@ -76,11 +80,13 @@ export function PropertyTab({
 
 function PropertyDetailsContent({
   dealId,
+  propertyId,
   propertyData,
   visibilityContext,
   assetClass,
 }: {
   dealId: string;
+  propertyId?: string | null;
   propertyData: Record<string, unknown>;
   visibilityContext?: VisibilityContext | null;
   assetClass?: string | null;
@@ -93,6 +99,8 @@ function PropertyDetailsContent({
   const [pending, startTransition] = useTransition();
   const [enriching, setEnriching] = useState(false);
   const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
+  const [searchValue, setSearchValue] = useState("");
+  const [searchSelected, setSearchSelected] = useState(false);
 
   const layoutSections = useMemo(() => {
     if (layout.loading) return [];
@@ -170,6 +178,44 @@ function PropertyDetailsContent({
     [dealId]
   );
 
+  // Search bar: on address select, fill fields then auto-trigger enrichment
+  const handleSearchAddressSelect = useCallback(
+    (parsed: ParsedAddress) => {
+      // Show green checkmark briefly
+      setSearchSelected(true);
+      setTimeout(() => setSearchSelected(false), 2000);
+
+      // Fill address fields
+      handleAddressSelect(parsed);
+
+      // Store lat/lng if available
+      if (parsed.lat != null && parsed.lng != null) {
+        setLocalData((prev) => ({ ...prev, latitude: parsed.lat, longitude: parsed.lng }));
+        startTransition(async () => {
+          await updatePropertyDataAction(dealId, "latitude", parsed.lat);
+          await updatePropertyDataAction(dealId, "longitude", parsed.lng);
+        });
+      }
+
+      // Clear the search bar after selection
+      setSearchValue("");
+
+      // Auto-trigger enrichment with the parsed address values directly
+      // (avoids stale state since localData hasn't updated yet)
+      setTimeout(() => {
+        enrichFromAddress({
+          address: parsed.address_line1,
+          state: parsed.state,
+          city: parsed.city,
+          zip: parsed.zip,
+          county: parsed.county,
+        });
+      }, 100);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dealId, handleAddressSelect]
+  );
+
   // Fields that live in uw_data (shared with Overview tab) rather than property_data
   const UW_DATA_FIELDS = new Set(["purchase_price", "appraised_value"]);
 
@@ -199,58 +245,72 @@ function PropertyDetailsContent({
     return labels;
   }, [enrichFieldMap]);
 
-  async function enrichFromAddress() {
-    const address = localData.property_address ?? localData.address_line1;
-    const state = localData.property_state ?? localData.state;
+  async function enrichFromAddress(overrides?: {
+    address?: string;
+    state?: string;
+    city?: string;
+    zip?: string;
+    county?: string;
+  }) {
+    const address = overrides?.address ?? localData.property_address ?? localData.address_line1;
+    const state = overrides?.state ?? localData.property_state ?? localData.state;
 
     if (!address || !state) {
       showError("Address and state are required for enrichment");
       return;
     }
 
+    const city = overrides?.city ?? localData.property_city ?? localData.city;
+    const zip = overrides?.zip ?? localData.property_zip ?? localData.zip;
+    const county = overrides?.county ?? localData.property_county ?? localData.county;
+
     setEnriching(true);
     try {
-      const response = await fetch("/api/properties/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address: String(address).trim(),
-          state: String(state).trim(),
-          ...(localData.property_city ?? localData.city
-            ? { city: String(localData.property_city ?? localData.city).trim() }
-            : {}),
-          ...(localData.property_zip ?? localData.zip
-            ? { zip: String(localData.property_zip ?? localData.zip).trim() }
-            : {}),
-          ...(localData.property_county ?? localData.county
-            ? { county: String(localData.property_county ?? localData.county).trim() }
-            : {}),
-        }),
-      });
+      const supabase = createClient();
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        const searched = data.searched;
-        const cityStr = searched?.city ?? localData.property_city ?? localData.city;
-        const zipStr = searched?.zip ?? localData.property_zip ?? localData.zip;
+      // Call the edge function with property_id and address overrides
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "realie-property-lookup",
+        {
+          body: {
+            property_id: propertyId,
+            address_override: {
+              address_line1: String(address).trim(),
+              state: String(state).trim(),
+              ...(city ? { city: String(city).trim() } : {}),
+              ...(zip ? { zip: String(zip).trim() } : {}),
+              ...(county ? { county: String(county).trim() } : {}),
+            },
+          },
+        }
+      );
+
+      if (invokeError) {
+        // FunctionsHttpError contains the response body
+        const errorBody = typeof invokeError === "object" && "context" in invokeError
+          ? (invokeError as { context?: { body?: string } }).context?.body
+          : null;
+        let parsed: { error?: string; detail?: string; realie_status?: number } = {};
+        if (errorBody) {
+          try { parsed = JSON.parse(errorBody); } catch { /* ignore */ }
+        }
+
+        const errorMsg = parsed.error ?? invokeError.message ?? "Enrichment failed";
         const addrParts = [
           String(address).trim(),
-          cityStr ? String(cityStr).trim() : null,
+          city ? String(city).trim() : null,
           String(state).trim(),
-          zipStr ? String(zipStr).trim() : null,
+          zip ? String(zip).trim() : null,
         ].filter(Boolean);
         const searchedAddr = addrParts.join(", ");
+        const is404 = parsed.realie_status === 404;
 
-        // Show the actual backend error for non-404s (auth failures, config issues, etc.)
-        const backendError = data.error as string | undefined;
-        const detail = data.detail as string | undefined;
-        const is404 = response.status === 404;
-        const errorMsg = is404
-          ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
-          : detail
-            ? `${backendError ?? "Enrichment error"}: ${detail}`
-            : backendError ?? `Enrichment service error (${response.status}). Try again later.`;
-        showError("Could not enrich property", errorMsg);
+        showError(
+          "Could not enrich property",
+          is404
+            ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+            : errorMsg
+        );
         showInfo(
           "Fields you can fill manually",
           enrichableFieldLabels.slice(0, 15).join(", ") +
@@ -259,20 +319,20 @@ function PropertyDetailsContent({
         return;
       }
 
-      const data = await response.json();
-      const enriched = data.enriched as Record<string, unknown>;
+      const enriched = data?.enriched as Record<string, unknown> | undefined;
+      if (!enriched) {
+        showError("Could not enrich property", "No enrichment data returned");
+        return;
+      }
 
       // Determine which enrichable fields already have values
       const fieldsWithValues: string[] = [];
-      const fieldsToFill: string[] = [];
       for (const [key, value] of Object.entries(enriched)) {
         if (value === null || value === undefined || value === "") continue;
         if (!enrichFieldMap.has(key)) continue;
         const hasExisting = localData[key] !== null && localData[key] !== undefined && localData[key] !== "";
         if (hasExisting) {
           fieldsWithValues.push(enrichFieldMap.get(key)?.label ?? key);
-        } else {
-          fieldsToFill.push(key);
         }
       }
 
@@ -440,33 +500,48 @@ function PropertyDetailsContent({
     );
   }
 
-  const enrichButton = (
-    <div className="flex items-center justify-between">
-      <div />
-      {enriching ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Enriching property data...
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={enrichFromAddress}
-          disabled={!hasAddress || !hasState || pending}
-        >
-          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-          Enrich Property
-        </Button>
+  const enrichButtonInline = enriching ? (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <Loader2 className="h-3 w-3 animate-spin" />
+      Enriching...
+    </div>
+  ) : (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+      onClick={() => enrichFromAddress()}
+      disabled={!hasAddress || !hasState || pending}
+    >
+      <Sparkles className="h-3 w-3 mr-1" />
+      Enrich Property
+    </Button>
+  );
+
+  const addressSearchBar = !isEditing && (
+    <div className="relative">
+      <Search className={cn(
+        "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground rq-transition",
+        searchSelected && "text-emerald-500 dark:text-emerald-400"
+      )} />
+      {searchSelected && (
+        <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 dark:text-emerald-400 rq-animate-fade-in" />
       )}
+      <AddressAutocomplete
+        value={searchValue}
+        onChange={setSearchValue}
+        onAddressSelect={handleSearchAddressSelect}
+        placeholder="Search address..."
+        className="pl-9 pr-9 h-10 w-full rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        disabled={enriching}
+      />
     </div>
   );
 
   if (useLayoutSections || (isEditing && effectiveSections.length > 0)) {
     return (
       <div className="space-y-4">
-        {enrichButton}
-
+        {addressSearchBar}
         {effectiveSections.map((section, sectionIdx) => {
           const layoutFields = (effectiveFieldsBySection[section.id] ?? [])
             .filter((f) => f.is_visible)
@@ -474,6 +549,7 @@ function PropertyDetailsContent({
           if (layoutFields.length === 0 && !isEditing) return null;
 
           const isCollapsed = !isEditing && collapsedSections.has(section.id);
+          const isFirstSection = sectionIdx === 0;
 
           return (
             <EditableSection
@@ -482,37 +558,40 @@ function PropertyDetailsContent({
               sectionIndex={sectionIdx}
               totalSections={effectiveSections.length}
             >
-              <div className="rounded-xl border bg-card p-5">
-                <button
-                  type="button"
-                  className={cn(
-                    "flex w-full items-center gap-1.5 text-left",
-                    !isEditing && "cursor-pointer"
-                  )}
-                  onClick={() => !isEditing && toggleSection(section.id)}
-                  disabled={isEditing}
-                >
-                  {!isEditing && (
-                    <ChevronRight
-                      className={cn(
-                        "h-3.5 w-3.5 text-muted-foreground rq-transition-transform",
-                        !isCollapsed && "rotate-90"
-                      )}
-                    />
-                  )}
-                  <h4 className="rq-micro-label">
-                    {section.section_label}
-                  </h4>
-                </button>
+              <div className="rq-card-wrapper">
+                <div className="rq-card-header">
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex items-center gap-1.5 text-left",
+                      !isEditing && "cursor-pointer"
+                    )}
+                    onClick={() => !isEditing && toggleSection(section.id)}
+                    disabled={isEditing}
+                  >
+                    {!isEditing && (
+                      <ChevronRight
+                        className={cn(
+                          "h-3.5 w-3.5 text-muted-foreground rq-transition-transform",
+                          !isCollapsed && "rotate-90"
+                        )}
+                      />
+                    )}
+                    <h4 className="rq-micro-label">
+                      {section.section_label}
+                    </h4>
+                  </button>
+                  {isFirstSection && enrichButtonInline}
+                </div>
                 {!isCollapsed && (
-                  <div className="mt-3">
-                    <div className="grid grid-cols-12 gap-x-5 gap-y-2">
+                  <div className="rq-card">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1">
                       {layoutFields.map((lf, idx) => {
                         const fieldDef = uwFieldMap.get(lf.field_key);
                         if (!fieldDef) return null;
-                        const spanClass = SPAN_CLASS[lf.column_span] || SPAN_CLASS.half;
+                        const isFullWidth = lf.column_span === "full";
                         return (
-                          <div key={lf.id ?? lf.field_key} className={spanClass}>
+                          <div key={lf.id ?? lf.field_key} className={isFullWidth ? "col-span-2 sm:col-span-3" : undefined}>
                             <EditableFieldSlot
                               fieldId={lf.id}
                               fieldLabel={fieldDef.label}
@@ -572,32 +651,36 @@ function PropertyDetailsContent({
 
   return (
     <div className="space-y-4">
-      {enrichButton}
-
-      {Array.from(fallbackSectionGroups.entries()).map(([groupName, fields]) => (
-        <div key={groupName} className="rounded-xl border bg-card p-5">
-          <h4 className="rq-micro-label mb-3">
-            {groupName}
-          </h4>
-          <div className="grid grid-cols-12 gap-x-5 gap-y-2">
-            {fields.map((field) => (
-              <div key={field.key} className="col-span-12 sm:col-span-6">
-                {field.key === ADDRESS_FIELD_KEY ? (
-                  renderAddressField(field, field.key)
-                ) : (
-                  <UwField
-                    field={field}
-                    value={localData[field.key] ?? null}
-                    onChange={(val) => handleFieldChange(field.key, val)}
-                    onBlur={() => handleFieldBlur(field.key)}
-                    disabled={pending}
-                    mode={editingFieldKey === field.key ? "edit" : "read"}
-                    onStartEdit={() => setEditingFieldKey(field.key)}
-                    onEndEdit={() => setEditingFieldKey(null)}
-                  />
-                )}
-              </div>
-            ))}
+      {addressSearchBar}
+      {Array.from(fallbackSectionGroups.entries()).map(([groupName, fields], groupIdx) => (
+        <div key={groupName} className="rq-card-wrapper">
+          <div className="rq-card-header">
+            <h4 className="rq-micro-label">
+              {groupName}
+            </h4>
+            {groupIdx === 0 && enrichButtonInline}
+          </div>
+          <div className="rq-card">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1">
+              {fields.map((field) => (
+                <div key={field.key}>
+                  {field.key === ADDRESS_FIELD_KEY ? (
+                    renderAddressField(field, field.key)
+                  ) : (
+                    <UwField
+                      field={field}
+                      value={localData[field.key] ?? null}
+                      onChange={(val) => handleFieldChange(field.key, val)}
+                      onBlur={() => handleFieldBlur(field.key)}
+                      disabled={pending}
+                      mode={editingFieldKey === field.key ? "edit" : "read"}
+                      onStartEdit={() => setEditingFieldKey(field.key)}
+                      onEndEdit={() => setEditingFieldKey(null)}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ))}

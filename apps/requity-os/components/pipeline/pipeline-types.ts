@@ -108,7 +108,7 @@ export interface UnifiedDeal {
   assigned_to: string | null;
   amount: number | null;
   probability: number;
-  expected_close_date: string | null;
+  close_date: string | null;
   status: DealStatus;
   loss_reason: string | null;
   source: string | null;
@@ -117,6 +117,7 @@ export interface UnifiedDeal {
   notes: string | null;
   is_priority: boolean;
   tags: string[];
+  sort_order: number | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -130,6 +131,7 @@ export interface UnifiedDeal {
   fundraise_amount_options?: number[] | null;
   fundraise_hero_image_url?: string | null;
   fundraise_deck_url?: string | null;
+  fundraise_hard_cap?: number | null;
   // Joined
   primary_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null } | null;
   broker_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; broker_company?: { name: string } | null } | null;

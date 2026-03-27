@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from "react";
+import { createPortal } from "react-dom";
+import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { extractMentionIds } from "@/lib/comment-utils";
+import { useAutoExpand } from "@/hooks/useAutoExpand";
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 interface TeamMember {
   id: string;
@@ -64,11 +71,14 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<TeamMember[]>([]);
   const [membersLoaded, setMembersLoaded] = useState(false);
+  const [membersLoading, setMembersLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mentionStartRef = useRef<number>(-1);
   const mentionsRef = useRef<Map<string, string>>(new Map());
   const initializedRef = useRef(false);
+
+  useAutoExpand(textareaRef, value);
 
   useImperativeHandle(ref, () => ({
     focus() {
@@ -113,19 +123,31 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
 
   // Load team members once
   const loadTeamMembers = useCallback(async () => {
-    if (membersLoaded) return;
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name, email, avatar_url")
-      .not("full_name", "is", null)
-      .order("full_name");
+    if (membersLoaded || membersLoading) return;
+    setMembersLoading(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .not("full_name", "is", null)
+        .order("full_name");
 
-    if (data) {
-      setTeamMembers(data.filter((p) => p.full_name) as TeamMember[]);
-      setMembersLoaded(true);
+      if (error) {
+        console.error("Failed to load team members for mentions:", error.message);
+        return;
+      }
+
+      if (data) {
+        setTeamMembers(data.filter((p) => p.full_name) as TeamMember[]);
+        setMembersLoaded(true);
+      }
+    } catch (err) {
+      console.error("Failed to load team members for mentions:", err);
+    } finally {
+      setMembersLoading(false);
     }
-  }, [membersLoaded]);
+  }, [membersLoaded, membersLoading]);
 
   // Filter members based on query
   useEffect(() => {
@@ -258,6 +280,24 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
     // Strip any remaining zero-width spaces
     markupText = markupText.replaceAll("\u200B", "");
 
+    // Fallback: resolve plain @Name patterns against loaded team members
+    // Handles users who type names manually without selecting from dropdown
+    if (teamMembers.length > 0) {
+      const sortedMembers = [...teamMembers].sort(
+        (a, b) => b.full_name.length - a.full_name.length
+      );
+      for (const member of sortedMembers) {
+        const pattern = new RegExp(
+          `@${escapeRegExp(member.full_name)}(?!\\])`,
+          "gi"
+        );
+        markupText = markupText.replace(
+          pattern,
+          `@[${member.full_name}](${member.id})`
+        );
+      }
+    }
+
     const mentionIds = extractMentionIds(markupText);
     onSubmit(markupText.trim(), mentionIds);
   }
@@ -339,13 +379,86 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
     }
   }
 
+  // Position the portal dropdown relative to the textarea
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!showDropdown || !textareaRef.current) {
+      setDropdownPos(null);
+      return;
+    }
+    const rect = textareaRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropdownHeight = 200; // approximate max-h-48 = 192px + padding
+    // Show above textarea if not enough space below
+    const top = spaceBelow < dropdownHeight
+      ? rect.top + window.scrollY - dropdownHeight
+      : rect.bottom + window.scrollY + 4;
+    setDropdownPos({ top, left: rect.left + window.scrollX });
+  }, [showDropdown, filteredMembers, membersLoading]);
+
   const hasText = value.trim().length > 0 || canSubmitEmpty;
   const textareaPadding = compact ? "px-3 pt-3 pb-2" : "px-4 pt-3.5 pb-2";
   const toolbarPadding = compact ? "px-3 py-2" : "px-3.5 py-2.5";
 
+  const showResults = showDropdown && filteredMembers.length > 0;
+  const showEmpty = showDropdown && filteredMembers.length === 0 && membersLoaded && !membersLoading;
+  const showLoading = showDropdown && !membersLoaded && membersLoading;
+  const showPortal = showResults || showEmpty || showLoading;
+
+  const dropdownContent = showPortal && dropdownPos ? (
+    <div
+      ref={dropdownRef}
+      style={{ position: "fixed", top: dropdownPos.top - window.scrollY, left: dropdownPos.left, zIndex: 9999 }}
+      className="w-64 bg-popover border rounded-md shadow-md max-h-48 overflow-y-auto"
+    >
+      {showLoading && (
+        <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Loading team members...
+        </div>
+      )}
+      {showResults && filteredMembers.map((member, idx) => (
+        <button
+          key={member.id}
+          type="button"
+          className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-accent transition-colors ${
+            idx === dropdownIndex ? "bg-accent" : ""
+          }`}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            selectMember(member);
+          }}
+        >
+          <div className="w-6 h-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium flex-shrink-0">
+            {member.full_name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="font-medium truncate">{member.full_name}</div>
+            {member.email && (
+              <div className="text-muted-foreground text-[10px] truncate">
+                {member.email}
+              </div>
+            )}
+          </div>
+        </button>
+      ))}
+      {showEmpty && (
+        <div className="px-3 py-2 text-xs text-muted-foreground">
+          No team members found
+        </div>
+      )}
+    </div>
+  ) : null;
+
   return (
     <div className="comment-surface">
-      <div className="relative">
+      <div>
         <textarea
           ref={textareaRef}
           value={value}
@@ -357,51 +470,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
           disabled={disabled}
           className={`comment-surface-textarea ${textareaPadding} disabled:cursor-not-allowed disabled:opacity-50`}
         />
-        {showDropdown && filteredMembers.length > 0 && (
-          <div
-            ref={dropdownRef}
-            className="absolute z-50 w-64 bg-popover border rounded-md shadow-md mt-1 max-h-48 overflow-y-auto"
-          >
-            {filteredMembers.map((member, idx) => (
-              <button
-                key={member.id}
-                type="button"
-                className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-accent transition-colors ${
-                  idx === dropdownIndex ? "bg-accent" : ""
-                }`}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  selectMember(member);
-                }}
-              >
-                <div className="w-6 h-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium flex-shrink-0">
-                  {member.full_name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{member.full_name}</div>
-                  {member.email && (
-                    <div className="text-muted-foreground text-[10px] truncate">
-                      {member.email}
-                    </div>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        {showDropdown && filteredMembers.length === 0 && membersLoaded && (
-          <div
-            ref={dropdownRef}
-            className="absolute z-50 w-64 bg-popover border rounded-md shadow-md mt-1 px-3 py-2 text-xs text-muted-foreground"
-          >
-            No team members found
-          </div>
-        )}
+        {typeof document !== "undefined" && dropdownContent && createPortal(dropdownContent, document.body)}
       </div>
       {middleContent}
       <div className={`comment-toolbar ${toolbarPadding}`}>

@@ -27,6 +27,7 @@ import { NoteThread } from "@/components/shared/UnifiedNotes/NoteThread";
 import type { NoteData } from "@/components/shared/UnifiedNotes/types";
 import type { UploadedAttachment } from "@/components/shared/attachments";
 import { ExpandableText } from "@/components/shared/ExpandableText";
+import { isIntakeNote, IntakeNoteRenderer } from "./IntakeNoteRenderer";
 import type { StreamItem, StreamItemType } from "./useActionCenterData";
 
 // ── Icon + color config per type ──
@@ -132,7 +133,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
     const cfg = TYPE_CONFIG[item.type];
     const Icon = cfg.icon;
     return (
-      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rq-system-event flex items-center gap-2">
         <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
         <span>{item.title}</span>
         <span className="ml-auto shrink-0 text-[10px]">{timeAgo(item.timestamp)}</span>
@@ -145,7 +146,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
     const cfg = TYPE_CONFIG[item.type];
     const Icon = cfg.icon;
     return (
-      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rq-system-event flex items-center gap-2">
         <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
         <span className="truncate">{item.title}</span>
         <span className="ml-auto shrink-0 text-[10px]">{timeAgo(item.timestamp)}</span>
@@ -177,19 +178,25 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
     );
   }
 
-  // Note: use NoteThread
+  // Note: use NoteThread (with enhanced rendering for intake notes)
   if (item.type === "note" && item.noteData && noteHandlers) {
+    const isIntake = isIntakeNote(item.noteData.body);
     return (
       <div className="px-2 py-0.5 border-b border-border/20">
+        {isIntake && (
+          <div className="px-2 pt-2 pb-1">
+            <IntakeNoteRenderer body={item.noteData.body} />
+          </div>
+        )}
         <NoteThread
-          note={item.noteData}
+          note={isIntake ? { ...item.noteData, body: item.noteData.body.split("\n")[0].replace(/\*\*/g, "") } : item.noteData}
           replies={item.noteReplies ?? []}
           currentUserId={noteHandlers.currentUserId}
           currentUserName={noteHandlers.currentUserName}
           showPinning={true}
           showInternalToggle={true}
           defaultInternal={true}
-          compact={false}
+          compact={isIntake}
           onPin={noteHandlers.onPin}
           onEdit={noteHandlers.onEdit}
           onDelete={noteHandlers.onDelete}
@@ -376,13 +383,25 @@ function StageChangeItem({ item }: { item: StreamItem }) {
   );
 }
 
+// ── Fix "Unknown" display name in system event text ──
+
+function fixUnknownInTitle(text: string, authorName?: string): string {
+  if (!text) return text;
+  // Replace leading "Unknown" with the resolved author name or "System"
+  return text.replace(/^Unknown\b/, authorName && authorName !== "System" ? authorName : "System");
+}
+
 // ── System one-liner ──
 
 function SystemItem({ item }: { item: StreamItem }) {
+  const displayText = fixUnknownInTitle(
+    item.title ?? item.description ?? "",
+    item.author?.name
+  );
   return (
-    <div className="flex items-center gap-2 px-4 py-1 text-xs text-muted-foreground border-b border-border/20">
-      <Zap className="h-3 w-3 shrink-0 text-muted-foreground/60" />
-      <span className="truncate">{item.title ?? item.description}</span>
+    <div className="rq-system-event flex items-center gap-2 border-b border-border/10">
+      <Zap className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+      <span className="truncate">{displayText}</span>
       <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(item.timestamp)}</span>
     </div>
   );
@@ -460,14 +479,15 @@ function truncateValue(val: string, max = 30): string {
 
 function SystemGroupItem({ item }: { item: StreamItem }) {
   const [expanded, setExpanded] = useState(false);
-  const authorName = item.author?.name && item.author.name !== "System" ? item.author.name : null;
+  const rawAuthorName = item.author?.name && item.author.name !== "System" ? item.author.name : null;
+  const authorName = rawAuthorName === "Unknown" ? null : rawAuthorName;
 
   return (
-    <div className="border-b border-border/20">
+    <div className="border-b border-border/10">
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
-        className="flex w-full items-center gap-2 px-4 py-1.5 text-xs text-muted-foreground hover:bg-muted/30 rq-transition"
+        className="rq-system-event-group flex w-full items-center gap-2 text-[11px]"
       >
         <ChevronRight
           className={cn(
@@ -489,15 +509,16 @@ function SystemGroupItem({ item }: { item: StreamItem }) {
             const hasValues = child.fieldOldValue != null || child.fieldNewValue != null;
             const oldDisplay = child.fieldOldValue ? truncateValue(child.fieldOldValue) : null;
             const newDisplay = child.fieldNewValue ? truncateValue(child.fieldNewValue) : null;
-            const childAuthorName = child.author?.name && child.author.name !== "System" ? child.author.name : null;
+            const rawChildAuthor = child.author?.name && child.author.name !== "System" ? child.author.name : null;
+            const childAuthorName = rawChildAuthor === "Unknown" ? null : rawChildAuthor;
 
             return (
               <div
                 key={child.id}
-                className="flex items-center gap-2 py-0.5 text-[11px] text-muted-foreground"
+                className="flex items-center gap-2 py-0.5 text-[11px] text-muted-foreground/70"
               >
                 <span className="truncate">
-                  {child.title}
+                  {fixUnknownInTitle(child.title ?? "", child.author?.name)}
                   {hasValues && (
                     <>
                       {oldDisplay && (

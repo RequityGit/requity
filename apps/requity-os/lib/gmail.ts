@@ -93,13 +93,12 @@ export async function getValidGmailToken(
     .from("gmail_tokens")
     .select("id, access_token, refresh_token, token_expires_at, email")
     .eq("user_id", userId)
-    .eq("is_active", true)
     .maybeSingle();
 
   if (error) {
     throw new Error("Failed to fetch Gmail token.");
   }
-  if (!token) {
+  if (!token || !token.refresh_token) {
     throw new Error("No active Gmail connection found.");
   }
 

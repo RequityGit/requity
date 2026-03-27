@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +26,12 @@ import {
 } from "./ExtractedFieldsReview";
 import {
   createUnifiedDealAction,
-  createTempExtractionUploadUrl,
-  cleanupTempExtraction,
   addDealNoteAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import {
+  createTempExtractionUploadUrl,
+  cleanupTempExtraction,
+} from "@/lib/actions/extraction-actions";
 import {
   ACTIVE_ASSET_CLASS_OPTIONS,
   type AssetClass,
@@ -60,6 +63,7 @@ export function NewDealDialog({
   teamMembers,
   currentUserId,
 }: NewDealDialogProps) {
+  const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [capitalSide, setCapitalSide] = useState<CapitalSide | null>(null);
   const [assetClass, setAssetClass] = useState<string>("");
@@ -164,6 +168,7 @@ export function NewDealDialog({
           | undefined;
         showSuccess(`Deal ${deal?.deal_number ?? ""} created`);
         handleClose(false);
+        router.push(`/pipeline/${deal?.deal_number || deal?.id}`);
       }
     });
   }
@@ -310,6 +315,7 @@ export function NewDealDialog({
         }
         showSuccess(`Deal ${deal?.deal_number ?? ""} created`);
         handleClose(false);
+        router.push(`/pipeline/${deal?.deal_number || deal?.id}`);
       }
     });
   }

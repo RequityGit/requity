@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useAutoExpand } from "@/hooks/useAutoExpand";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,8 @@ export function NoteButton({ note, onChange }: NoteButtonProps) {
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState(note || "");
   const ref = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useAutoExpand(textareaRef, val);
   const has = val.trim().length > 0;
 
   useEffect(() => {
@@ -44,13 +47,14 @@ export function NoteButton({ note, onChange }: NoteButtonProps) {
             Assumption Note
           </div>
           <textarea
+            ref={textareaRef}
             value={val}
             onChange={(e) => {
               setVal(e.target.value);
               onChange?.(e.target.value);
             }}
             placeholder="Add a note..."
-            className="w-full min-h-[70px] resize-y rounded-lg border border-border bg-accent/50 text-foreground px-2.5 py-2 text-xs leading-relaxed outline-none focus:border-muted-foreground"
+            className="w-full min-h-[70px] resize-none overflow-hidden rounded-lg border border-border bg-accent/50 text-foreground px-2.5 py-2 text-xs leading-relaxed outline-none focus:border-muted-foreground"
           />
           <div className="flex justify-end gap-1.5 mt-2">
             {has && (

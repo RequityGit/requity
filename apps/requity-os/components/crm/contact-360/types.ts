@@ -78,6 +78,7 @@ export interface ActivityData {
   call_duration_seconds: number | null;
   created_by_name: string | null;
   created_at: string;
+  metadata: Record<string, unknown> | null;
 }
 
 export interface EmailData {

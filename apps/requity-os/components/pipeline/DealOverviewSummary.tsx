@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { InlineField } from "@/components/ui/inline-field";
 import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatCurrency, formatPercent, formatAddress } from "@/lib/format";
 import { updateUwDataAction, updateDealNameAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { type UnifiedDeal, ASSET_CLASS_LABELS, ACTIVE_ASSET_CLASS_OPTIONS } from "./pipeline-types";
 import { CostBasisSection } from "./CostBasisSection";
@@ -90,7 +90,6 @@ import {
   Building2,
   DollarSign,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 // ── Helpers ──
 
@@ -99,17 +98,6 @@ function daysAgo(dateString: string | null | undefined): number | null {
   const d = new Date(dateString);
   if (isNaN(d.getTime())) return null;
   return Math.floor((Date.now() - d.getTime()) / 86_400_000);
-}
-
-// ── Section label ──
-
-function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-1.5 rq-micro-label mb-2">
-      <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
-      {children}
-    </div>
-  );
 }
 
 // ── Read-only field (for computed values) ──
@@ -127,16 +115,6 @@ function ReadOnlyField({ label, children, className }: { label: string; children
 
 function Placeholder() {
   return <span className="text-muted-foreground/40">Add...</span>;
-}
-
-// ── Card wrapper ──
-
-function OverviewCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn("rounded-lg border border-border bg-card p-4 px-5", className)}>
-      {children}
-    </div>
-  );
 }
 
 // ── Props ──
@@ -219,14 +197,15 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     });
   }, [dealId, deal.name, startTransition]);
 
-  // Build full address string for display
+  // Build full address string for display (deduplicates city/state/zip if already in street)
   const fullAddress = useMemo(() => {
-    const street = uwStr("property_address");
-    const cityState = [uwStr("property_city"), uwStr("property_state")].filter(Boolean).join(", ");
-    const zip = uwStr("property_zip");
-    const line2 = [cityState, zip].filter(Boolean).join(" ");
-    if (!street && !line2) return null;
-    return [street, line2].filter(Boolean).join(", ");
+    const result = formatAddress({
+      street: uwStr("property_address"),
+      city: uwStr("property_city"),
+      state: uwStr("property_state"),
+      zip: uwStr("property_zip"),
+    });
+    return result || null;
   }, [uwStr]);
 
   // Address editing state
@@ -266,11 +245,16 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
   const daysInStage = deal.days_in_stage ?? daysAgo(deal.stage_entered_at);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {/* ── Section 1: Property ── */}
-      <div>
-        <SectionLabel icon={Building2}>Property</SectionLabel>
-        <OverviewCard>
+      <div className="rq-card-wrapper">
+        <div className="rq-card-header">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <h4 className="rq-micro-label">Property</h4>
+          </div>
+        </div>
+        <div className="p-4 px-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1">
             <InlineField
               label="Property name"
@@ -315,15 +299,20 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               onSave={(v) => saveField("total_sqft", v)}
             />
           </div>
-        </OverviewCard>
+        </div>
       </div>
 
       {/* ── Section 2: Deal Summary (merged with Loan Terms) ── */}
-      <div>
-        <SectionLabel icon={DollarSign}>Deal Summary</SectionLabel>
-        <div className={cn("grid gap-4", showProposedTerms ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
-          {/* Deal info */}
-          <OverviewCard>
+      <div className={cn("grid gap-3", showProposedTerms ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
+        {/* Deal info */}
+        <div className="rq-card-wrapper">
+          <div className="rq-card-header">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+              <h4 className="rq-micro-label">Deal Summary</h4>
+            </div>
+          </div>
+          <div className="p-4 px-5">
             <div className="grid grid-cols-2 gap-x-6 gap-y-1">
               {/* Always shown */}
               <InlineField
@@ -418,10 +407,10 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                 onSave={(v) => saveField("exit_strategy", ES_LABEL_TO_KEY[v] ?? v)}
               />
               <InlineField
-                label="Target close date"
+                label="Closing date"
                 type="date"
-                value={uwStr("expected_close_date") ?? deal.expected_close_date}
-                onSave={(v) => saveField("expected_close_date", v)}
+                value={deal.close_date}
+                onSave={(v) => saveField("close_date", v)}
               />
               <InlineField
                 label="Lead source"
@@ -439,15 +428,19 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
 
             {/* Refinance Overview & Existing Loans (refi deals only) */}
             {isRefi && <CostBasisSection dealId={dealId} loanPurpose={loanPurpose} />}
-          </OverviewCard>
+          </div>
+        </div>
 
-          {/* Proposed Terms (only if not early stage) */}
-          {showProposedTerms && (
-            <OverviewCard className="border-blue-300 dark:border-blue-700 border-2">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-[11px] font-medium text-muted-foreground">Proposed terms</div>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Active</Badge>
+        {/* Proposed Terms (only if not early stage) */}
+        {showProposedTerms && (
+          <div className="rq-card-wrapper border-blue-300 dark:border-blue-700 border-2">
+            <div className="rq-card-header">
+              <div className="flex items-center gap-2">
+                <h4 className="rq-micro-label">Proposed terms</h4>
               </div>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Active</Badge>
+            </div>
+            <div className="p-4 px-5">
               <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                 {/* Loan type spans first row left */}
                 <InlineField
@@ -566,9 +559,9 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                   />
                 )}
               </div>
-            </OverviewCard>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>

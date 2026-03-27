@@ -95,6 +95,32 @@ export function useDocumentsTabData(
     };
   }, [fetchData]);
 
+  // Realtime: subscribe to document changes for this deal
+  useEffect(() => {
+    if (!dealId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`deal-docs-${dealId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "unified_deal_documents",
+          filter: `deal_id=eq.${dealId}`,
+        },
+        () => {
+          fetchData(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dealId, fetchData]);
+
   // Auto-sync: when folder is linked, trigger background Drive ↔ Portal sync
   const syncTriggeredRef = useRef(false);
   useEffect(() => {

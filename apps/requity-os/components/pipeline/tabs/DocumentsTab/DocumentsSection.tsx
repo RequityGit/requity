@@ -19,10 +19,12 @@ import {
   Link2,
   Users,
   RefreshCw,
+  FileSignature,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   createDealDocumentUploadUrl,
   saveDealDocumentRecord,
@@ -86,6 +88,7 @@ export function DocumentsSection({
   onUploadComplete,
   currentUserId,
   currentUserName,
+  onSendForSignature,
 }: {
   documents: DealDocument[];
   conditions: DealCondition[];
@@ -97,7 +100,9 @@ export function DocumentsSection({
   onUploadComplete?: () => void;
   currentUserId?: string;
   currentUserName?: string;
+  onSendForSignature?: (doc: DealDocument) => void;
 }) {
+  const confirm = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, startUpload] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -323,6 +328,14 @@ export function DocumentsSection({
   );
 
   async function handleDelete(docId: string, docName: string) {
+    const ok = await confirm({
+      title: "Permanently delete document?",
+      description: `"${docName}" will be permanently removed. This cannot be undone.`,
+      confirmLabel: "Delete permanently",
+      destructive: true,
+    });
+    if (!ok) return;
+
     setDeletingId(docId);
     const result = await deleteDealDocumentV2(docId);
     if (result.error) {
@@ -681,6 +694,16 @@ export function DocumentsSection({
                             <Download className="h-3 w-3" strokeWidth={1.5} />
                           </button>
                         )}
+                        {doc.storage_path && onSendForSignature && (
+                          <button
+                            type="button"
+                            onClick={() => onSendForSignature(doc)}
+                            className="p-1 text-muted-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0"
+                            title="Send for Signature"
+                          >
+                            <FileSignature className="h-3 w-3" strokeWidth={1.5} />
+                          </button>
+                        )}
                         {!isArchived && (
                           <button
                             type="button"
@@ -701,19 +724,21 @@ export function DocumentsSection({
                             <Archive className="h-3 w-3" strokeWidth={1.5} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(doc.id, doc.document_name)}
-                          disabled={deletingId === doc.id}
-                          className="p-1 text-muted-foreground hover:text-destructive transition-colors cursor-pointer bg-transparent border-0"
-                          title="Delete"
-                        >
-                          {deletingId === doc.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3 w-3" strokeWidth={1.5} />
-                          )}
-                        </button>
+                        {isArchived && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(doc.id, doc.document_name)}
+                            disabled={deletingId === doc.id}
+                            className="p-1 text-muted-foreground hover:text-destructive transition-colors cursor-pointer bg-transparent border-0"
+                            title="Delete permanently"
+                          >
+                            {deletingId === doc.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" strokeWidth={1.5} />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

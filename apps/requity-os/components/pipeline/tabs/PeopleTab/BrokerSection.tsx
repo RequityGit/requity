@@ -122,16 +122,16 @@ export function BrokerSection({
 
   if (!localBroker) {
     return (
-      <div className="rq-card-wrapper">
-        <div className="rq-card-header">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
           <div className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <Briefcase className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
             <h4 className="rq-micro-label">
               Broker
             </h4>
           </div>
         </div>
-        <div className="rq-card">
+        <div className="p-4 px-5">
           <span className="inline-field-label">Search contacts to link as broker</span>
           <div className="mt-1">
             <RelationshipPicker
@@ -155,13 +155,13 @@ export function BrokerSection({
     .join("")
     .toUpperCase()
     .slice(0, 2);
-  const company = localBroker.broker_company?.name || localBroker.company_name || "";
+  const company = localBroker.company_name || localBroker.broker_company?.name || "";
 
   return (
-    <div className="rq-card-wrapper">
-      <div className="rq-card-header">
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
         <div className="flex items-center gap-2">
-          <Briefcase className="h-4 w-4 text-muted-foreground" />
+          <Briefcase className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
           <h4 className="rq-micro-label">
             Broker
           </h4>

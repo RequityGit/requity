@@ -31,6 +31,12 @@ interface GooglePlaceResult {
   address_components?: GoogleAddressComponent[];
   formatted_address?: string;
   name?: string;
+  geometry?: {
+    location?: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
 }
 
 interface GoogleAutocomplete {
@@ -44,6 +50,8 @@ export interface ParsedAddress {
   state: string;
   zip: string;
   county?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface AddressAutocompleteProps {
@@ -125,6 +133,12 @@ function parsePlace(place: GooglePlaceResult): ParsedAddress {
     ? `${streetNumber} ${route}`
     : route;
 
+  // Extract lat/lng from geometry if available
+  if (place.geometry?.location) {
+    result.lat = place.geometry.location.lat();
+    result.lng = place.geometry.location.lng();
+  }
+
   return result;
 }
 
@@ -155,7 +169,7 @@ export function AddressAutocomplete({
     const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
       types: ["address"],
       componentRestrictions: { country: "us" },
-      fields: ["address_components", "formatted_address"],
+      fields: ["address_components", "formatted_address", "geometry"],
     });
 
     ac.addListener("place_changed", () => {

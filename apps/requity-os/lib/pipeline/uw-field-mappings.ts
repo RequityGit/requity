@@ -54,6 +54,7 @@ const BORROWER_FIELD_MAPPINGS: FieldMapping[] = [
 const DEAL_FIELD_MAPPINGS: FieldMapping[] = [
   { fieldKey: "date_created", source: "deal", table: "unified_deals", column: "created_at" },
   { fieldKey: "asset_class", source: "deal", table: "unified_deals", column: "asset_class" },
+  { fieldKey: "close_date", source: "deal", table: "unified_deals", column: "close_date" },
 ];
 
 /** All field mappings combined */

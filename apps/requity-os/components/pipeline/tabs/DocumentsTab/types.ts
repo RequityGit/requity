@@ -41,6 +41,8 @@ export interface DocumentsTabProps {
   googleDriveFolderId?: string | null;
   currentUserId?: string;
   currentUserName?: string;
+  /** Called after upload, approval, delete, or other document mutations to refresh the list */
+  onUploadComplete?: () => void;
   /** Deal data for document generation (amount, uw_data, property_data) */
   dealDocData?: {
     id: string;

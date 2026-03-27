@@ -394,8 +394,19 @@ export default async function LendingPage() {
                 <div className="program-list">
                   {[
                     { name: "Fix & Flip", tagline: "Short-term renovation and resale, up to 90% LTC, draw-based rehab", href: "/lending/fix-and-flip" },
-                    { name: "DSCR Rental", tagline: "Long-term rental loans qualified on property cash flow, 30-year fixed available", href: "/lending/dscr-rental" },
                     { name: "New Construction", tagline: "Ground-up residential and commercial, draw schedule based", href: "/lending/new-construction" },
+                  ].map((item) => (
+                    <Link key={item.name} href={item.href} className="program-row">
+                      <div className="program-row-content">
+                        <span className="program-row-name">{item.name}</span>
+                        <span className="program-row-divider" />
+                        <span className="program-row-tagline">{item.tagline}</span>
+                      </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
+                  ))}
+                  {[
+                    { name: "DSCR Rental", tagline: "Long-term rental loans qualified on property cash flow, 30-year fixed available" },
                   ].map((item) => (
                     <Link key={item.name} href={item.href} className="program-row">
                       <div className="program-row-content">

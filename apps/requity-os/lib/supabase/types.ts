@@ -16110,7 +16110,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           deal_number: string | null
-          expected_close_date: string | null
+          close_date: string | null
           fundraise_amount_options: Json | null
           fundraise_deck_url: string | null
           fundraise_description: string | null
@@ -16135,6 +16135,7 @@ export type Database = {
           property_id: string | null
           source: string | null
           source_detail: string | null
+          sort_order: number | null
           stage: string
           stage_entered_at: string
           status: string
@@ -16153,7 +16154,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          expected_close_date?: string | null
+          close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
@@ -16176,6 +16177,7 @@ export type Database = {
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          sort_order?: number | null
           source?: string | null
           source_detail?: string | null
           stage?: string
@@ -16196,7 +16198,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
-          expected_close_date?: string | null
+          close_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
@@ -16219,6 +16221,7 @@ export type Database = {
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          sort_order?: number | null
           source?: string | null
           source_detail?: string | null
           stage?: string

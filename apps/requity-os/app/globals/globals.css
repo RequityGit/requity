@@ -508,13 +508,13 @@
   /* Card shell — rounded container with border + background.
      Use alone for cards with custom internals, or combine with .rq-card for padded content. */
   .rq-card-wrapper {
-    @apply rounded-xl border border-border bg-card overflow-hidden;
+    @apply rounded-lg border border-border bg-card overflow-hidden;
   }
 
   /* Card header bar — sits at top of .rq-card-wrapper with bottom border.
      Typically contains flex row with icon + title + optional action button. */
   .rq-card-header {
-    @apply flex items-center justify-between px-5 py-3.5 border-b border-border;
+    @apply flex items-center justify-between px-5 py-2.5 border-b border-border;
   }
 
   /* List item row — repeated rows inside cards (team members, contacts, deals).
@@ -581,6 +581,20 @@
   /* Large stat / KPI value */
   .rq-stat-value {
     @apply text-xl font-bold tabular-nums;
+  }
+
+  /* Stat/metric cards: min padding 16px top, 18px sides, 20px bottom. Title-to-value spacing 10px min. */
+  .rq-stat-card {
+    @apply pt-4 px-[18px] pb-5 relative;
+  }
+  .rq-stat-card-title {
+    @apply text-[11px] uppercase tracking-[0.05em] font-semibold text-muted-foreground;
+  }
+  .rq-stat-card-value {
+    @apply text-[22px] md:text-[26px] font-bold tracking-tight text-foreground tabular-nums mt-2.5;
+  }
+  .rq-stat-card-icon {
+    @apply absolute top-4 right-[18px] text-muted-foreground;
   }
 }
 
@@ -694,6 +708,54 @@
 }
 
 /* ============================
+   Empty / null field display
+   ============================ */
+  .rq-field-empty {
+    @apply text-muted-foreground/50 select-none;
+  }
+  .rq-field-placeholder {
+    @apply text-sm text-muted-foreground/40 italic;
+  }
+
+  /* ============================
+   Key-value display pair — for detail page fields
+   Use with .rq-field-grid or .rq-field-grid-3 as the parent grid.
+   ============================ */
+  .rq-kv-label {
+    @apply text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground leading-none;
+  }
+  .rq-kv-value {
+    @apply text-sm font-medium text-foreground mt-1.5;
+  }
+
+  /* ============================
+   Section header with inline action
+   ============================ */
+  .rq-section-header {
+    @apply flex items-center justify-between px-5 py-3 border-b border-border;
+  }
+  .rq-section-header-title {
+    @apply flex items-center gap-2 text-[13px] font-semibold text-foreground uppercase tracking-wide;
+  }
+  .rq-section-header-action {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5
+      rounded-md border border-border text-xs font-medium
+      text-muted-foreground hover:text-foreground hover:bg-accent/50
+      rq-transition cursor-pointer;
+  }
+
+  /* ============================
+   Status condition dots
+   ============================ */
+  .rq-status-dot {
+    @apply inline-block w-2 h-2 rounded-full flex-shrink-0;
+  }
+  .rq-status-dot-pending { @apply bg-blue-500; }
+  .rq-status-dot-not-started { @apply bg-gray-300 dark:bg-gray-600; }
+  .rq-status-dot-in-review { @apply bg-amber-500; }
+  .rq-status-dot-complete { @apply bg-emerald-500; }
+
+  /* ============================
    Inline text links — clickable text that isn't a button
    ============================ */
 @layer components {
@@ -721,6 +783,29 @@
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   letter-spacing: -0.025em;
+}
+
+/* ============================
+   System event rows — lighter treatment for automated activity feed entries
+   ============================ */
+.rq-system-event {
+  @apply text-xs text-muted-foreground py-1.5 px-2.5;
+}
+.rq-system-event-group {
+  @apply text-xs text-muted-foreground py-2 px-2.5
+    border border-border/50 rounded-md bg-muted/20
+    cursor-pointer hover:bg-muted/40 rq-transition;
+}
+
+/* ============================
+   AI Summary card — highlighted block in activity feed
+   ============================ */
+.rq-ai-summary {
+  @apply rounded-lg border-l-[3px] border-info p-4 text-sm;
+  background-color: hsl(var(--info) / 0.05);
+}
+.dark .rq-ai-summary {
+  background-color: hsl(var(--info) / 0.08);
 }
 
 /* ─── Reduced motion: respect user preference ─── */
@@ -786,7 +871,7 @@
 
 /* Borderless textarea inside the surface */
 .comment-surface-textarea {
-  @apply w-full bg-transparent border-0 outline-none resize-none
+  @apply w-full bg-transparent border-0 outline-none resize-none overflow-hidden
     text-xs text-foreground placeholder:text-muted-foreground
     focus:ring-0 focus:outline-none;
 }
@@ -897,7 +982,8 @@
   animation: rq-pulse-once var(--duration-slow) var(--ease-in-out) 1;
 }
 
-/* ─── Urgent deal glow (pipeline cards) ─── */
+
+/* ─── Urgent deal glow (closing within 14 days) ─── */
 .rq-urgent-glow {
   animation: rq-urgent-pulse 2s ease-in-out infinite;
 }
@@ -910,53 +996,6 @@
     animation: none;
     box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
   }
-}
-
-/* ─── Focus ribbon (pipeline card corner badge) ─── */
-.rq-focus-ribbon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 44px;
-  height: 44px;
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
-  z-index: 10;
-  cursor: pointer;
-  display: flex;
-  align-items: start;
-  justify-content: end;
-  padding: 5px 5px 0 0;
-  transition: opacity var(--duration-fast) var(--ease-out),
-              background-color var(--duration-fast) var(--ease-out);
-}
-
-.rq-focus-ribbon--idle {
-  opacity: 0;
-  background-color: hsl(var(--muted-foreground) / 0.12);
-}
-.group:hover .rq-focus-ribbon--idle {
-  opacity: 1;
-}
-.rq-focus-ribbon--idle:hover {
-  background-color: hsl(var(--muted-foreground) / 0.2);
-}
-
-.rq-focus-ribbon--active {
-  opacity: 1;
-  background: linear-gradient(135deg, #ef4444, #f97316);
-  animation: rq-focus-shimmer 2s ease-in-out infinite;
-}
-.rq-focus-ribbon--active:hover {
-  background: linear-gradient(135deg, #f87171, #fb923c);
-}
-
-@keyframes rq-focus-shimmer {
-  0%, 100% { opacity: 0.85; }
-  50% { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rq-focus-ribbon--active { animation: none; opacity: 1; }
 }
 
 /* ─── Like button animations ─── */

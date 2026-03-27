@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useMemo, useCallback, useRef } from "react";
+import React, { useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Users, Calendar, Clock, AlertTriangle, Zap, Crosshair } from "lucide-react";
-import { useDraggable } from "@dnd-kit/core";
+import { User, Users, Calendar, Clock, AlertTriangle } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   type UnifiedDeal,
-  type UnifiedStage,
   type StageConfig,
   ASSET_CLASS_LABELS,
   type AssetClass,
@@ -19,7 +19,7 @@ import {
   getDealDisplayConfig,
   isCommercialAssetClass,
 } from "@/lib/pipeline/deal-display-config";
-import { formatDateShort } from "@/lib/format";
+import { formatDateShort, formatAddress } from "@/lib/format";
 
 // ─── Types ───
 
@@ -30,7 +30,6 @@ interface DealCardProps {
   assigneeName?: string | null;
   onClick: (e?: React.MouseEvent) => void;
   onHover?: () => void;
-  onTogglePriority?: (dealId: string, isPriority: boolean) => void;
   isSelected?: boolean;
 }
 
@@ -51,23 +50,26 @@ export function getDealAddress(deal: UnifiedDeal): string {
   // Check property_data first
   const pd = deal.property_data;
   if (pd) {
+    // Pre-composed full address takes priority
     if (typeof pd.address === "string" && pd.address) return pd.address;
-    const pdParts = [pd.street_address, pd.city, pd.state].filter(Boolean);
-    if (pdParts.length > 0) {
-      let addr = pdParts.join(", ");
-      if (pd.zip) addr += ` ${pd.zip}`;
-      return addr;
-    }
+    const result = formatAddress({
+      street: pd.street_address as string | undefined,
+      city: pd.city as string | undefined,
+      state: pd.state as string | undefined,
+      zip: pd.zip as string | undefined,
+    });
+    if (result) return result;
   }
   // Fall back to uw_data address fields
   const uw = deal.uw_data;
   if (uw) {
-    const uwParts = [uw.property_address, uw.property_city, uw.property_state].filter(Boolean);
-    if (uwParts.length > 0) {
-      let addr = uwParts.join(", ");
-      if (uw.property_zip) addr += ` ${uw.property_zip}`;
-      return addr;
-    }
+    const result = formatAddress({
+      street: uw.property_address as string | undefined,
+      city: uw.property_city as string | undefined,
+      state: uw.property_state as string | undefined,
+      zip: uw.property_zip as string | undefined,
+    });
+    if (result) return result;
   }
   return "";
 }
@@ -112,7 +114,7 @@ export function getAmountLabel(deal: UnifiedDeal): string {
   return isEquity ? "Target Equity" : "Target Loan Amount";
 }
 
-function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "soon" | "overdue" {
+function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "overdue" {
   if (!dateStr) return "normal";
   // Split ISO date string directly to avoid timezone shift
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -121,24 +123,10 @@ function getCloseDateStatus(dateStr: string | null): "normal" | "urgent" | "soon
   now.setHours(0, 0, 0, 0);
   const diffDays = Math.floor((close.getTime() - now.getTime()) / 86400000);
   if (diffDays < 0) return "overdue";
-  if (diffDays <= 7) return "soon";
   if (diffDays <= 14) return "urgent";
   return "normal";
 }
 
-const EARLY_STAGES: UnifiedStage[] = ["lead", "analysis", "negotiation"];
-
-/** Deal needs high-visibility glow: in early stage AND close date within 14 days */
-export function isUrgentDeal(deal: UnifiedDeal): boolean {
-  if (!EARLY_STAGES.includes(deal.stage)) return false;
-  const status = getCloseDateStatus(deal.expected_close_date);
-  return status === "urgent" || status === "soon" || status === "overdue";
-}
-
-/** Deal should glow red: either urgent by close date or manually pinned */
-function shouldGlow(deal: UnifiedDeal): boolean {
-  return deal.is_priority || isUrgentDeal(deal);
-}
 
 function getConditionsBarColor(progress: { completed: number; total: number }): string {
   if (progress.completed === progress.total) return "bg-emerald-500";
@@ -172,7 +160,8 @@ function CardContent({
   const propertyName = deal.name;
   const displayAddress = address || (isCommercial ? "" : deal.name);
   const loanType = getLoanTypeLabel(deal);
-  const closeDateStatus = getCloseDateStatus(deal.expected_close_date);
+  const isClosed = deal.status === "won" || deal.status === "lost" || deal.stage === "closed";
+  const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
   const condPct = conditionsProgress && conditionsProgress.total > 0
     ? Math.round((conditionsProgress.completed / conditionsProgress.total) * 100)
     : 0;
@@ -350,17 +339,16 @@ function CardContent({
               </span>
             </>
           )}
-          {deal.expected_close_date && (
+          {deal.close_date && (
             <span
               className={cn(
                 "flex items-center gap-1 text-[10px] font-medium",
-                closeDateStatus === "overdue" && "text-red-600 dark:text-red-400",
-                (closeDateStatus === "soon" || closeDateStatus === "urgent") && "text-amber-600 dark:text-amber-400",
+                (closeDateStatus === "overdue" || closeDateStatus === "urgent") && "text-red-600 dark:text-red-400",
                 closeDateStatus === "normal" && "text-muted-foreground"
               )}
             >
               <Calendar className={cn("h-2.5 w-2.5", closeDateStatus === "normal" ? "opacity-50" : "opacity-80")} />
-              {formatDateShort(deal.expected_close_date)}
+              {formatDateShort(deal.close_date)}
               {closeDateStatus === "overdue" && " (overdue)"}
             </span>
           )}
@@ -392,7 +380,6 @@ function DealCardInner({
   assigneeName,
   onClick,
   onHover,
-  onTogglePriority,
   isSelected,
 }: DealCardProps) {
   const router = useRouter();
@@ -402,42 +389,60 @@ function DealCardInner({
     onHover?.();
   }, [router, dealHref, onHover]);
 
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: deal.id,
     data: { stage: deal.stage },
   });
 
-  // dnd-kit's onPointerDown calls preventDefault(), which suppresses the
-  // browser click event. Detect clicks manually via pointer position tracking.
-  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const sortableStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    touchAction: "none" as const,
+  };
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      pointerStartRef.current = { x: e.clientX, y: e.clientY };
-      // Forward to dnd-kit's handler so dragging still works
-      (listeners as Record<string, (e: React.PointerEvent) => void> | undefined)
-        ?.onPointerDown?.(e);
-    },
-    [listeners]
-  );
+  // With distance-based PointerSensor (distance: 8), native click events fire
+  // normally for sub-threshold movements. wasDraggedRef is a safety net for
+  // edge cases where a click might fire immediately after a drag ends.
+  const wasDraggedRef = useRef(false);
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      const start = pointerStartRef.current;
-      pointerStartRef.current = null;
-      if (!start) return;
+  useEffect(() => {
+    if (isDragging) {
+      wasDraggedRef.current = true;
+    }
+  }, [isDragging]);
 
-      // If the pointer landed on the focus ribbon, skip navigation
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (wasDraggedRef.current) {
+        wasDraggedRef.current = false;
+        return;
+      }
       const target = e.target as HTMLElement;
       if (target.closest("[data-focus-btn]")) return;
-
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      if (Math.sqrt(dx * dx + dy * dy) < 8) {
-        onClick(e as unknown as React.MouseEvent);
-      }
+      onClick(e);
     },
     [onClick]
+  );
+
+  // Merge dnd-kit's keyboard handler with Enter/Space click navigation
+  const dndKeyDown = (listeners as Record<string, (e: React.KeyboardEvent) => void> | undefined)?.onKeyDown;
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.key === "Enter" || e.key === " ") && !isDragging) {
+        e.preventDefault();
+        onClick();
+        return;
+      }
+      dndKeyDown?.(e);
+    },
+    [onClick, isDragging, dndKeyDown]
   );
 
   const { days, alertLevel } = useMemo(() => {
@@ -447,41 +452,25 @@ function DealCardInner({
   }, [deal.stage_entered_at, stageConfig]);
 
   const isClosed = deal.status === "won" || deal.status === "lost";
-  const glowing = shouldGlow(deal);
-
-  // Guard against double-fire from both onClick and onPointerUp
-  const pinFiredRef = useRef(false);
-  const handlePinClick = useCallback(
-    (e: React.MouseEvent | React.PointerEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (pinFiredRef.current) return;
-      pinFiredRef.current = true;
-      onTogglePriority?.(deal.id, !deal.is_priority);
-      // Reset guard after a tick so next click works
-      requestAnimationFrame(() => { pinFiredRef.current = false; });
-    },
-    [deal.id, deal.is_priority, onTogglePriority]
-  );
+  const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
+  const glowing = closeDateStatus === "urgent" || closeDateStatus === "overdue";
 
   return (
     <div
       ref={setNodeRef}
       data-deal-id={deal.id}
-      {...listeners}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
+      style={sortableStyle}
       {...attributes}
+      {...listeners}
+      onClick={handleClick}
       onPointerEnter={prefetchDeal}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onClick();
-      }}
+      onKeyDown={handleKeyDown}
       className={cn(
         "group w-full text-left rounded-xl border bg-card relative overflow-hidden flex flex-col",
         "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)]",
         "dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.35),0_1px_3px_rgba(0,0,0,0.15)]",
-        "hover:border-foreground/[0.18] hover:-translate-y-px",
-        "rq-transition cursor-pointer",
+        "hover:border-foreground/[0.18]",
+        "rq-transition cursor-grab active:cursor-grabbing",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected && "ring-2 ring-primary/40",
         isDragging && "opacity-50",
@@ -489,32 +478,6 @@ function DealCardInner({
         glowing && "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow"
       )}
     >
-      {/* Focus ribbon toggle */}
-      {onTogglePriority && (
-        <button
-          type="button"
-          data-focus-btn
-          onPointerDown={(e) => e.stopPropagation()}
-          onPointerUp={(e) => { e.stopPropagation(); handlePinClick(e); }}
-          onClick={handlePinClick}
-          className={cn(
-            "rq-focus-ribbon",
-            deal.is_priority
-              ? "rq-focus-ribbon--active"
-              : "rq-focus-ribbon--idle"
-          )}
-          title={deal.is_priority ? "Remove focus" : "Focus this deal"}
-          aria-label={deal.is_priority ? "Remove focus from deal" : "Focus this deal"}
-          aria-pressed={deal.is_priority}
-        >
-          {deal.is_priority ? (
-            <Zap className="h-3 w-3 text-white fill-current drop-shadow-sm" />
-          ) : (
-            <Crosshair className="h-3 w-3 text-muted-foreground" />
-          )}
-        </button>
-      )}
-
       <CardContent
         deal={deal}
         days={days}
@@ -537,9 +500,9 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.asset_class === next.deal.asset_class &&
     prev.deal.capital_side === next.deal.capital_side &&
     prev.deal.status === next.deal.status &&
-    prev.deal.expected_close_date === next.deal.expected_close_date &&
-    prev.deal.is_priority === next.deal.is_priority &&
+    prev.deal.close_date === next.deal.close_date &&
     prev.deal.assigned_to === next.deal.assigned_to &&
+    prev.deal.sort_order === next.deal.sort_order &&
     prev.deal.primary_contact_id === next.deal.primary_contact_id &&
     prev.deal.broker_contact_id === next.deal.broker_contact_id &&
     prev.stageConfig?.stage === next.stageConfig?.stage &&
@@ -560,22 +523,19 @@ export function DealCardOverlay({
   const days = daysInStage(deal.stage_entered_at);
   const alertLevel = getAlertLevel(days, stageConfig);
   const isClosed = deal.status === "won" || deal.status === "lost";
-  const glowing = shouldGlow(deal);
+  const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
+  const glowing = closeDateStatus === "urgent" || closeDateStatus === "overdue";
 
   return (
     <div
       className={cn(
-        "w-72 text-left rounded-xl border bg-card relative overflow-hidden flex flex-col shadow-lg",
-        "ring-2 ring-primary/50 cursor-grabbing",
-        isClosed && "opacity-60",
-        glowing && "ring-red-500/60 border-red-500/40"
+        "w-72 text-left rounded-xl border bg-card relative overflow-hidden flex flex-col shadow-lg rotate-[2deg]",
+        glowing
+          ? "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow cursor-grabbing"
+          : "ring-2 ring-primary/50 cursor-grabbing",
+        isClosed && "opacity-60"
       )}
     >
-      {deal.is_priority && (
-        <div className="rq-focus-ribbon rq-focus-ribbon--active" style={{ cursor: "default" }}>
-          <Zap className="h-3 w-3 text-white fill-current drop-shadow-sm" />
-        </div>
-      )}
       <CardContent
         deal={deal}
         days={days}

@@ -31,7 +31,14 @@ const PUBLIC_ROUTES = [
   "/upload",
   "/api/upload-link", // token-based upload (no auth required)
   "/api/deal-messages", // token-based borrower messaging (auth handled in route)
-  "/api/gmail/auth/callback", // OAuth redirect - handles own auth via state param
+];
+
+// Routes accessible to BOTH authenticated and unauthenticated users.
+// Unlike PUBLIC_ROUTES, authenticated users are NOT redirected to their dashboard.
+const PASSTHROUGH_ROUTES = [
+  "/invest", // public soft-commitment investment forms
+  "/api/fundraise", // deal fundraise info (used by invest pages)
+  "/api/forms", // form definitions, submissions, deal-token (used by form engine)
 ];
 
 export async function middleware(request: NextRequest) {
@@ -65,6 +72,20 @@ export async function middleware(request: NextRequest) {
     url.pathname = pathname.replace(/^\/investor/, "/i");
     return NextResponse.redirect(url, 301);
   }
+
+  // /settings → /{role}/account (preserves query params for Gmail OAuth callback)
+  if (pathname === "/settings") {
+    const cookieRole = request.cookies.get("active_role")?.value;
+    const rolePrefix =
+      cookieRole === "borrower" ? "/b" : cookieRole === "investor" ? "/i" : "";
+    const url = request.nextUrl.clone();
+    url.pathname = `${rolePrefix}/account`;
+    return NextResponse.redirect(url);
+  }
+
+  // Passthrough routes are accessible regardless of auth state — no redirects.
+  const isPassthrough = PASSTHROUGH_ROUTES.some((r) => pathname.startsWith(r));
+  if (isPassthrough) return NextResponse.next();
 
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)

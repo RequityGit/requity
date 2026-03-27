@@ -228,6 +228,34 @@ export async function disableLayoutEditor(id: string) {
   return { success: true };
 }
 
+export async function saveDocusealTemplateId(
+  id: string,
+  docusealTemplateId: number | null
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("document_templates")
+    .update({
+      docuseal_template_id: docusealTemplateId,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Failed to save DocuSeal template ID:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath("/control-center/document-templates");
+  return { success: true };
+}
+
 export async function deleteTemplate(id: string) {
   const supabase = await createClient();
 

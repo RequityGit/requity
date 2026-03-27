@@ -16,21 +16,12 @@ export function KpiCard({
   icon,
   className,
 }: KpiCardProps) {
-  // Detect if value looks like a currency/financial figure
-  const isFinancial = typeof value === "string" && (value.includes("$") || value.includes("%"));
-
   return (
     <Card className={cn("rounded-xl", className)}>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] uppercase tracking-[0.05em] font-semibold text-muted-foreground">
-            {title}
-          </span>
-          {icon && <div className="text-muted-foreground">{icon}</div>}
-        </div>
-        <div className="num text-[22px] md:text-[26px] font-bold tracking-tight text-foreground">
-          {value}
-        </div>
+      <CardContent className="!p-0 rq-stat-card">
+        <span className="rq-stat-card-title">{title}</span>
+        {icon && <div className="rq-stat-card-icon">{icon}</div>}
+        <div className="rq-stat-card-value">{value}</div>
         {description && (
           <p className="text-[11px] text-muted-foreground mt-1">{description}</p>
         )}

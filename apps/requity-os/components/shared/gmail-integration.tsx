@@ -14,12 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showSuccess, showError } from "@/lib/toast";
-import { Mail, CheckCircle2, XCircle, Loader2, Unplug, AlertTriangle, RefreshCw, Inbox } from "lucide-react";
+import { Mail, CheckCircle2, XCircle, Loader2, Unplug, RefreshCw, Inbox } from "lucide-react";
 
 interface GmailToken {
   id: string;
   email: string;
   is_active: boolean;
+  refresh_token: string | null;
   connected_at: string;
   scopes: string[] | null;
 }
@@ -32,9 +33,7 @@ export function GmailIntegration() {
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [gmailToken, setGmailToken] = useState<GmailToken | null>(null);
-  const [gmailConfigured, setGmailConfigured] = useState<boolean | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [tokenExpired, setTokenExpired] = useState(false);
   const [syncResult, setSyncResult] = useState<{
     messagesProcessed: number;
     errors: string[];
@@ -50,31 +49,22 @@ export function GmailIntegration() {
 
       const { data } = await supabase
         .from("gmail_tokens")
-        .select("id, email, is_active, connected_at, scopes")
+        .select("id, email, is_active, refresh_token, connected_at, scopes")
         .eq("user_id", user.id)
-        .eq("is_active", true)
         .maybeSingle();
 
-      setGmailToken(data as GmailToken | null);
+      // Connected if a refresh_token exists (access token can always be refreshed).
+      // Don't rely on is_active alone — expired access tokens are normal and refreshable.
+      if (data?.refresh_token) {
+        setGmailToken(data as GmailToken);
+      } else {
+        setGmailToken(null);
+      }
     } catch (err) {
       console.error("Failed to fetch Gmail status:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Check if Gmail OAuth is configured on the server
-  useEffect(() => {
-    async function checkConfig() {
-      try {
-        const res = await fetch("/api/gmail/config");
-        const data = await res.json();
-        setGmailConfigured(data.configured ?? false);
-      } catch {
-        setGmailConfigured(false);
-      }
-    }
-    checkConfig();
   }, []);
 
   // Handle OAuth callback query params
@@ -91,23 +81,6 @@ export function GmailIntegration() {
     }
   }, [searchParams, router, pathname]);
 
-  // Check token health (can it actually refresh?) after initial status load
-  const checkTokenHealth = useCallback(async () => {
-    if (!gmailToken) return;
-    try {
-      const res = await fetch("/api/gmail/status");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.error === "expired") {
-        setTokenExpired(true);
-        // Token was deactivated server-side, refresh local state
-        setGmailToken(null);
-      }
-    } catch {
-      // Silently ignore — health check is best-effort
-    }
-  }, [gmailToken]);
-
   useEffect(() => {
     fetchGmailStatus();
   }, [fetchGmailStatus]);
@@ -116,30 +89,35 @@ export function GmailIntegration() {
   useEffect(() => {
     const gmailParam = searchParams.get("gmail");
     if (gmailParam === "connected") {
-      setTokenExpired(false);
       fetchGmailStatus();
     }
   }, [searchParams, fetchGmailStatus]);
 
-  // Run token health check once after token is loaded
-  useEffect(() => {
-    checkTokenHealth();
-  }, [checkTokenHealth]);
-
   async function handleConnect() {
     setConnecting(true);
     try {
-      const res = await fetch("/api/gmail/auth/start", { method: "POST" });
-      const data = await res.json();
+      const supabase = createClient();
 
-      if (!res.ok) {
-        showError("Could not start Gmail authorization", data?.error || "Please try again.");
+      // Verify we have an active session — the edge function requires a valid JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showError("Could not start Gmail authorization", "Please log in again to connect Gmail.");
+        return;
+      }
+
+      // Call the Supabase edge function to get the Google OAuth URL
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-start');
+
+      if (error) {
+        console.error('Failed to start Gmail OAuth:', error);
+        showError("Could not start Gmail authorization", "Please try again.");
         return;
       }
 
       if (data?.auth_url) {
         window.location.href = data.auth_url;
       } else {
+        console.error('No auth_url returned from gmail-oauth-start');
         showError("Could not start Gmail authorization", "No authorization URL received.");
       }
     } catch (err) {
@@ -161,9 +139,8 @@ export function GmailIntegration() {
 
       const { error } = await supabase
         .from("gmail_tokens")
-        .update({ is_active: false })
-        .eq("user_id", user.id)
-        .eq("is_active", true);
+        .update({ is_active: false, refresh_token: "" })
+        .eq("user_id", user.id);
 
       if (error) {
         showError("Could not disconnect Gmail", "Please try again.");
@@ -368,82 +345,6 @@ export function GmailIntegration() {
                 <>
                   <Unplug className="h-4 w-4 mr-2" />
                   Disconnect Gmail
-                </>
-              )}
-            </Button>
-          </div>
-        ) : gmailConfigured === false ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 rounded-md bg-amber-50 border border-amber-200">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-amber-900">
-                  Gmail integration is not configured
-                </p>
-                {!pathname.startsWith("/b/") && !pathname.startsWith("/i/") ? (
-                  <div className="text-xs text-amber-700 space-y-1 mt-1">
-                    <p>
-                      To enable Gmail integration, add these environment variables
-                      to your deployment:
-                    </p>
-                    <ul className="list-disc list-inside space-y-0.5 ml-1">
-                      <li>
-                        <code className="bg-amber-100 px-1 rounded text-[11px]">GMAIL_CLIENT_ID</code>
-                      </li>
-                      <li>
-                        <code className="bg-amber-100 px-1 rounded text-[11px]">GMAIL_CLIENT_SECRET</code>
-                      </li>
-                    </ul>
-                    <p>
-                      Create OAuth credentials in the{" "}
-                      <a
-                        href="https://console.cloud.google.com/apis/credentials"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline font-medium"
-                      >
-                        Google Cloud Console
-                      </a>{" "}
-                      and set the redirect URI to{" "}
-                      <code className="bg-amber-100 px-1 rounded text-[11px]">
-                        {"<your-domain>"}/api/gmail/auth/callback
-                      </code>
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-amber-700">
-                    Contact your administrator to enable Gmail OAuth.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : tokenExpired ? (
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 p-3 rounded-md bg-red-50 border border-red-200">
-              <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-900">
-                  Gmail connection expired
-                </p>
-                <p className="text-xs text-red-700 mt-1">
-                  Your Gmail authorization has expired. This can happen when
-                  Google revokes access after a period of inactivity or if the
-                  app&apos;s OAuth configuration changed. Please reconnect to
-                  resume sending and syncing emails.
-                </p>
-              </div>
-            </div>
-            <Button onClick={handleConnect} disabled={connecting}>
-              {connecting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Reconnecting...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Reconnect Gmail Account
                 </>
               )}
             </Button>

@@ -1,0 +1,27 @@
+{
+  "scan_date": "2026-03-26",
+  "categories": {
+    "raw_formatters": {
+      "description": "Files using raw formatters instead of lib/format.ts",
+      "baseline": 26,
+      "note": "Regressed to 55 on 2026-03-26, see issue #899"
+    },
+    "direct_toast_imports": {
+      "description": "Files importing useToast from shadcn or directly from sonner",
+      "baseline": 0,
+      "note": "Regressed to 1 on 2026-03-26, see issue #899"
+    },
+    "hardcoded_durations": {
+      "description": "TSX files with className containing duration-150/200/300",
+      "baseline": 18
+    },
+    "console_logs": {
+      "description": "Files with console.log, excluding test files, app/api/ routes, and node_modules",
+      "baseline": 3
+    },
+    "direct_alertdialog": {
+      "description": "TSX files using AlertDialog, excluding ui/alert-dialog.tsx and shared/ConfirmDialog.tsx",
+      "baseline": 2
+    }
+  }
+}

@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import { fetchSiteData } from "../lib/supabase";
 import type { NavItem, CompanyInfo } from "../lib/types";
 import StructuredData from "./components/StructuredData";
+import { RetellWidget } from "./components/RetellWidget";
 
 export const metadata: Metadata = {
   title: {
@@ -100,6 +101,7 @@ export default async function RootLayout({
         <Nav items={navItems} />
         {children}
         <Footer navItems={navItems} company={company} />
+        <RetellWidget />
       </body>
     </html>
   );

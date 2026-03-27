@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -83,6 +84,7 @@ export function ContactDetailSidebar({
   onLogCall,
   onRelationshipAdded,
 }: ContactDetailSidebarProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [localContact, setLocalContact] = useState(contact);
   const [localRelationships, setLocalRelationships] = useState(relationships);
@@ -127,8 +129,49 @@ export function ContactDetailSidebar({
       showError("Could not add relationship", error.message);
     } else if (data) {
       setLocalRelationships((prev) => [data as unknown as RelationshipData, ...prev]);
+
+      // Auto-provision investor record if missing
+      let needsRefresh = false;
+      if (newRelType === "investor" && !contact.linked_investor_id) {
+        const { data: inv, error: invErr } = await supabase
+          .from("investors")
+          .insert({ crm_contact_id: contact.id })
+          .select("id")
+          .single();
+        if (invErr) {
+          console.error("Could not auto-create investor record:", invErr.message);
+        } else if (inv) {
+          await supabase
+            .from("crm_contacts")
+            .update({ linked_investor_id: inv.id })
+            .eq("id", contact.id);
+          needsRefresh = true;
+        }
+      }
+
+      // Auto-provision borrower record if missing
+      if (newRelType === "borrower" && !contact.borrower_id) {
+        const { data: bor, error: borErr } = await supabase
+          .from("borrowers")
+          .insert({ crm_contact_id: contact.id })
+          .select("id")
+          .single();
+        if (borErr) {
+          console.error("Could not auto-create borrower record:", borErr.message);
+        } else if (bor) {
+          await supabase
+            .from("crm_contacts")
+            .update({ borrower_id: bor.id })
+            .eq("id", contact.id);
+          needsRefresh = true;
+        }
+      }
+
       showSuccess("Relationship added");
       onRelationshipAdded?.();
+      if (needsRefresh) {
+        router.refresh();
+      }
     }
     setAddRelOpen(false);
     setNewRelType("");

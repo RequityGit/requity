@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseCurrency, LOAN_TYPE_CODES } from "@repo/lib";
 import { createHash } from "crypto";
 import type { FormStep, FormFieldDefinition } from "@/lib/form-engine/types";
+import { ensureInvestorRelationship } from "@/lib/crm/ensure-investor-relationship";
 
 interface SubmitRequest {
   submission_id: string;
@@ -137,6 +138,9 @@ export async function POST(request: Request) {
     let opportunityCreationFailed = false;
     let opportunityError: string | null = null;
 
+    // Track whether contact was newly created (for activity logging)
+    let contactWasCreated = false;
+
     for (const group of sortedGroups) {
       const entityData = buildEntityData(group.fields, data);
       if (Object.keys(entityData).length === 0) continue;
@@ -199,6 +203,7 @@ export async function POST(request: Request) {
 
                 if (contactError) throw new Error(`Contact creation failed: ${contactError.message}`);
                 contactId = newContact.id;
+                contactWasCreated = true;
               }
             } else {
               const { data: newContact, error: contactError } = await supabase
@@ -209,9 +214,15 @@ export async function POST(request: Request) {
 
               if (contactError) throw new Error(`Contact creation failed: ${contactError.message}`);
               contactId = newContact.id;
+              contactWasCreated = true;
             }
 
             if (contactId) entityIds.contact_id = contactId;
+
+            // Auto-tag soft commitment contacts as investors
+            if (isSoftCommitmentForm && contactId) {
+              await ensureInvestorRelationship(supabase, contactId);
+            }
             break;
           }
 
@@ -331,6 +342,13 @@ export async function POST(request: Request) {
               if (timeline) uwData.timeline_to_close = timeline;
               if (company) uwData.company = company;
 
+              // Pre-populate borrower fields for Overview tab
+              const borrowerName = `${firstName} ${lastName}`.trim();
+              if (borrowerName) uwData.borrower_name = borrowerName;
+              if (data.email) uwData.borrower_email = data.email;
+              if (data.phone) uwData.borrower_phone = data.phone;
+              if (creditScore) uwData.borrower_credit_score = parseInt(creditScore, 10) || null;
+
               // Build notes
               const notesLines = [
                 `Form submission - ${new Date().toISOString().split("T")[0]}`,
@@ -383,6 +401,51 @@ export async function POST(request: Request) {
                   is_guarantor: false,
                   sort_order: 1,
                 });
+
+                // Auto-create borrowing entity and borrower member so People tab is pre-populated
+                try {
+                  const entityName = company || `${firstName} ${lastName}`.trim() || "TBD";
+                  const { data: newEntity } = await supabase
+                    .from("deal_borrowing_entities")
+                    .insert({
+                      deal_id: dealData.id,
+                      entity_name: entityName,
+                      entity_type: company ? "LLC" : "Individual",
+                    } as never)
+                    .select("id")
+                    .single();
+
+                  if (newEntity) {
+                    const parsedCredit = creditScore ? parseInt(creditScore, 10) : 0;
+                    const experienceMap: Record<string, number> = {
+                      "0": 0, "1-3": 2, "4-10": 7, "10+": 15,
+                    };
+                    const parsedExperience = experienceLevel
+                      ? (experienceMap[experienceLevel] ?? 0)
+                      : 0;
+
+                    await supabase
+                      .from("deal_borrower_members")
+                      .insert({
+                        borrowing_entity_id: (newEntity as { id: string }).id,
+                        deal_id: dealData.id,
+                        contact_id: entityIds.contact_id,
+                        first_name: firstName || null,
+                        last_name: lastName || null,
+                        email: (data.email as string) || null,
+                        phone: (data.phone as string) || null,
+                        role: "Managing Member",
+                        credit_score: parsedCredit || 0,
+                        experience: parsedExperience,
+                        ownership_pct: 100,
+                        is_guarantor: true,
+                        sort_order: 1,
+                      } as never);
+                  }
+                } catch (borrowerErr) {
+                  // Non-blocking: deal is created, borrower info can be added manually
+                  console.error("Auto-create borrower member failed:", borrowerErr);
+                }
               }
             } else {
               // Standard opportunity creation for other forms
@@ -464,6 +527,7 @@ export async function POST(request: Request) {
     }
 
     // 2b. Soft commitment: create soft_commitments record + call edge function
+    let softCommitmentDealName: string | null = null;
     if (isSoftCommitmentForm && body.deal_id) {
       try {
         const commitmentAmount = typeof data.commitment_amount === "number"
@@ -478,6 +542,35 @@ export async function POST(request: Request) {
         // Parse full_name into parts for the soft_commitments record
         const fullName = (data.full_name as string) || "";
 
+        // Check if deal has hit its hard cap to auto-assign waitlist status
+        let commitmentStatus = "pending";
+        const { data: dealData } = await supabase
+          .from("unified_deals")
+          .select("fundraise_hard_cap, name" as never)
+          .eq("id" as never, body.deal_id as never)
+          .single();
+
+        if (dealData) {
+          softCommitmentDealName = (dealData as { name: string | null }).name || null;
+          const hardCap = (dealData as { fundraise_hard_cap: number | null }).fundraise_hard_cap;
+          if (hardCap && hardCap > 0) {
+            const { data: sumData } = await supabase
+              .from("soft_commitments")
+              .select("commitment_amount" as never)
+              .eq("deal_id" as never, body.deal_id as never)
+              .in("status" as never, ["pending", "confirmed", "subscribed"] as never);
+
+            const currentTotal = (sumData as { commitment_amount: number }[] | null)?.reduce(
+              (sum, row) => sum + (row.commitment_amount ?? 0),
+              0
+            ) ?? 0;
+
+            if (currentTotal >= hardCap) {
+              commitmentStatus = "waitlist";
+            }
+          }
+        }
+
         const { data: scData, error: scError } = await supabase
           .from("soft_commitments")
           .insert({
@@ -490,7 +583,7 @@ export async function POST(request: Request) {
             custom_amount: isCustomAmount ? commitmentAmount : null,
             is_accredited: data.is_accredited === "yes" ? true : data.is_accredited === "no" ? false : null,
             questions: (data.questions as string) || null,
-            status: "pending",
+            status: commitmentStatus,
             source: (data._source as string) || "form",
           } as never)
           .select("id")
@@ -527,6 +620,57 @@ export async function POST(request: Request) {
       } catch (scErr) {
         // Non-blocking: log but don't fail the submission
         console.error("Soft commitment processing failed:", scErr);
+      }
+    }
+
+    // 2c. Log CRM activities for contact creation and soft commitment placement
+    if (entityIds.contact_id) {
+      try {
+        const activityInserts: Array<Record<string, unknown>> = [];
+
+        // Log "Contact created" if this is a new contact
+        if (contactWasCreated) {
+          const sourceName = (formDef as Record<string, unknown>).name || "Form";
+          activityInserts.push({
+            contact_id: entityIds.contact_id,
+            activity_type: "system",
+            subject: "Contact created",
+            description: `Contact was created via ${sourceName} submission.`,
+            performed_by_name: "System",
+          });
+        }
+
+        // Log "Soft commitment placed" if one was created
+        if (entityIds.soft_commitment_id && isSoftCommitmentForm) {
+          const commitmentAmount = typeof data.commitment_amount === "number"
+            ? data.commitment_amount
+            : parseFloat(String(data.commitment_amount)) || 0;
+          const amountStr = commitmentAmount > 0
+            ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(commitmentAmount)
+            : "";
+          activityInserts.push({
+            contact_id: entityIds.contact_id,
+            activity_type: "system",
+            subject: "Soft commitment placed",
+            description: amountStr
+              ? `Placed a ${amountStr} soft commitment via investment form.`
+              : "Placed a soft commitment via investment form.",
+            performed_by_name: "System",
+            metadata: {
+              soft_commitment_id: entityIds.soft_commitment_id,
+              deal_id: body.deal_id,
+              deal_name: softCommitmentDealName,
+              commitment_amount: commitmentAmount,
+            },
+          });
+        }
+
+        if (activityInserts.length > 0) {
+          await supabase.from("crm_activities").insert(activityInserts);
+        }
+      } catch (activityErr) {
+        // Non-blocking: activity logging should never fail the submission
+        console.error("Activity logging failed:", activityErr);
       }
     }
 

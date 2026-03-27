@@ -175,7 +175,7 @@ function mapActivityType(type: string): StreamItemType {
   return "system";
 }
 
-function mapToFilterType(type: StreamItemType): StreamFilterType {
+export function mapToFilterType(type: StreamItemType): StreamFilterType {
   if (type === "note") return "notes";
   if (type === "email_in" || type === "email_out") return "emails";
   if (type === "call" || type === "sms" || type === "meeting") return "calls";
@@ -183,7 +183,7 @@ function mapToFilterType(type: StreamItemType): StreamFilterType {
   return "system";
 }
 
-function getInitials(name: string | null | undefined): string {
+export function getInitials(name: string | null | undefined): string {
   if (!name) return "?";
   return name
     .split(" ")
@@ -197,7 +197,7 @@ function getInitials(name: string | null | undefined): string {
 
 const SYSTEM_GROUP_WINDOW_MS = 3600000; // 1 hour
 
-function groupSystemEvents(items: StreamItem[]): StreamItem[] {
+export function groupSystemEvents(items: StreamItem[]): StreamItem[] {
   const result: StreamItem[] = [];
   let i = 0;
 

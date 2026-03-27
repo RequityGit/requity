@@ -265,6 +265,7 @@ export function ContactDetailClient({
                 ref={timelineRef}
                 contactId={contact.id}
                 currentUserId={currentUserId}
+                currentUserName={currentUserName}
                 onComposeEmail={() => setEmailComposeOpen(true)}
                 logCallTrigger={logCallTrigger}
               />
