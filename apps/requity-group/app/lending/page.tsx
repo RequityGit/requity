@@ -393,17 +393,18 @@ export default async function LendingPage() {
                 </div>
                 <div className="program-list">
                   {[
-                    { name: "Fix & Flip", tagline: "Short-term renovation and resale, up to 90% LTC, draw-based rehab" },
-                    { name: "DSCR Rental", tagline: "Long-term rental loans qualified on property cash flow, 30-year fixed available" },
-                    { name: "New Construction", tagline: "Ground-up residential and commercial, draw schedule based" },
+                    { name: "Fix & Flip", tagline: "Short-term renovation and resale, up to 90% LTC, draw-based rehab", href: "/lending/fix-and-flip" },
+                    { name: "DSCR Rental", tagline: "Long-term rental loans qualified on property cash flow, 30-year fixed available", href: "/lending/dscr-rental" },
+                    { name: "New Construction", tagline: "Ground-up residential and commercial, draw schedule based", href: "/lending/new-construction" },
                   ].map((item) => (
-                    <div key={item.name} className="program-row program-row-static">
+                    <Link key={item.name} href={item.href} className="program-row">
                       <div className="program-row-content">
                         <span className="program-row-name">{item.name}</span>
                         <span className="program-row-divider" />
                         <span className="program-row-tagline">{item.tagline}</span>
                       </div>
-                    </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -433,15 +434,16 @@ export default async function LendingPage() {
                     </Link>
                   ))}
                   {[
-                    { name: "Capital Advisory", tagline: "Permanent takeout financing placement, connecting borrowers with long-term capital partners" },
+                    { name: "Capital Advisory", tagline: "Permanent takeout financing placement, connecting borrowers with long-term capital partners", href: "/lending/capital-advisory" },
                   ].map((item) => (
-                    <div key={item.name} className="program-row program-row-static">
+                    <Link key={item.name} href={item.href} className="program-row">
                       <div className="program-row-content">
                         <span className="program-row-name">{item.name}</span>
                         <span className="program-row-divider" />
                         <span className="program-row-tagline">{item.tagline}</span>
                       </div>
-                    </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
                   ))}
                 </div>
               </div>
