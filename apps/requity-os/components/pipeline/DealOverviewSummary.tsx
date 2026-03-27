@@ -415,7 +415,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               <InlineField
                 label="Lead source"
                 type="select"
-                value={LS_KEY_TO_LABEL[uwStr("source") ?? ""] ?? uwStr("source") ?? ""}
+                value={LS_KEY_TO_LABEL[uwStr("source") ?? ""] ?? uwStr("lead_source") ?? uwStr("source") ?? ""}
                 options={LEAD_SOURCE_LABELS}
                 onSave={(v) => saveField("source", LS_LABEL_TO_KEY[v] ?? v)}
               />
