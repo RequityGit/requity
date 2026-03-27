@@ -20,6 +20,18 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
+    },
+    "netlify": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@netlify/mcp@latest",
+        "--site-id",
+        "5bfdca4e-1de0-4a4d-921e-aa98cce728b8",
+        "--proxy-path",
+        "https://netlify-mcp.netlify.app/proxy/eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..dvwfwzT4a3MLLMIo.Xoy0M9NhOHbfwt2YB98nfb6wnC6pRTzqu71AwBK6i-hg4UupLG9G6p3n0QtKoRe0_8vp2BMoGzACU0QZhFaYKg9GJcmRHbDdww_IarOtXcpXvEhkTfftcBujoqmzQ-MD49zQx9Aq6-Kft1s8r0gQqGGaHapc83srPeC63PBLbnkdoWTJ2uqQwmxjXrZ242_mqzMFvg9tOPD0b6hzCCsXVZOaCz5H3Ca1JyZHwBlZiVoOT6UBBsOkRnj8CxNBYaE_0oRBObJGjiXQHY1VOI0Kw_BpZ3I7swXMwNOYTPGgCRxA2X6O5b3dFtSj_RicUeFAHm2jsV7jMWIWBr0OGkZPPOj4J2QsRc1ln1cMU2c7EEPswrM_RA.vMIH5wbOOl3-foboLtvEww",
+        "--no-wait"
+      ]
     }
   }
 }
