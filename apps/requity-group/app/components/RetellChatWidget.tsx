@@ -6,7 +6,7 @@ export default function RetellChatWidget() {
           id="retell-widget"
           src="https://dashboard.retellai.com/retell-widget.js"
           type="module"
-          data-public-key="public_key_b2e3b961e5076c4619ab6"
+          data-public-key="public_key_ddcd8e9dc2a4f9589e7a5"
           data-agent-id="agent_8921021b191a03d12b216949b1"
           data-agent-version="0"
           data-title="Chat with Requity Lending"
