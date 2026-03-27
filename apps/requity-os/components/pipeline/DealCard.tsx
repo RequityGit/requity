@@ -407,46 +407,26 @@ function DealCardInner({
     touchAction: "none" as const,
   };
 
-  // PointerSensor calls preventDefault() on pointerdown, which suppresses the
-  // native click event. We detect clicks via pointer position tracking.
-  // IMPORTANT: Use onPointerDownCapture (capture phase) so we record position
-  // WITHOUT overriding dnd-kit's onPointerDown from {...listeners}. Overriding
-  // and forwarding programmatically breaks PointerSensor activation.
-  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
-  // Track whether a drag occurred during this pointer session to suppress
-  // click navigation after delay-based drag activation + release.
-  const didDragRef = useRef(false);
+  // With distance-based PointerSensor (distance: 8), native click events fire
+  // normally for sub-threshold movements. wasDraggedRef is a safety net for
+  // edge cases where a click might fire immediately after a drag ends.
+  const wasDraggedRef = useRef(false);
 
   useEffect(() => {
-    if (isDragging) didDragRef.current = true;
+    if (isDragging) {
+      wasDraggedRef.current = true;
+    }
   }, [isDragging]);
 
-  const handlePointerDownCapture = useCallback(
-    (e: React.PointerEvent) => {
-      didDragRef.current = false;
-      pointerStartRef.current = { x: e.clientX, y: e.clientY };
-    },
-    []
-  );
-
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      const start = pointerStartRef.current;
-      pointerStartRef.current = null;
-      if (!start) return;
-
-      // If a drag was activated during this pointer session, suppress click
-      if (didDragRef.current) return;
-
-      // If the pointer landed on the focus ribbon, skip navigation
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (wasDraggedRef.current) {
+        wasDraggedRef.current = false;
+        return;
+      }
       const target = e.target as HTMLElement;
       if (target.closest("[data-focus-btn]")) return;
-
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      if (Math.sqrt(dx * dx + dy * dy) < 8) {
-        onClick(e as unknown as React.MouseEvent);
-      }
+      onClick(e);
     },
     [onClick]
   );
@@ -482,8 +462,7 @@ function DealCardInner({
       style={sortableStyle}
       {...attributes}
       {...listeners}
-      onPointerDownCapture={handlePointerDownCapture}
-      onPointerUp={handlePointerUp}
+      onClick={handleClick}
       onPointerEnter={prefetchDeal}
       onKeyDown={handleKeyDown}
       className={cn(
