@@ -2,9 +2,9 @@
   "mcpServers": {
     "sentry": {
       "command": "npx",
-      "args": ["-y", "@sentry/mcp-server@latest"],
+      "args": ["-y", "@sentry/mcp-server@latest", "--organization-slug", "requity"],
       "env": {
-        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}"
+        "SENTRY_ACCESS_TOKEN": "${SENTRY_AUTH_TOKEN}"
       }
     },
     "supabase": {
