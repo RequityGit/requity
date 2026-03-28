@@ -61,6 +61,7 @@ export function DealFilters({
   const dealConfigs = getAllDealConfigs();
 
   const activeFilterCount = [
+    lifecycleView === true,
     filters.capitalSide !== "all",
     filters.dealFlavor !== "all",
     filters.assetClass !== "all",
@@ -80,40 +81,14 @@ export function DealFilters({
     if (showingLostDeals && onToggleLostDeals) {
       onToggleLostDeals();
     }
+    if (lifecycleView && onToggleLifecycle) {
+      onToggleLifecycle();
+    }
   }
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-1 items-center gap-2 flex-wrap">
-        {/* Status toggle */}
-        {onToggleLostDeals && (
-          <div className="flex rounded-md border">
-            <button
-              onClick={() => showingLostDeals && onToggleLostDeals()}
-              className={cn(
-                "px-3 py-2 md:py-1.5 text-xs font-medium transition-colors min-h-[36px]",
-                !showingLostDeals
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Active
-            </button>
-            <button
-              onClick={() => !showingLostDeals && onToggleLostDeals()}
-              className={cn(
-                "px-3 py-2 md:py-1.5 text-xs font-medium transition-colors min-h-[36px] flex items-center gap-1",
-                showingLostDeals
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <XCircle className="h-3 w-3" />
-              Closed Lost
-            </button>
-          </div>
-        )}
-
         {/* Search */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -161,6 +136,38 @@ export function DealFilters({
             </div>
 
             <div className="p-4 space-y-4">
+              {/* Lifecycle */}
+              {onToggleLifecycle && !showingLostDeals && (
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Lifecycle</span>
+                  <div className="flex rounded-md border">
+                    <button
+                      onClick={() => lifecycleView && onToggleLifecycle()}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 text-xs font-medium rq-transition",
+                        !lifecycleView
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Origination
+                    </button>
+                    <button
+                      onClick={() => !lifecycleView && onToggleLifecycle()}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 text-xs font-medium rq-transition flex items-center justify-center gap-1",
+                        lifecycleView
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <ArrowLeftRight className="h-3 w-3" />
+                      Full Lifecycle
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Capital side */}
               <div className="space-y-1.5">
                 <span className="text-xs font-medium text-muted-foreground">Capital Side</span>
@@ -295,23 +302,6 @@ export function DealFilters({
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Lifecycle toggle (kanban only) */}
-        {onToggleLifecycle && !showingLostDeals && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToggleLifecycle}
-            className={cn(
-              "h-10 md:h-9 gap-1.5 hidden md:flex",
-              lifecycleView &&
-                "border-primary/50 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
-            )}
-          >
-            <ArrowLeftRight className="h-3.5 w-3.5" />
-            <span>Lifecycle</span>
-          </Button>
-        )}
-
         {/* View toggle (hidden on mobile -- table view is forced) */}
         <div className="hidden md:flex rounded-md border">
           <button
