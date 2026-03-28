@@ -23,12 +23,13 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { showSuccess, showError } from "@/lib/toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import {
+  moveDealAndReorderAction,
   updateDealStageAction,
   reorderDealsAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
@@ -330,32 +331,42 @@ export function PipelineKanban({
           moveDeal(dealId, targetStage);
           reorderDeal(targetIds, targetStage);
 
-          // Persist stage change — simple direct update, no gating
-          const stageResult = await updateDealStageAction(
+          // Persist stage + order in a single server action call
+          const moveResult = await moveDealAndReorderAction(
             dealId,
             targetStage,
+            targetIds,
             insertIndex
           );
 
-          if (stageResult.error) {
-            // Revert optimistic update
-            moveDeal(dealId, originalStage);
-            showError("Could not move deal", stageResult.error);
+          if (moveResult.error) {
+            // Fallback: persist stage change only so drops still work even if
+            // combined move+reorder path fails.
+            const fallback = await updateDealStageAction(
+              dealId,
+              targetStage,
+              insertIndex
+            );
+
+            if (fallback.error) {
+              // Revert optimistic update only if both primary and fallback fail
+              moveDeal(dealId, originalStage);
+              showError("Could not move deal", fallback.error);
+              return;
+            }
+
+            const stageLabel =
+              STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+            showWarning(
+              `${deal.name} moved to ${stageLabel}`,
+              "Order could not be saved right now. Stage change was saved."
+            );
             return;
           }
 
-          // Persist sort order for all cards in the target column
-          const orderResult = await reorderDealsAction(
-            targetIds,
-            targetStage
-          );
-          if (orderResult.error) {
-            showError("Deal moved but could not save order", orderResult.error);
-          } else {
-            const stageLabel =
-              STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
-            showSuccess(`${deal.name} moved to ${stageLabel}`);
-          }
+          const stageLabel =
+            STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+          showSuccess(`${deal.name} moved to ${stageLabel}`);
         }
       } finally {
         // Always clear the dragging guard so realtime resumes
