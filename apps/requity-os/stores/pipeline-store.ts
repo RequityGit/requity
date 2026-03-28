@@ -106,8 +106,11 @@ export const usePipelineStore = create<PipelineState>()(
       set((state) => {
         const deal = state.deals.get(dealId);
         if (deal) {
-          deal.stage = newStage;
-          deal.stage_entered_at = new Date().toISOString();
+          state.deals.set(dealId, {
+            ...deal,
+            stage: newStage,
+            stage_entered_at: new Date().toISOString(),
+          });
           state.dealsVersion++; // Stage change is structural
         }
       }),
@@ -117,7 +120,7 @@ export const usePipelineStore = create<PipelineState>()(
         orderedIds.forEach((id, index) => {
           const deal = state.deals.get(id);
           if (deal && deal.stage === stage) {
-            deal.sort_order = index;
+            state.deals.set(id, { ...deal, sort_order: index });
           }
         });
         state.dealsVersion++;
@@ -128,7 +131,7 @@ export const usePipelineStore = create<PipelineState>()(
         const deal = state.deals.get(dealId);
         if (deal) {
           const stageChanged = patch.stage !== undefined && patch.stage !== deal.stage;
-          Object.assign(deal, patch);
+          state.deals.set(dealId, { ...deal, ...patch });
           if (stageChanged) state.dealsVersion++;
         }
       }),
