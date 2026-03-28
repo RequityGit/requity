@@ -787,7 +787,7 @@ Deno.serve(async (req: Request) => {
     const fieldsWithValues = Object.entries(parsed).filter(
       ([, v]) => v != null && v !== undefined
     ).length;
-    console.log(`Intake item ${intakeItem.id}: ${fieldsWithValues} fields populated, ` +
+    console.log(`[process-intake-email] Intake item ${intakeItem.id}: ${fieldsWithValues} fields populated, ` +
       `${documentsCreated} docs created, forwarded=${parsed.isForwarded || false}`);
 
     return new Response(

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/public/LanguageContext';
 import { LanguageToggle } from '@/components/public/LanguageToggle';
 import translations from '@/lib/translations';
+import { useNavToggle } from '@/hooks/useNavToggle';
 
 const INVESTOR_FAQS = [
   {
@@ -115,6 +116,8 @@ export default function InvestorFaqPage() {
   const t = translations.investorFaq[lang];
   const nav = translations.nav[lang];
   const f = translations.footer[lang];
+
+  useNavToggle();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const [activeCategory, setActiveCategory] = useState('all');
 
@@ -130,12 +133,6 @@ export default function InvestorFaqPage() {
     );
     reveals.forEach(el => observer.observe(el));
 
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-    mobileToggle?.addEventListener('click', () => navLinks?.classList.toggle('open'));
-    navLinks?.querySelectorAll('a').forEach(l =>
-      l.addEventListener('click', () => navLinks?.classList.remove('open'))
-    );
 
     return () => observer.disconnect();
   }, []);

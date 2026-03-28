@@ -269,7 +269,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Audit log
-    console.log(JSON.stringify({
+    console.log("[create-field]", JSON.stringify({
       event: "create_field",
       created_by: callingUser.id,
       module,

@@ -569,7 +569,6 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
     const nonNullCount = Object.values(fields).filter(
       (f: unknown) => (f as { value: unknown }).value != null
     ).length;
-    console.log(`Claude extracted ${nonNullCount} non-null fields from: ${subject}`);
 
     return {
       summary: parsed.summary || subject,
@@ -676,7 +675,7 @@ Deno.serve(async (req: Request) => {
                     .eq("id", existing.id);
                 }
                 results.attachments_uploaded += uploadedCount;
-                console.log(`Backfilled ${uploadedCount} attachments for existing queue item ${existing.id}`);
+                console.log(`[fetch-intake-emails] Backfilled ${uploadedCount} attachments for existing queue item ${existing.id}`);
               }
 
               // Also run extraction + process-intake-email if no intake_item exists yet

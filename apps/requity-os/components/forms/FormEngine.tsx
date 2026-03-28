@@ -58,8 +58,7 @@ export function FormEngine({
   // Load form definition (with optional deal token)
   useEffect(() => {
     async function loadForm() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const supabase: any = createClient();
+      const supabase = createClient();
 
       // If deal token provided, validate it first to get form_id and prefill
       let dealData: DealTokenData | null = null;
@@ -130,12 +129,12 @@ export function FormEngine({
         return;
       }
 
-      const definition: FormDefinition = {
-        ...data,
-        steps: (data.steps || []) as FormStep[],
-        settings: (data.settings || {}) as FormDefinition["settings"],
-        contexts: (data.contexts || []) as FormDefinition["contexts"],
-      };
+      const definition = {
+        ...(data as unknown as FormDefinition),
+        steps: ((data.steps as unknown) || []) as FormStep[],
+        settings: ((data.settings as unknown) || {}) as FormDefinition["settings"],
+        contexts: ((data.contexts as unknown) || []) as FormDefinition["contexts"],
+      } as FormDefinition;
 
       setFormDef(definition);
 

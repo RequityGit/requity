@@ -504,7 +504,6 @@ export async function POST(req: NextRequest) {
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
 
-    console.log("[Enrich] Calling Realie:", realieUrl, "| original address:", body.address);
 
     // Try with raw API key first, then Bearer prefix if 400/401
     let response = await fetch(realieUrl, {
@@ -517,7 +516,6 @@ export async function POST(req: NextRequest) {
       (response.status === 400 || response.status === 401) &&
       !REALIE_API_KEY.startsWith("Bearer ")
     ) {
-      console.log("[Enrich] Retrying with Bearer prefix");
       response = await fetch(realieUrl, {
         method: "GET",
         headers: { Authorization: `Bearer ${REALIE_API_KEY}` },
@@ -562,7 +560,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("[Enrich] Realie response keys:", Object.keys(data), "| status:", response.status);
 
     const property: RealieProperty = (data.property ?? data.data?.[0] ?? data) as RealieProperty;
 

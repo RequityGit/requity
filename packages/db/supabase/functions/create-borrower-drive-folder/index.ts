@@ -243,13 +243,13 @@ async function ensureContainerFolders(
   if (!bId) {
     const folder = await createDriveFolder(accessToken, "Borrowers", parentFolderId);
     bId = folder.id;
-    console.log(`Created Borrowers container folder: ${bId}`);
+    console.log(`[create-borrower-drive-folder] Created Borrowers container folder: ${bId}`);
   }
 
   if (!eId) {
     const folder = await createDriveFolder(accessToken, "Entities", parentFolderId);
     eId = folder.id;
-    console.log(`Created Entities container folder: ${eId}`);
+    console.log(`[create-borrower-drive-folder] Created Entities container folder: ${eId}`);
   }
 
   borrowersContainerId = bId;

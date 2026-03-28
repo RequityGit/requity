@@ -1164,7 +1164,7 @@ export async function updateConditionStatusAction(
         )
         .then((result) => {
           if (result.queued) {
-            console.log(`[settling-period] Queued approval for ${condName}`);
+            console.log(`[pipeline:settling-period] Queued approval for ${condName}`);
           }
         })
         .catch((err) => {
