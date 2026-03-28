@@ -63,7 +63,7 @@ export function getEntityColumn(entityType: NoteEntityType): string {
   const map: Record<NoteEntityType, string> = {
     contact: "contact_id",
     company: "company_id",
-    deal: "loan_id",
+    deal: "deal_id",
     task: "task_id",
     project: "project_id",
     approval: "approval_id",

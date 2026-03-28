@@ -76,7 +76,7 @@ export function UnifiedNotes({
     if (entityType === "deal") {
       const conditions: string[] = [];
       if (dealId) conditions.push(`deal_id.eq.${dealId}`);
-      if (loanId) conditions.push(`loan_id.eq.${loanId}`);
+      if (loanId) conditions.push(`deal_id.eq.${loanId}`);
       if (opportunityId) conditions.push(`opportunity_id.eq.${opportunityId}`);
       if (conditions.length > 0) {
         query = query.or(conditions.join(","));
@@ -238,17 +238,17 @@ export function UnifiedNotes({
         break;
       case "deal":
         if (dealId) row.deal_id = dealId;
-        if (loanId) row.loan_id = loanId;
+        if (loanId) row.deal_id = loanId;
         if (opportunityId) row.opportunity_id = opportunityId;
         break;
       case "condition":
         row.condition_id = entityId;
-        if (loanId) row.loan_id = loanId;
+        if (loanId) row.deal_id = loanId;
         break;
       case "unified_condition":
         row.unified_condition_id = entityId;
         if (dealId) row.deal_id = dealId;
-        if (loanId) row.loan_id = loanId;
+        if (loanId) row.deal_id = loanId;
         break;
       case "task":
         row.task_id = entityId;
@@ -488,17 +488,17 @@ export function UnifiedNotes({
         break;
       case "deal":
         if (dealId) row.deal_id = dealId;
-        if (loanId) row.loan_id = loanId;
+        if (loanId) row.deal_id = loanId;
         if (opportunityId) row.opportunity_id = opportunityId;
         break;
       case "condition":
         row.condition_id = entityId;
-        if (loanId) row.loan_id = loanId;
+        if (loanId) row.deal_id = loanId;
         break;
       case "unified_condition":
         row.unified_condition_id = entityId;
         if (dealId) row.deal_id = dealId;
-        if (loanId) row.loan_id = loanId;
+        if (loanId) row.deal_id = loanId;
         break;
       case "task":
         row.task_id = entityId;

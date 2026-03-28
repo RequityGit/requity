@@ -662,14 +662,11 @@ async function processMessage(
   let linkedContactId: string | null = null;
   let linkedBorrowerId: string | null = null;
   let linkedInvestorId: string | null = null;
-  let linkedLoanId: string | null = null;
-
   for (const pm of participantMatches) {
     for (const match of pm.matches) {
       if (match.contact_id && !linkedContactId) linkedContactId = match.contact_id;
       if (match.borrower_id && !linkedBorrowerId) linkedBorrowerId = match.borrower_id;
       if (match.investor_id && !linkedInvestorId) linkedInvestorId = match.investor_id;
-      if (match.linked_loan_id && !linkedLoanId) linkedLoanId = match.linked_loan_id;
     }
   }
 
@@ -700,7 +697,6 @@ async function processMessage(
       linked_contact_id: linkedContactId,
       linked_borrower_id: linkedBorrowerId,
       linked_investor_id: linkedInvestorId,
-      linked_loan_id: linkedLoanId,
       match_status: "auto",
       postmark_status: direction === "outbound" ? "sent" : null,
     })
