@@ -1,0 +1,50 @@
+name: Supabase DB Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+  workflow_dispatch:
+
+jobs:
+  db-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Read project_id from supabase/config.toml
+        id: project
+        shell: bash
+        run: |
+          if [ ! -f supabase/config.toml ]; then
+            echo "supabase/config.toml not found"
+            exit 1
+          fi
+
+          PROJECT_REF=$(sed -nE 's/^[[:space:]]*project_id[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' supabase/config.toml | head -n1)
+
+          if [ -z "$PROJECT_REF" ]; then
+            echo "project_id not found in supabase/config.toml"
+            exit 1
+          fi
+
+          echo "project_ref=$PROJECT_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Link Supabase project
+        run: supabase link --project-ref "${{ steps.project.outputs.project_ref }}"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Apply migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
