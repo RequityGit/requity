@@ -148,6 +148,8 @@ export interface UnifiedDeal {
   current_maturity_date?: string | null;
   funding_date?: string | null;
   first_payment_date?: string | null;
+  last_payment_date?: string | null;
+  next_payment_due?: string | null;
   payoff_date?: string | null;
   note_sold_to?: string | null;
   note_sale_date?: string | null;
@@ -156,9 +158,23 @@ export interface UnifiedDeal {
   extension_count?: number | null;
   total_draws_funded?: number | null;
   draw_count?: number | null;
+  interest_rate?: number | null;
+  loan_amount?: number | null;
+  monthly_payment?: number | null;
+  payment_frequency?: string | null;
+  per_diem_interest?: number | null;
+  late_charge_pct?: number | null;
+  late_charge_grace_days?: number | null;
+  loan_term_months?: number | null;
+  origination_date?: string | null;
+  payoff_amount?: number | null;
+  payoff_good_through?: string | null;
   // Computed client-side
   days_in_stage?: number;
   alert_level?: AlertLevel;
+  _upb?: number;
+  _remaining_draw?: number | null;
+  _has_pending_draw?: boolean;
 }
 
 export interface StageConfig {
