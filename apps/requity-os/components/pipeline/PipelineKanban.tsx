@@ -23,13 +23,12 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { showSuccess, showError, showWarning } from "@/lib/toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import {
-  moveDealAndReorderAction,
   updateDealStageAction,
   reorderDealsAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
@@ -170,7 +169,6 @@ export function PipelineKanban({
 
   // Store actions for optimistic updates
   const moveDeal = usePipelineStore((s) => s.moveDeal);
-  const moveAndReorderDeal = usePipelineStore((s) => s.moveAndReorderDeal);
   const reorderDeal = usePipelineStore((s) => s.reorderDeal);
   const setDraggingDealId = usePipelineStore((s) => s.setDraggingDealId);
 
@@ -324,54 +322,20 @@ export function PipelineKanban({
           }
         } else {
           // ── Cross-column move ──
+          // Land at top of target column (sort_order = 0).
+          // Single store mutation — no reorder cascade, no infinite re-render.
           const originalStage = deal.stage;
+          const originalSortOrder = deal.sort_order;
 
-          // Figure out insertion index in target column
-          let insertIndex = stageDeals.length; // default: end
-          if (overDeal) {
-            const overIndex = stageDeals.findIndex((d) => d.id === overId);
-            if (overIndex !== -1) insertIndex = overIndex;
-          }
+          // Optimistic: move deal to new stage at top
+          moveDeal(dealId, targetStage, 0);
 
-          // Build new target column order
-          const targetIds = stageDeals
-            .filter((d) => d.id !== dealId)
-            .map((d) => d.id);
-          targetIds.splice(insertIndex, 0, dealId);
-
-          // Atomic optimistic update — single store mutation, one version bump,
-          // one subscriber notification (prevents cascading re-renders)
-          moveAndReorderDeal(dealId, targetStage, targetIds);
-
-          // Persist stage + order in a single server action call
-          const moveResult = await moveDealAndReorderAction(
-            dealId,
-            targetStage,
-            targetIds,
-            insertIndex
-          );
-
-          if (moveResult.error) {
-            // Fallback: persist stage change only so drops still work even if
-            // combined move+reorder path fails.
-            const fallback = await updateDealStageAction(
-              dealId,
-              targetStage,
-              insertIndex
-            );
-
-            if (fallback.error) {
-              // Revert optimistic update only if both primary and fallback fail
-              moveDeal(dealId, originalStage);
-              showError("Could not move deal", fallback.error);
-              return;
-            }
-
-            const stageLabel = getStageLabel(targetStage);
-            showWarning(
-              `${deal.name} moved to ${stageLabel}`,
-              "Order could not be saved right now. Stage change was saved."
-            );
+          // Persist
+          const result = await updateDealStageAction(dealId, targetStage, 0);
+          if (result.error) {
+            // Revert optimistic update
+            moveDeal(dealId, originalStage, originalSortOrder ?? undefined);
+            showError("Could not move deal", result.error);
             return;
           }
 
@@ -383,7 +347,7 @@ export function PipelineKanban({
         setDraggingDealId(null);
       }
     },
-    [moveDeal, moveAndReorderDeal, reorderDeal, setDraggingDealId]
+    [moveDeal, reorderDeal, setDraggingDealId]
   );
 
   const handleDragCancel = useCallback(() => {
