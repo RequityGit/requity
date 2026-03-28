@@ -347,6 +347,66 @@ export async function reorderDealsAction(
   }
 }
 
+// ─── Move + Reorder (single server action call for DnD cross-column moves) ───
+
+export async function moveDealAndReorderAction(
+  dealId: string,
+  newStage: string,
+  orderedDealIds: string[],
+  sortOrder?: number
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const update: Record<string, unknown> = {
+      stage: newStage,
+      stage_entered_at: new Date().toISOString(),
+    };
+    if (sortOrder !== undefined) {
+      update.sort_order = sortOrder;
+    }
+
+    const { error: stageError } = await admin
+      .from("unified_deals" as never)
+      .update(update as never)
+      .eq("id" as never, dealId as never);
+
+    if (stageError) {
+      console.error("moveDealAndReorderAction stage error:", stageError);
+      return { error: stageError.message, stageMoved: false };
+    }
+
+    const { error: orderError } = await admin.rpc("bulk_reorder_deals", {
+      p_deal_ids: orderedDealIds,
+      p_stage: newStage,
+    });
+
+    if (orderError) {
+      console.error("moveDealAndReorderAction reorder error:", orderError);
+      return {
+        success: true,
+        stageMoved: true,
+        orderSaved: false,
+        warning: "Deal moved but failed to save deal order",
+      };
+    }
+
+    return { success: true, stageMoved: true, orderSaved: true };
+  } catch (err: unknown) {
+    console.error("moveDealAndReorderAction error:", err);
+    return {
+      stageMoved: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Failed to move and reorder deal",
+    };
+  }
+}
+
 // ─── Regress Stage (backward jump, no validation) ───
 
 export async function regressStageAction(
