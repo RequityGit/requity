@@ -1405,13 +1405,13 @@ function DealHeader({
         <div className="hidden md:flex items-center gap-4 shrink-0">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex flex-col items-center min-w-[90px]">
+              <div className="flex flex-col items-center min-w-fit">
                 <InlineField
                   type="select"
                   value={HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? ""}
                   options={HEADER_AC_LABELS}
                   onSave={(v) => onMetricSave("property_type", HEADER_AC_LABEL_TO_KEY[v] ?? v)}
-                  className="items-center text-center font-semibold [&_span]:whitespace-nowrap"
+                  className="items-center text-center font-semibold"
                 />
                 <span className="rq-micro-label">Asset</span>
               </div>
@@ -1422,13 +1422,13 @@ function DealHeader({
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex flex-col items-center min-w-[100px]">
+              <div className="flex flex-col items-center min-w-fit">
                 <InlineField
                   type="currency"
                   value={loanAmount}
                   formatValue={(v) => formatCompactCurrency(Number(v) || null)}
                   onSave={(v) => onMetricSave("loan_amount", v)}
-                  className="items-center text-center font-semibold [&_span]:whitespace-nowrap"
+                  className="items-center text-center font-semibold"
                 />
                 <span className="rq-micro-label">Loan</span>
               </div>
@@ -1439,7 +1439,7 @@ function DealHeader({
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex flex-col items-center min-w-[80px]">
+              <div className="flex flex-col items-center min-w-fit">
                 <InlineField
                   type="date"
                   value={expectedClose ? String(expectedClose).split("T")[0] : null}
@@ -1451,7 +1451,7 @@ function DealHeader({
                     return formatDateShort(dt.toISOString());
                   }}
                   placeholder="—"
-                  className="items-center text-center font-semibold [&_span]:whitespace-nowrap"
+                  className="items-center text-center font-semibold"
                 />
                 <span className="rq-micro-label">Close</span>
               </div>
