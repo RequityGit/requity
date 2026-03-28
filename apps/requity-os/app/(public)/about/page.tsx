@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/public/LanguageContext';
 import { LanguageToggle } from '@/components/public/LanguageToggle';
 import translations from '@/lib/translations';
+import { useNavToggle } from '@/hooks/useNavToggle';
 
 export default function AboutPage() {
   const { lang } = useLanguage();
   const t = translations.about[lang];
   const nav = translations.nav[lang];
   const f = translations.footer[lang];
+
+  useNavToggle();
 
   useEffect(() => {
     const reveals = document.querySelectorAll('.reveal');
@@ -24,12 +27,6 @@ export default function AboutPage() {
     );
     reveals.forEach(el => observer.observe(el));
 
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-    mobileToggle?.addEventListener('click', () => navLinks?.classList.toggle('open'));
-    navLinks?.querySelectorAll('a').forEach(l =>
-      l.addEventListener('click', () => navLinks?.classList.remove('open'))
-    );
 
     return () => observer.disconnect();
   }, []);

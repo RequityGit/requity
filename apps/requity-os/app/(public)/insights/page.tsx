@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/public/LanguageContext';
 import { LanguageToggle } from '@/components/public/LanguageToggle';
 import translations from '@/lib/translations';
+import { useNavToggle } from '@/hooks/useNavToggle';
 
 const INSIGHTS = [
   {
@@ -64,6 +65,8 @@ export default function InsightsPage() {
   const t = translations.insights[lang];
   const nav = translations.nav[lang];
   const f = translations.footer[lang];
+
+  useNavToggle();
   const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
@@ -78,12 +81,6 @@ export default function InsightsPage() {
     );
     reveals.forEach(el => observer.observe(el));
 
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-    mobileToggle?.addEventListener('click', () => navLinks?.classList.toggle('open'));
-    navLinks?.querySelectorAll('a').forEach(l =>
-      l.addEventListener('click', () => navLinks?.classList.remove('open'))
-    );
 
     return () => observer.disconnect();
   }, []);
