@@ -51,9 +51,9 @@ interface PipelineState {
   // Drag-in-progress guard — prevents realtime from overwriting optimistic state
   draggingDealId: string | null;
 
-  // Version counter — increments on structural changes (add/remove/stage move/hydrate).
-  // Sort-order-only changes do NOT bump this, so downstream selectors like
-  // useAllDeals() skip expensive array rebuilds for reorder-only updates.
+  // Version counter — increments on every intentional mutation (add/remove/stage move/reorder/hydrate).
+  // Used as memo dependency instead of raw Map reference to give the store
+  // explicit control over when downstream selectors recompute.
   dealsVersion: number;
 
   // Actions
@@ -127,8 +127,7 @@ export const usePipelineStore = create<PipelineState>()(
             state.deals.set(id, { ...deal, sort_order: index });
           }
         });
-        // Do NOT increment dealsVersion — sort-order-only changes
-        // should not trigger expensive array rebuilds
+        state.dealsVersion++; // Columns must see new sort_order
       }),
 
     updateDeal: (dealId, patch) =>
