@@ -4,6 +4,16 @@ const isDev = process.env.NODE_ENV === "development";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Ensure NEXT_PUBLIC_ Supabase vars are inlined into both server and client
+  // bundles even when the host only sets the non-prefixed variants.
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      "",
+  },
   webpack: (config, { isServer }) => {
     // pptxgenjs ships an ES module that references node:fs / node:https.
     // These are never called in the browser, but webpack 5 throws
