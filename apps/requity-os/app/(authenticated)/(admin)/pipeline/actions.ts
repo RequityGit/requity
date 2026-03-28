@@ -1459,6 +1459,7 @@ export async function resolveIntakeItemAction(data: {
             const { data: newContact } = await admin
               .from("crm_contacts")
               .insert({
+                contact_number: "",
                 first_name: firstName,
                 last_name: lastName,
                 email: String(brokerEmail).toLowerCase(),
@@ -2167,25 +2168,48 @@ export async function processIntakeItemAction(
     // Process Contact
     if (decisions.entityModes.contact === "new") {
       const incoming = INCOMING_DATA_MAP.contact(parsed);
-      const { data: contact, error } = await admin
-        .from("crm_contacts" as never)
-        .insert({
-          first_name: incoming.first_name || null,
-          last_name: incoming.last_name || null,
-          name: incoming.name || null,
-          email: incoming.email || null,
-          phone: incoming.phone || null,
-          contact_type: contactType,
-          source: "other",
-        } as never)
-        .select("id" as never)
-        .single();
 
-      if (error) {
-        console.error("Failed to create contact:", error);
-        return { error: `Failed to create contact: ${error.message}` };
+      // Check if contact already exists by email or phone to avoid unique constraint violations
+      const contactEmail = incoming.email || null;
+      const contactPhone = incoming.phone || null;
+      if (contactEmail || contactPhone) {
+        const orFilters = [
+          contactEmail ? `email.eq.${contactEmail}` : null,
+          contactPhone ? `phone.eq.${contactPhone}` : null,
+        ].filter(Boolean).join(",");
+        const { data: existingContact } = await admin
+          .from("crm_contacts" as never)
+          .select("id" as never)
+          .or(orFilters as never)
+          .limit(1)
+          .maybeSingle();
+        if (existingContact) {
+          contactId = (existingContact as { id: string }).id;
+        }
       }
-      contactId = (contact as { id: string }).id;
+
+      if (!contactId) {
+        const { data: contact, error } = await admin
+          .from("crm_contacts" as never)
+          .insert({
+            contact_number: "",
+            first_name: incoming.first_name || null,
+            last_name: incoming.last_name || null,
+            name: incoming.name || null,
+            email: incoming.email || null,
+            phone: incoming.phone || null,
+            contact_type: contactType,
+            source: "other",
+          } as never)
+          .select("id" as never)
+          .single();
+
+        if (error) {
+          console.error("Failed to create contact:", error);
+          return { error: `Failed to create contact: ${error.message}` };
+        }
+        contactId = (contact as { id: string }).id;
+      }
     } else if (decisions.entityModes.contact === "merge" && effectiveMatches?.contact) {
       contactId = effectiveMatches.contact.match_id;
       const fieldChoicesContact = decisions.fieldChoices.contact || {};
@@ -2224,25 +2248,47 @@ export async function processIntakeItemAction(
     if (decisions.entityModes.borrower_contact === "new") {
       const incoming = INCOMING_DATA_MAP.borrower_contact(parsed);
       if (incoming.name || incoming.email) {
-        const { data: borrowerContact, error: bErr } = await admin
-          .from("crm_contacts" as never)
-          .insert({
-            first_name: incoming.first_name || null,
-            last_name: incoming.last_name || null,
-            name: incoming.name || null,
-            email: incoming.email || null,
-            phone: incoming.phone || null,
-            company_name: incoming.company_name || null,
-            contact_type: "borrower",
-            source: "other",
-          } as never)
-          .select("id" as never)
-          .single();
+        // Check if borrower contact already exists by email or phone
+        const bEmail = incoming.email || null;
+        const bPhone = incoming.phone || null;
+        if (bEmail || bPhone) {
+          const orFilters = [
+            bEmail ? `email.eq.${bEmail}` : null,
+            bPhone ? `phone.eq.${bPhone}` : null,
+          ].filter(Boolean).join(",");
+          const { data: existingBorrower } = await admin
+            .from("crm_contacts" as never)
+            .select("id" as never)
+            .or(orFilters as never)
+            .limit(1)
+            .maybeSingle();
+          if (existingBorrower) {
+            borrowerContactId = (existingBorrower as { id: string }).id;
+          }
+        }
 
-        if (bErr) {
-          console.error("Failed to create borrower contact:", bErr);
-        } else if (borrowerContact) {
-          borrowerContactId = (borrowerContact as { id: string }).id;
+        if (!borrowerContactId) {
+          const { data: borrowerContact, error: bErr } = await admin
+            .from("crm_contacts" as never)
+            .insert({
+              contact_number: "",
+              first_name: incoming.first_name || null,
+              last_name: incoming.last_name || null,
+              name: incoming.name || null,
+              email: incoming.email || null,
+              phone: incoming.phone || null,
+              company_name: incoming.company_name || null,
+              contact_type: "borrower",
+              source: "other",
+            } as never)
+            .select("id" as never)
+            .single();
+
+          if (bErr) {
+            console.error("Failed to create borrower contact:", bErr);
+          } else if (borrowerContact) {
+            borrowerContactId = (borrowerContact as { id: string }).id;
+          }
         }
       }
     } else if (decisions.entityModes.borrower_contact === "merge" && effectiveMatches?.borrower_contact) {
