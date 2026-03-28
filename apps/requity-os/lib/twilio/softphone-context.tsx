@@ -133,7 +133,9 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
           console.warn("[Softphone] Too many errors, going offline");
           setError("Connection unstable. Use Retry to reconnect.");
           setStatus("offline");
-          device.unregister();
+          if (device.state === "registered") {
+            device.unregister();
+          }
           return;
         }
         setError(err.message || "Device error");
@@ -182,7 +184,9 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
     return () => {
       clearTimer();
       if (deviceRef.current) {
-        deviceRef.current.unregister();
+        if (deviceRef.current.state === "registered") {
+          deviceRef.current.unregister();
+        }
         deviceRef.current.destroy();
         deviceRef.current = null;
       }
@@ -262,7 +266,9 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
   const retry = useCallback(() => {
     errorCountRef.current = 0;
     if (deviceRef.current) {
-      deviceRef.current.unregister();
+      if (deviceRef.current.state === "registered") {
+        deviceRef.current.unregister();
+      }
       deviceRef.current.destroy();
       deviceRef.current = null;
     }
