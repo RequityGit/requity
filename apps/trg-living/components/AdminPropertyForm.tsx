@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -18,15 +17,16 @@ const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
     loading: () => <div className="border border-slate-200 rounded-2xl min-h-[200px] bg-slate-50 animate-pulse" />,
 });
 
-// Explicit allowlist — only real pm_communities columns are sent to Postgres
 const DB_FIELDS = [
     'name', 'slug', 'region_id', 'headline', 'description_html',
-    'address_display', 'city', 'state_code', 'zip_code', 'contact_email', 'contact_phone',
+    'address_display', 'city', 'state_code', 'zip_code', 
+    'contact_email', 'contact_phone',
     'beds_range', 'baths_range', 'starting_price', 'status',
     'featured_media_id',
+    'property_type'
 ];
 
-export interface CommunityFormData {
+export interface AdminPropertyFormData {
     id?: string;
     name: string;
     slug: string;
@@ -43,14 +43,15 @@ export interface CommunityFormData {
     baths_range: string;
     starting_price: string;
     status: string;
+    property_type: string;
     featured_media_id?: string;
     featured_media?: { id?: string; file_path: string };
     pm_gallery?: any[];
     amenity_ids?: string[];
 }
 
-interface CommunityFormProps {
-    initialData?: Partial<CommunityFormData>;
+interface AdminPropertyFormProps {
+    initialData?: Partial<AdminPropertyFormData>;
     regions: { id: string, name: string }[];
     allAmenities: any[];
     onSubmit: (cleanData: any) => Promise<void>;
@@ -60,7 +61,7 @@ interface CommunityFormProps {
     isEdit?: boolean;
 }
 
-export default function CommunityForm({ 
+export default function AdminPropertyForm({ 
     initialData, 
     regions, 
     allAmenities, 
@@ -69,12 +70,11 @@ export default function CommunityForm({
     onAmenitiesChange, 
     loading, 
     isEdit = false
-}: CommunityFormProps) {
-
-    const [formData, setFormData] = useState<CommunityFormData>({
+}: AdminPropertyFormProps) {
+    const [formData, setFormData] = useState<AdminPropertyFormData>({
         name: '', slug: '', region_id: '', headline: '', description_html: '',
         address_display: '', city: '', state_code: '', zip_code: '', 
-        contact_email: '', contact_phone: '',
+        contact_email: '', contact_phone: '', property_type: 'mhc',
         beds_range: 'Studio - 3 Beds', baths_range: '1 - 2 Baths',
         starting_price: 'Starting at $1,200', status: 'draft',
         featured_media_id: undefined,
@@ -95,10 +95,9 @@ export default function CommunityForm({
         e.preventDefault();
         const cleanPayload: any = {};
         DB_FIELDS.forEach(f => {
-            const val = formData[f as keyof CommunityFormData];
+            const val = formData[f as keyof AdminPropertyFormData];
             if (val !== undefined) cleanPayload[f] = val;
         });
-
         if (!cleanPayload.featured_media_id) cleanPayload.featured_media_id = null;
         onSubmit(cleanPayload);
     };
@@ -110,13 +109,12 @@ export default function CommunityForm({
     return (
         <form onSubmit={handleHardenAndSubmit} noValidate className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 space-y-8">
-
                 {/* SECTION 1: IDENTITY & STATUS */}
                 <div className="bg-white p-8 rounded-[1rem] border border-slate-200 shadow-sm space-y-6">
                     <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 border-b pb-4">1. Identity & Status</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Official Name</label>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Property Name</label>
                             <input
                                 required
                                 className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all outline-none font-bold"
@@ -132,8 +130,19 @@ export default function CommunityForm({
                                 className="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 font-mono text-xs text-slate-500"
                                 value={formData.slug}
                             />
-                        </div>                        
-                    </div>
+                        </div>            
+                        <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Property Type</label>
+                        <select 
+                            className="w-full p-4 border rounded-2xl font-bold bg-white"
+                            value={formData.property_type}
+                            onChange={(e) => setFormData({...formData, property_type: e.target.value})}
+                        >
+                            <option value="mhc">Mobile Home Community</option>
+                            <option value="campground">Campground / RV Resort</option>
+                        </select>
+                    </div>                                    
+                </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Direct Contact Email</label>
@@ -166,7 +175,7 @@ export default function CommunityForm({
                                 onChange={(e) => setFormData({...formData, region_id: e.target.value})}
                             >
                                 <option value="">Select Region...</option>
-                                {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                    {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                             </select>
                         </div>
                         <div className="space-y-1">
@@ -182,7 +191,6 @@ export default function CommunityForm({
                         </div>                        
                     </div>
                 </div>
-
                 {/* SECTION 2: LOCATION */}
                 <div className="bg-white p-8 rounded-[1rem] border border-slate-200 shadow-sm space-y-6">
                     <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 border-b pb-4">2. Location Details</h2>
@@ -279,7 +287,7 @@ export default function CommunityForm({
                     disabled={loading}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-6 rounded-3xl transition-all shadow-xl uppercase tracking-widest text-sm disabled:opacity-50"
                 >
-                    {loading ? 'Processing...' : (isEdit ? 'Save All Changes' : 'Publish Community')}
+                    {loading ? 'Processing...' : (isEdit ? 'Save Changes' : 'Publish Property')}
                 </button>
             </div>
 

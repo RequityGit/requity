@@ -19,11 +19,11 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
             redirect('/');
         }
 
-    const { data: communities } = await supabase.from('pm_communities').select('id, name').order('name');
+    const { data: properties } = await supabase.from('pm_properties').select('id, name').order('name');
     const { data: post } = await supabase
         .from('pm_posts')
         .select(`
-            id, title, slug, community_id, excerpt, body_html, status, featured_media_id,
+            id, title, slug, property_id, excerpt, body_html, status, featured_media_id,
             featured_media:pm_media!pm_posts_featured_media_id_fkey (id, file_path)
         `)
         .eq('id', id)
@@ -33,7 +33,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
     return (
         <div className="max-w-6xl mx-auto space-y-10 pb-20">
-            <EditPostClient post={post} communities={communities ?? []} id={id} />
+            <EditPostClient post={post} properties={properties ?? []} id={id} />
         </div>
     );
 }

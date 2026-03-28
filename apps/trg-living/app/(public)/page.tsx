@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import CommunityCard from '@/components/CommunityCard';
+import PropertyCard from '@/components/PropertyCard';
+
 export const revalidate = 3600;
 
 export default async function Home() {
@@ -11,13 +12,13 @@ export default async function Home() {
             id,
             name,
             slug,
-            pm_communities (
+            pm_properties (
                 id, name, slug, city, state_code, status,
-                featured_media:pm_media!pm_communities_featured_media_id_fkey (file_path)
+                featured_media:pm_media!pm_properties_featured_media_id_fkey (file_path)
             )
         `)
-        .eq('is_active', true)
-        .eq('pm_communities.status', 'published')
+        .eq('status', 'published')
+        .eq('pm_properties.status', 'published')
         .order('sort_order', { ascending: true });
 
     if (error) {
@@ -36,7 +37,7 @@ export default async function Home() {
                             <span className="text-blue-600">to call home.</span>
                         </h1>
                         <p className="text-xl text-slate-500 font-medium max-w-md leading-relaxed">
-                            Discover premium manufactured housing communities designed for modern living and lasting value.
+                            Discover premium residential communities and campgrounds designed for modern living and lasting value.
                         </p>
                     </div>
                 </div>
@@ -44,15 +45,15 @@ export default async function Home() {
 
             <main className="max-w-[1440px] mx-auto px-8 pt-24 pb-32 space-y-24">
                 {regions?.map((region) => (
-                    region.pm_communities && region.pm_communities.length > 0 && (
-                        <section key={region.id} className="space-y-8">
+                    region.pm_properties && region.pm_properties.length > 0 && (
+                        <section key={region.id} id={region.slug} className="space-y-8">
                             <div className="flex items-center gap-4">
                                 <h2 className="text-2xl font-bold tracking-tight">{region.name}</h2>
                                 <div className="h-px bg-slate-200 w-full"></div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {region.pm_communities.map((community: any) => (
-                                    <CommunityCard key={community.id} community={community} />
+                                {region.pm_properties.map((property: any) => (                          
+                                    <PropertyCard key={property.id} property={property} />
                                 ))}
                             </div>
                         </section>

@@ -7,12 +7,12 @@ export default async function AdminPostsList() {
   const { data: posts } = await supabase
     .from('pm_posts')
     .select(`
-      id,
-      title,
-      slug,
-      status,
-      created_at,
-      pm_communities (name)
+        id,
+        title,
+        status,
+        created_at,
+        slug,
+        pm_properties ( name )
     `)
     .order('created_at', { ascending: false });
 
@@ -50,7 +50,7 @@ export default async function AdminPostsList() {
                 </td>
                 <td className="px-6 py-5">
                   <span className="text-sm text-slate-600 font-medium">
-                    {post.pm_communities?.name || 'Global'}
+                    {post.pm_properties?.name || 'Global'}
                   </span>
                 </td>
                 <td className="px-6 py-5 text-sm text-slate-500">

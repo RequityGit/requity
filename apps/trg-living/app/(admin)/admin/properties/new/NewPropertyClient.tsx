@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import CommunityForm, { CommunityFormData } from '@/components/CommunityForm';
+import AdminPropertyForm from '@/components/AdminPropertyForm';
 
-export default function NewCommunityClient({
+export default function NewPropertyClient({
     regions,
     allAmenities
 }: {
@@ -20,11 +20,11 @@ export default function NewCommunityClient({
         setLoading(true);
         try {
             const { error } = await supabase
-                .from('pm_communities')
+                .from('pm_properties')
                 .insert([cleanData]);
 
             if (error) throw error;
-            router.push('/admin/communities');
+            router.push('/admin/properties');
             router.refresh();
         } catch (err: any) {
             alert(err.message);
@@ -34,7 +34,7 @@ export default function NewCommunityClient({
     };
 
     return (
-        <CommunityForm
+        <AdminPropertyForm
             regions={regions}
             allAmenities={allAmenities}
             onSubmit={handleCreate}

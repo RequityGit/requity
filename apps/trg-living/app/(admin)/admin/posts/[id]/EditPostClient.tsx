@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PostForm, { PostFormData } from '@/components/PostForm';
 
-export default function EditPostClient({ post, communities, id }: { post: any, communities: any[], id: string }) {
+export default function EditPostClient({ post, properties, id }: { post: any, properties: any[], id: string }) {
     const router = useRouter();
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function EditPostClient({ post, communities, id }: { post: any, c
         try {
             const updatePayload = {
                 title: formData.title,
-                community_id: formData.community_id,
+                property_id: formData.property_id,
                 excerpt: formData.excerpt,
                 body_html: formData.body_html,
                 status: formData.status,
@@ -26,9 +26,20 @@ export default function EditPostClient({ post, communities, id }: { post: any, c
             if (error) throw error;
             router.refresh();
             alert("Article Updated.");
-        } catch (err: any) { alert(err.message); } 
-        finally { setLoading(false); }
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    return <PostForm initialData={post} communities={communities} onSubmit={handleUpdate} loading={loading} isEdit={true} />;
+    return (
+        <PostForm
+            initialData={post}
+            properties={properties}
+            onSubmit={handleUpdate}
+            loading={loading}
+            isEdit={true}
+        />
+    );
 }

@@ -16,7 +16,7 @@ const MediaPicker = dynamic(() => import('@/components/MediaPicker'), {
 export interface PostFormData {
     title: string;
     slug: string;
-    community_id: string;
+    property_id: string;
     excerpt: string;
     body_html: string;
     status: 'draft' | 'published';
@@ -26,17 +26,17 @@ export interface PostFormData {
 
 interface PostFormProps {
     initialData?: Partial<PostFormData>;
-    communities: { id: string, name: string }[];
+    properties: { id: string, name: string }[];
     onSubmit: (data: PostFormData) => Promise<void>;
     loading: boolean;
     isEdit?: boolean;
 }
 
-export default function PostForm({ initialData, communities, onSubmit, loading, isEdit = false }: PostFormProps) {
+export default function PostForm({ initialData, properties, onSubmit, loading, isEdit = false }: PostFormProps) {
     const [formData, setFormData] = useState<PostFormData>({
         title: '',
         slug: '',
-        community_id: '',
+        property_id: '',
         excerpt: '',
         body_html: '',
         status: 'draft',
@@ -98,11 +98,15 @@ export default function PostForm({ initialData, communities, onSubmit, loading, 
                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-200 pb-4">Status & Target</h3>
                     <div className="space-y-4">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Community</label>
-                            <select required className="w-full p-4 rounded-2xl border border-slate-200 bg-white outline-none appearance-none font-bold text-sm"
-                                value={formData.community_id} onChange={(e) => setFormData({...formData, community_id: e.target.value})}>
-                                <option value="">Select Community...</option>
-                                {communities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Property</label>
+                            <select
+                                required
+                                className="w-full p-4 rounded-2xl border border-slate-200 bg-white outline-none appearance-none font-bold text-sm"
+                                value={formData.property_id}
+                                onChange={(e) => setFormData({...formData, property_id: e.target.value})}
+                                >
+                                <option value="">Select Property...</option>
+                                {properties.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                         <div className="space-y-1">

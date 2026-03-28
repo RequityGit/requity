@@ -4,7 +4,7 @@ export default async function AdminDashboard() {
     // force RLS checks immediately
     const supabase = createClient();
     // fetch counts efficiently using "head: true" to avoid downloading actual data    
-    const { count: communityCount } = await supabase.from('pm_communities').select('*', { count: 'exact', head: true });
+    const { count: communityCount } = await supabase.from('pm_properties').select('*', { count: 'exact', head: true });
     const { count: regionCount } = await supabase.from('pm_regions').select('*', { count: 'exact', head: true });
     const { count: leadCount } = await supabase.from('pm_leads').select('*', { count: 'exact', head: true });
     const { count: postCount } = await supabase.from('pm_posts').select('*', { count: 'exact', head: true });
@@ -48,7 +48,7 @@ export default async function AdminDashboard() {
                 {/* LEAD NOTIFICATIONS */}
                 <div className="p-8 rounded-3xl border border-blue-100 bg-blue-50/30 flex items-center justify-between">
                     <div>
-                        <h3 className="font-bold text-blue-900">Lead Inquiries</h3>
+                        <h3 className="font-bold text-blue-900">Leads</h3>
                         <p className="text-blue-700 text-sm">{leadCount || 0} Unread</p>
                     </div>
                     <a href="/admin/leads" className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase">Review</a>

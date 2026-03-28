@@ -5,13 +5,13 @@ import sanitizeHtml from 'sanitize-html';
 
 // Strip all HTML tags from user-submitted content before rendering in admin
 function sanitizeLeadMessage(text: string) {
-    return sanitizeHtml(text, {
+    return sanitizeHtml(text || '', {
         allowedTags: [],
         allowedAttributes: {},
     });
 }
 
-interface LeadWithCommunity {
+interface LeadWithProperty {
     id: string;
     created_at: string;
     full_name: string;
@@ -19,7 +19,8 @@ interface LeadWithCommunity {
     phone: string | null;
     message: string;
     status: string;
-    pm_communities: { name: string } | { name: string }[] | null;
+    property_id: string | null; 
+    pm_properties: { name: string } | { name: string }[] | null;
 }
 
 export default async function LeadsPage() {
@@ -48,23 +49,24 @@ export default async function LeadsPage() {
             phone,
             message,
             status,
-            pm_communities ( name )
+            property_id,
+            pm_properties ( name ) 
         `)
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error fetching leads:', error);
+        console.error('Error fetching leads:', error.message);
         return <div className="p-10 text-red-500 font-bold">Failed to load leads.</div>;
     }
 
-    const leads = (data as LeadWithCommunity[]) ?? [];
+    const leads = (data as unknown as LeadWithProperty[]) ?? [];
 
     return (
         <div className="space-y-8">
             <header className="flex justify-between items-end">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight">Leads</h1>
-                    <p className="text-slate-500 font-medium">Prospective residents from the public website</p>
+                    <p className="text-slate-500 font-medium">Leads generated from MHC and Campground pages.</p>
                 </div>
                 <div className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-blue-100">
                     {leads.length} Total
@@ -80,6 +82,7 @@ export default async function LeadsPage() {
                             <th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Property</th>
                             <th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Message Preview</th>
                             <th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                            <th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -98,15 +101,13 @@ export default async function LeadsPage() {
                                 <td className="p-6">
                                     <p className="text-sm font-black text-slate-900">{lead.full_name}</p>
                                     <p className="text-xs font-medium text-blue-600">{lead.email}</p>
-                                    {lead.phone && (
-                                        <p className="text-[10px] font-mono text-slate-400 mt-1">{lead.phone}</p>
-                                    )}
+                                    {lead.phone && <p className="text-[10px] font-mono text-slate-400 mt-1">{lead.phone}</p>}
                                 </td>
                                 <td className="p-6">
                                     <span className="inline-block px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-tight">
-                                        {(Array.isArray(lead.pm_communities)
-                                            ? lead.pm_communities[0]?.name
-                                            : lead.pm_communities?.name) || 'General Inquiry'}
+                                        {(Array.isArray(lead.pm_properties)
+                                            ? lead.pm_properties[0]?.name
+                                            : lead.pm_properties?.name) || 'General Inquiry'}
                                     </span>
                                 </td>
                                 <td className="p-6 max-w-xs">
@@ -131,16 +132,11 @@ export default async function LeadsPage() {
                                 </td>
                             </tr>
                         ))}
-
-                        {leads.length === 0 && (
-                            <tr>
-                                <td colSpan={5} className="p-20 text-center">
-                                    <p className="text-slate-400 font-bold italic">No inquiries received yet.</p>
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
+                {leads.length === 0 && (
+                    <div className="p-20 text-center text-slate-400 italic font-bold">No leads found.</div>
+                )}
             </div>
         </div>
     );

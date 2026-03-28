@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 interface ContactFormProps {
-    communityId?: string; // links lead to specific property
-    communityName?: string;
+    propertyId: string;
+    propertyName: string;
 }
 
-export default function ContactForm({ communityId, communityName }: ContactFormProps) {
+
+export default function ContactForm({ propertyId, propertyName }: ContactFormProps) {
     const supabase = createClient();
 
     // STATE MANAGEMENT
@@ -32,7 +33,7 @@ export default function ContactForm({ communityId, communityName }: ContactFormP
 
         const formData = new FormData(e.currentTarget);
         const payload = {
-            community_id: communityId,
+            property_id: propertyId,
             full_name: formData.get('full_name') as string,
             email: (formData.get('email') as string).trim().toLowerCase(),
             phone: formData.get('phone') as string,
@@ -75,7 +76,7 @@ export default function ContactForm({ communityId, communityName }: ContactFormP
         return (
             <div className="bg-emerald-50 p-12 rounded-3xl border border-emerald-100 text-center animate-in fade-in zoom-in duration-500">
                 <h3 className="text-2xl font-black text-emerald-900 mb-2">Message Sent!</h3>
-                <p>Thank you for your interest{communityName ? ` in ${communityName}` : ''}. We&apos;ll be in touch shortly.</p>
+                <p>Thank you for your interest{propertyName ? ` in ${propertyName}` : ''}. We&apos;ll be in touch shortly.</p>
             </div>
         );
     }

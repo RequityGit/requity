@@ -22,7 +22,7 @@ export default async function PostPage({
       excerpt,
       created_at,
       status,
-      pm_communities!inner(
+      pm_properties!inner(
         name, 
         slug
       ),
@@ -32,13 +32,13 @@ export default async function PostPage({
       )
     `)
     .eq('slug', params.postSlug)
-    .eq('pm_communities.slug', params.slug)
-    .eq('status', 'published') // Hard gate: Only show if published
+    .eq('pm_properties.slug', params.slug)
+    .eq('status', 'published')
     .single();
 
   if (!post) notFound();
 
-  const community = post.pm_communities as unknown as { name: string; slug: string };
+  const property = post.pm_properties as unknown as { name: string; slug: string };
   const media = post.featured_media as unknown as { file_path: string; alt_text: string } | null;
 
   const imageUrl = media 
@@ -49,20 +49,20 @@ export default async function PostPage({
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       <nav className="p-6 bg-white border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
         <Link 
-          href={`/communities/${params.slug}`} 
+          href={`/properties/${params.slug}`} 
           className="text-xs font-bold text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors flex items-center gap-2"
         >
-          <span className="text-lg">←</span> Back to {community.name}
+          <span className="text-lg">←</span> Back to {property.name}
         </Link>
         <div className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">
-          Community Newsroom
+          Property Newsroom
         </div>
       </nav>
 
       <article className="max-w-3xl mx-auto py-16 px-8">
         <header className="mb-12 text-center">
           <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-blue-100">
-            {community.name} Update • {new Date(post.created_at).toLocaleDateString()}
+            {property.name} Update • {new Date(post.created_at).toLocaleDateString()}
           </div>
           
           <h1 className="text-5xl font-black tracking-tighter text-slate-900 mb-6 leading-[1.1]">

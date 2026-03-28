@@ -5,7 +5,17 @@ import sanitizeHtml from 'sanitize-html';
 export const revalidate = 3600;
 
 // reserved for system folders
-const RESERVED_SLUGS = ['login', 'admin', 'api', 'communities'];
+const RESERVED_SLUGS = [
+    'login', 
+    'admin', 
+    'api', 
+    'communities', // legacy, kept for safety for now
+    'properties',  
+    'campgrounds', 
+    'for-sale',
+    'about',
+    'contact'
+];
 
 export default async function StaticPage({ params }: { params: Promise<{ pageSlug: string }> }) {
     const { pageSlug } = await params;

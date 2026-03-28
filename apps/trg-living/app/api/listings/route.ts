@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     // 1. WHITELIST & STATUS CHECK
     const supabase = createClient();
     const { data: validCity } = await supabase
-      .from('pm_communities')
+      .from('pm_properties')
       .select('city')
       .eq('city', city)
       .eq('status', 'published')

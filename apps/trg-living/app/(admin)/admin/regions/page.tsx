@@ -4,10 +4,10 @@ import Link from 'next/link';
 export default async function AdminRegionsList() {
     const supabase = createClient();
 
-    // Fetch regions sorted by custom sort order
+    // Fetch regions and the 'status' column
     const { data: regions } = await supabase
     .from('pm_regions')
-    .select('id, name, slug, sort_order, is_active')
+    .select('id, name, slug, sort_order, status')
     .order('sort_order', { ascending: true });
 
     return (
@@ -31,29 +31,40 @@ export default async function AdminRegionsList() {
                             <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Region Name</th>
                             <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">URL Slug</th>
                             <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Order</th>
-                            <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Status</th>
+                            <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
+                            <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {regions?.map((region) => (
                             <tr key={region.id} className="hover:bg-slate-50/30 transition-colors group">
                                 <td className="px-6 py-5">
-                                    <span className="font-bold text-slate-900">{region.name}</span>
+                                    <span className="font-bold text-slate-900">
+                                        {region.name}
+                                    </span>
                                 </td>
                                 <td className="px-6 py-5">
                                     <span className="text-xs font-mono text-slate-400">/{region.slug}</span>
                                 </td>
-                                <td className="px-6 py-5 text-sm text-slate-500">
+                                <td className="px-6 py-5 text-sm text-slate-500 font-medium">
                                     {region.sort_order}
                                 </td>
-                                <td className="px-6 py-5 text-right">
+                                <td className="px-6 py-5">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                    region.is_active
+                                    region.status === 'published'
                                     ? 'bg-emerald-50 text-emerald-600'
-                                    : 'bg-slate-100 text-slate-400'
+                                    : 'bg-amber-50 text-amber-600'
                                     }`}>
-                                        {region.is_active ? 'Active' : 'Inactive'}
+                                        {region.status === 'published' ? 'Live' : 'Draft'}
                                     </span>
+                                </td>
+                                <td className="px-6 py-5 text-right">
+                                    <Link 
+                                        href={`/admin/regions/${region.id}`} 
+                                        className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-widest transition-colors"
+                                    >
+                                        Manage
+                                    </Link>
                                 </td>
                             </tr>
                         ))}
