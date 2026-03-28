@@ -8560,33 +8560,6 @@ export type Database = {
         }
         Relationships: []
       }
-      members: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string
-          id: string
-          location: string | null
-          name: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          location?: string | null
-          name: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          location?: string | null
-          name?: string
-        }
-        Relationships: []
-      }
       modules: {
         Row: {
           created_at: string | null
