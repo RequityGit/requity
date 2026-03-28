@@ -23,13 +23,14 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { showSuccess, showError } from "@/lib/toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import {
   moveDealAndReorderAction,
+  updateDealStageAction,
   reorderDealsAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -339,9 +340,27 @@ export function PipelineKanban({
           );
 
           if (moveResult.error) {
-            // Revert optimistic update
-            moveDeal(dealId, originalStage);
-            showError("Could not move deal", moveResult.error);
+            // Fallback: persist stage change only so drops still work even if
+            // combined move+reorder path fails.
+            const fallback = await updateDealStageAction(
+              dealId,
+              targetStage,
+              insertIndex
+            );
+
+            if (fallback.error) {
+              // Revert optimistic update only if both primary and fallback fail
+              moveDeal(dealId, originalStage);
+              showError("Could not move deal", fallback.error);
+              return;
+            }
+
+            const stageLabel =
+              STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+            showWarning(
+              `${deal.name} moved to ${stageLabel}`,
+              "Order could not be saved right now. Stage change was saved."
+            );
             return;
           }
 
