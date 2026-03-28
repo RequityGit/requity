@@ -268,8 +268,20 @@ function PropertyDetailsContent({
     try {
       const supabase = createClient();
 
+      // Validate session first to avoid opaque edge-function transport errors
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        showError(
+          "Could not enrich property",
+          "Your session has expired. Please refresh and log in again."
+        );
+        return;
+      }
+
       // Call the edge function with property_id and address overrides
-      const { data, error: invokeError } = await supabase.functions.invoke(
+      let { data, error: invokeError } = await supabase.functions.invoke(
         "realie-property-lookup",
         {
           body: {
@@ -284,6 +296,52 @@ function PropertyDetailsContent({
           },
         }
       );
+
+      // If direct edge invocation fails at transport layer, retry via server API route
+      // to bypass browser->edge CORS/network edge cases.
+      const isTransportFailure =
+        !!invokeError &&
+        /Failed to send a request to the Edge Function|fetch/i.test(
+          invokeError.message ?? ""
+        );
+
+      if (isTransportFailure) {
+        console.warn("[PropertyTab] Edge invoke transport failure; retrying via /api/properties/enrich", {
+          message: invokeError?.message,
+        });
+
+        const fallbackRes = await fetch("/api/properties/enrich", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address: String(address).trim(),
+            state: String(state).trim(),
+            ...(city ? { city: String(city).trim() } : {}),
+            ...(zip ? { zip: String(zip).trim() } : {}),
+            ...(county ? { county: String(county).trim() } : {}),
+          }),
+        });
+
+        const fallbackJson = (await fallbackRes
+          .json()
+          .catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+          summary?: string;
+          enriched?: Record<string, unknown>;
+          realie_status?: number;
+        };
+
+        if (fallbackRes.ok) {
+          data = fallbackJson;
+          invokeError = null;
+        } else {
+          invokeError = {
+            message: fallbackJson.error ?? `Fallback enrichment failed (${fallbackRes.status})`,
+            context: { body: JSON.stringify(fallbackJson) },
+          } as unknown as Error;
+        }
+      }
 
       if (invokeError) {
         // FunctionsHttpError contains the response body
