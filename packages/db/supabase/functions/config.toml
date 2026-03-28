@@ -12,3 +12,6 @@ verify_jwt = false
 
 [track-activity]
 verify_jwt = false
+
+[realie-property-lookup]
+verify_jwt = false

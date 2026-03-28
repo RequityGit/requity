@@ -14,7 +14,8 @@
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "xvfb-run --auto-servernum --server-args='-screen 0 1280x800x24' npx playwright test --headed",
     "typecheck": "turbo run typecheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "types:generate:supabase": "supabase gen types typescript --project-id edhlkknvlczhbowasjna > packages/db/src/types.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",

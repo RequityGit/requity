@@ -103,10 +103,6 @@ export default async function ScenariosPage({
   const oppIds = (scenarios ?? [])
     .map((s: { opportunity_id: string | null }) => s.opportunity_id)
     .filter(Boolean) as string[];
-  const loanIds = (scenarios ?? [])
-    .map((s: { loan_id: string | null }) => s.loan_id)
-    .filter(Boolean) as string[];
-
   const dealNames: Record<string, string> = {};
   if (oppIds.length > 0) {
     const { data: opps } = await admin
@@ -115,18 +111,6 @@ export default async function ScenariosPage({
       .in("id", oppIds);
     for (const o of opps ?? []) {
       dealNames[(o as { id: string }).id] = (o as { deal_name: string | null }).deal_name || "Unnamed Deal";
-    }
-  }
-  if (loanIds.length > 0) {
-    const { data: loans } = await admin
-      .from("loans")
-      .select("id, loan_number, property_address")
-      .in("id", loanIds);
-    for (const l of loans ?? []) {
-      dealNames[(l as { id: string }).id] =
-        (l as { property_address: string | null }).property_address ||
-        (l as { loan_number: string | null }).loan_number ||
-        "Unnamed Loan";
     }
   }
 

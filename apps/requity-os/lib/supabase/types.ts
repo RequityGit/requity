@@ -450,13 +450,6 @@ export type Database = {
             referencedRelation: "servicing_loans"
             referencedColumns: ["loan_id"]
           },
-          {
-            foreignKeyName: "billing_line_items_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
-            referencedColumns: ["loan_id"]
-          },
         ]
       }
       borrower_ach_info: {
@@ -502,13 +495,6 @@ export type Database = {
             columns: ["loan_id"]
             isOneToOne: false
             referencedRelation: "servicing_loans"
-            referencedColumns: ["loan_id"]
-          },
-          {
-            foreignKeyName: "borrower_ach_info_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
             referencedColumns: ["loan_id"]
           },
         ]
@@ -675,60 +661,6 @@ export type Database = {
           },
         ]
       }
-      borrower_requests: {
-        Row: {
-          borrower_name: string
-          created_at: string | null
-          description: string
-          follow_up_count: number | null
-          id: string
-          last_follow_up_at: string | null
-          loan_id: string
-          requested_by: string
-          resolved_at: string | null
-          sent_at: string | null
-        }
-        Insert: {
-          borrower_name: string
-          created_at?: string | null
-          description: string
-          follow_up_count?: number | null
-          id?: string
-          last_follow_up_at?: string | null
-          loan_id: string
-          requested_by: string
-          resolved_at?: string | null
-          sent_at?: string | null
-        }
-        Update: {
-          borrower_name?: string
-          created_at?: string | null
-          description?: string
-          follow_up_count?: number | null
-          id?: string
-          last_follow_up_at?: string | null
-          loan_id?: string
-          requested_by?: string
-          resolved_at?: string | null
-          sent_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "borrower_requests_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "borrower_requests_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       borrowers: {
         Row: {
           created_at: string
@@ -852,95 +784,7 @@ export type Database = {
           id?: string
           proposed_amount?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "budget_change_request_line_items_budget_change_request_id_fkey"
-            columns: ["budget_change_request_id"]
-            isOneToOne: false
-            referencedRelation: "budget_change_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_change_request_line_items_budget_line_item_id_fkey"
-            columns: ["budget_line_item_id"]
-            isOneToOne: false
-            referencedRelation: "budget_line_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      budget_change_requests: {
-        Row: {
-          construction_budget_id: string
-          created_at: string
-          id: string
-          loan_id: string
-          net_budget_change: number
-          reason: string
-          request_date: string
-          request_number: string | null
-          requested_by: string
-          review_notes: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: Database["public"]["Enums"]["budget_change_request_status"]
-          updated_at: string
-        }
-        Insert: {
-          construction_budget_id: string
-          created_at?: string
-          id?: string
-          loan_id: string
-          net_budget_change?: number
-          reason: string
-          request_date?: string
-          request_number?: string | null
-          requested_by: string
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: Database["public"]["Enums"]["budget_change_request_status"]
-          updated_at?: string
-        }
-        Update: {
-          construction_budget_id?: string
-          created_at?: string
-          id?: string
-          loan_id?: string
-          net_budget_change?: number
-          reason?: string
-          request_date?: string
-          request_number?: string | null
-          requested_by?: string
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: Database["public"]["Enums"]["budget_change_request_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "budget_change_requests_construction_budget_id_fkey"
-            columns: ["construction_budget_id"]
-            isOneToOne: false
-            referencedRelation: "construction_budgets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_change_requests_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_change_requests_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       budget_line_item_history: {
         Row: {
@@ -979,95 +823,7 @@ export type Database = {
           new_amount?: number | null
           previous_amount?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "budget_line_item_history_budget_line_item_id_fkey"
-            columns: ["budget_line_item_id"]
-            isOneToOne: false
-            referencedRelation: "budget_line_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_line_item_history_construction_budget_id_fkey"
-            columns: ["construction_budget_id"]
-            isOneToOne: false
-            referencedRelation: "construction_budgets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      budget_line_items: {
-        Row: {
-          budgeted_amount: number
-          category: string
-          construction_budget_id: string
-          created_at: string
-          description: string | null
-          drawn_amount: number
-          id: string
-          is_active: boolean
-          loan_id: string
-          percent_complete: number
-          remaining_amount: number | null
-          revised_amount: number
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          budgeted_amount: number
-          category: string
-          construction_budget_id: string
-          created_at?: string
-          description?: string | null
-          drawn_amount?: number
-          id?: string
-          is_active?: boolean
-          loan_id: string
-          percent_complete?: number
-          remaining_amount?: number | null
-          revised_amount: number
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          budgeted_amount?: number
-          category?: string
-          construction_budget_id?: string
-          created_at?: string
-          description?: string | null
-          drawn_amount?: number
-          id?: string
-          is_active?: boolean
-          loan_id?: string
-          percent_complete?: number
-          remaining_amount?: number | null
-          revised_amount?: number
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "budget_line_items_construction_budget_id_fkey"
-            columns: ["construction_budget_id"]
-            isOneToOne: false
-            referencedRelation: "construction_budgets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_line_items_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_line_items_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       capital_call_line_items: {
         Row: {
@@ -1260,15 +1016,7 @@ export type Database = {
           stabilized_annual_amount?: number | null
           underwriting_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "commercial_ancillary_income_underwriting_id_fkey"
-            columns: ["underwriting_id"]
-            isOneToOne: false
-            referencedRelation: "commercial_underwriting"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       commercial_expense_defaults: {
         Row: {
@@ -1358,15 +1106,7 @@ export type Database = {
           target_rate?: number | null
           underwriting_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "commercial_occupancy_income_underwriting_id_fkey"
-            columns: ["underwriting_id"]
-            isOneToOne: false
-            referencedRelation: "commercial_underwriting"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       commercial_proforma_years: {
         Row: {
@@ -1453,15 +1193,7 @@ export type Database = {
           vacancy?: number | null
           year?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "commercial_proforma_years_underwriting_id_fkey"
-            columns: ["underwriting_id"]
-            isOneToOne: false
-            referencedRelation: "commercial_underwriting"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       commercial_rent_roll: {
         Row: {
@@ -1530,315 +1262,7 @@ export type Database = {
           underwriting_id?: string
           unit_number?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "commercial_rent_roll_underwriting_id_fkey"
-            columns: ["underwriting_id"]
-            isOneToOne: false
-            referencedRelation: "commercial_underwriting"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      commercial_underwriting: {
-        Row: {
-          bad_debt_pct: number | null
-          bridge_amortization_months: number | null
-          bridge_io_months: number | null
-          bridge_loan_amount: number | null
-          bridge_origination_pts: number | null
-          bridge_rate: number | null
-          bridge_term_months: number | null
-          created_at: string | null
-          created_by: string | null
-          current_ancillary_income: number | null
-          current_gpi: number | null
-          current_lease_income: number | null
-          current_occupancy_revenue: number | null
-          disposition_cost_pct: number | null
-          equity_invested: number | null
-          exit_amortization_years: number | null
-          exit_cap_rate: number | null
-          exit_io_months: number | null
-          exit_lender_name: string | null
-          exit_loan_amount: number | null
-          exit_rate: number | null
-          expense_growth_yr1: number | null
-          expense_growth_yr2: number | null
-          expense_growth_yr3: number | null
-          expense_growth_yr4: number | null
-          expense_growth_yr5: number | null
-          going_in_cap_rate: number | null
-          id: string
-          is_active: boolean
-          label: string | null
-          loan_id: string | null
-          notes: string | null
-          operating_days_per_year: number | null
-          opportunity_id: string | null
-          poh_expense_ratio: number | null
-          poh_rental_income: number | null
-          property_type: string
-          purchase_price: number | null
-          rent_growth_yr1: number | null
-          rent_growth_yr2: number | null
-          rent_growth_yr3: number | null
-          rent_growth_yr4: number | null
-          rent_growth_yr5: number | null
-          rent_roll_upload_id: string | null
-          scenario_id: string | null
-          stabilized_ancillary_income: number | null
-          stabilized_gpi: number | null
-          stabilized_lease_income: number | null
-          stabilized_occupancy_revenue: number | null
-          stabilized_vacancy_pct: number | null
-          status: string | null
-          t12_bad_debt_pct: number | null
-          t12_contract_services: number | null
-          t12_ga: number | null
-          t12_gpi: number | null
-          t12_insurance: number | null
-          t12_marketing: number | null
-          t12_mgmt_fee: number | null
-          t12_payroll: number | null
-          t12_repairs: number | null
-          t12_replacement_reserve: number | null
-          t12_taxes: number | null
-          t12_upload_id: string | null
-          t12_utilities: number | null
-          t12_vacancy_pct: number | null
-          total_sf: number | null
-          total_units_spaces: number | null
-          updated_at: string | null
-          vacancy_pct_yr1: number | null
-          vacancy_pct_yr2: number | null
-          vacancy_pct_yr3: number | null
-          vacancy_pct_yr4: number | null
-          vacancy_pct_yr5: number | null
-          version_number: number
-          year_built: number | null
-          yr1_contract_override: number | null
-          yr1_ga_override: number | null
-          yr1_insurance_override: number | null
-          yr1_marketing_override: number | null
-          yr1_mgmt_fee_pct: number | null
-          yr1_payroll_override: number | null
-          yr1_repairs_override: number | null
-          yr1_reserve_override: number | null
-          yr1_taxes_override: number | null
-          yr1_utilities_override: number | null
-        }
-        Insert: {
-          bad_debt_pct?: number | null
-          bridge_amortization_months?: number | null
-          bridge_io_months?: number | null
-          bridge_loan_amount?: number | null
-          bridge_origination_pts?: number | null
-          bridge_rate?: number | null
-          bridge_term_months?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          current_ancillary_income?: number | null
-          current_gpi?: number | null
-          current_lease_income?: number | null
-          current_occupancy_revenue?: number | null
-          disposition_cost_pct?: number | null
-          equity_invested?: number | null
-          exit_amortization_years?: number | null
-          exit_cap_rate?: number | null
-          exit_io_months?: number | null
-          exit_lender_name?: string | null
-          exit_loan_amount?: number | null
-          exit_rate?: number | null
-          expense_growth_yr1?: number | null
-          expense_growth_yr2?: number | null
-          expense_growth_yr3?: number | null
-          expense_growth_yr4?: number | null
-          expense_growth_yr5?: number | null
-          going_in_cap_rate?: number | null
-          id?: string
-          is_active?: boolean
-          label?: string | null
-          loan_id?: string | null
-          notes?: string | null
-          operating_days_per_year?: number | null
-          opportunity_id?: string | null
-          poh_expense_ratio?: number | null
-          poh_rental_income?: number | null
-          property_type: string
-          purchase_price?: number | null
-          rent_growth_yr1?: number | null
-          rent_growth_yr2?: number | null
-          rent_growth_yr3?: number | null
-          rent_growth_yr4?: number | null
-          rent_growth_yr5?: number | null
-          rent_roll_upload_id?: string | null
-          scenario_id?: string | null
-          stabilized_ancillary_income?: number | null
-          stabilized_gpi?: number | null
-          stabilized_lease_income?: number | null
-          stabilized_occupancy_revenue?: number | null
-          stabilized_vacancy_pct?: number | null
-          status?: string | null
-          t12_bad_debt_pct?: number | null
-          t12_contract_services?: number | null
-          t12_ga?: number | null
-          t12_gpi?: number | null
-          t12_insurance?: number | null
-          t12_marketing?: number | null
-          t12_mgmt_fee?: number | null
-          t12_payroll?: number | null
-          t12_repairs?: number | null
-          t12_replacement_reserve?: number | null
-          t12_taxes?: number | null
-          t12_upload_id?: string | null
-          t12_utilities?: number | null
-          t12_vacancy_pct?: number | null
-          total_sf?: number | null
-          total_units_spaces?: number | null
-          updated_at?: string | null
-          vacancy_pct_yr1?: number | null
-          vacancy_pct_yr2?: number | null
-          vacancy_pct_yr3?: number | null
-          vacancy_pct_yr4?: number | null
-          vacancy_pct_yr5?: number | null
-          version_number?: number
-          year_built?: number | null
-          yr1_contract_override?: number | null
-          yr1_ga_override?: number | null
-          yr1_insurance_override?: number | null
-          yr1_marketing_override?: number | null
-          yr1_mgmt_fee_pct?: number | null
-          yr1_payroll_override?: number | null
-          yr1_repairs_override?: number | null
-          yr1_reserve_override?: number | null
-          yr1_taxes_override?: number | null
-          yr1_utilities_override?: number | null
-        }
-        Update: {
-          bad_debt_pct?: number | null
-          bridge_amortization_months?: number | null
-          bridge_io_months?: number | null
-          bridge_loan_amount?: number | null
-          bridge_origination_pts?: number | null
-          bridge_rate?: number | null
-          bridge_term_months?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          current_ancillary_income?: number | null
-          current_gpi?: number | null
-          current_lease_income?: number | null
-          current_occupancy_revenue?: number | null
-          disposition_cost_pct?: number | null
-          equity_invested?: number | null
-          exit_amortization_years?: number | null
-          exit_cap_rate?: number | null
-          exit_io_months?: number | null
-          exit_lender_name?: string | null
-          exit_loan_amount?: number | null
-          exit_rate?: number | null
-          expense_growth_yr1?: number | null
-          expense_growth_yr2?: number | null
-          expense_growth_yr3?: number | null
-          expense_growth_yr4?: number | null
-          expense_growth_yr5?: number | null
-          going_in_cap_rate?: number | null
-          id?: string
-          is_active?: boolean
-          label?: string | null
-          loan_id?: string | null
-          notes?: string | null
-          operating_days_per_year?: number | null
-          opportunity_id?: string | null
-          poh_expense_ratio?: number | null
-          poh_rental_income?: number | null
-          property_type?: string
-          purchase_price?: number | null
-          rent_growth_yr1?: number | null
-          rent_growth_yr2?: number | null
-          rent_growth_yr3?: number | null
-          rent_growth_yr4?: number | null
-          rent_growth_yr5?: number | null
-          rent_roll_upload_id?: string | null
-          scenario_id?: string | null
-          stabilized_ancillary_income?: number | null
-          stabilized_gpi?: number | null
-          stabilized_lease_income?: number | null
-          stabilized_occupancy_revenue?: number | null
-          stabilized_vacancy_pct?: number | null
-          status?: string | null
-          t12_bad_debt_pct?: number | null
-          t12_contract_services?: number | null
-          t12_ga?: number | null
-          t12_gpi?: number | null
-          t12_insurance?: number | null
-          t12_marketing?: number | null
-          t12_mgmt_fee?: number | null
-          t12_payroll?: number | null
-          t12_repairs?: number | null
-          t12_replacement_reserve?: number | null
-          t12_taxes?: number | null
-          t12_upload_id?: string | null
-          t12_utilities?: number | null
-          t12_vacancy_pct?: number | null
-          total_sf?: number | null
-          total_units_spaces?: number | null
-          updated_at?: string | null
-          vacancy_pct_yr1?: number | null
-          vacancy_pct_yr2?: number | null
-          vacancy_pct_yr3?: number | null
-          vacancy_pct_yr4?: number | null
-          vacancy_pct_yr5?: number | null
-          version_number?: number
-          year_built?: number | null
-          yr1_contract_override?: number | null
-          yr1_ga_override?: number | null
-          yr1_insurance_override?: number | null
-          yr1_marketing_override?: number | null
-          yr1_mgmt_fee_pct?: number | null
-          yr1_payroll_override?: number | null
-          yr1_repairs_override?: number | null
-          yr1_reserve_override?: number | null
-          yr1_taxes_override?: number | null
-          yr1_utilities_override?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "commercial_underwriting_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commercial_underwriting_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commercial_underwriting_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commercial_underwriting_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commercial_underwriting_scenario_id_fkey"
-            columns: ["scenario_id"]
-            isOneToOne: false
-            referencedRelation: "model_scenarios"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       commercial_upload_mappings: {
         Row: {
@@ -1874,15 +1298,7 @@ export type Database = {
           underwriting_id?: string
           upload_type?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "commercial_upload_mappings_underwriting_id_fkey"
-            columns: ["underwriting_id"]
-            isOneToOne: false
-            referencedRelation: "commercial_underwriting"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       commercial_uw_assumptions: {
         Row: {
@@ -2299,63 +1715,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      construction_budgets: {
-        Row: {
-          budget_version: number
-          created_at: string
-          created_by: string
-          id: string
-          loan_id: string
-          notes: string | null
-          status: Database["public"]["Enums"]["budget_status"]
-          total_budget: number
-          total_drawn: number
-          total_remaining: number | null
-          updated_at: string
-        }
-        Insert: {
-          budget_version?: number
-          created_at?: string
-          created_by: string
-          id?: string
-          loan_id: string
-          notes?: string | null
-          status?: Database["public"]["Enums"]["budget_status"]
-          total_budget: number
-          total_drawn?: number
-          total_remaining?: number | null
-          updated_at?: string
-        }
-        Update: {
-          budget_version?: number
-          created_at?: string
-          created_by?: string
-          id?: string
-          loan_id?: string
-          notes?: string | null
-          status?: Database["public"]["Enums"]["budget_status"]
-          total_budget?: number
-          total_drawn?: number
-          total_remaining?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "construction_budgets_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: true
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "construction_budgets_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: true
-            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
         ]
@@ -2805,7 +2164,6 @@ export type Database = {
             | null
           lifecycle_updated_at: string | null
           linked_investor_id: string | null
-          linked_loan_id: string | null
           marketing_consent: boolean | null
           name: string | null
           next_follow_up_date: string | null
@@ -2860,7 +2218,6 @@ export type Database = {
             | null
           lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
-          linked_loan_id?: string | null
           marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
@@ -2915,7 +2272,6 @@ export type Database = {
             | null
           lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
-          linked_loan_id?: string | null
           marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
@@ -2993,20 +2349,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "crm_contacts_linked_loan_id_fkey"
-            columns: ["linked_loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_contacts_linked_loan_id_fkey"
-            columns: ["linked_loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "crm_contacts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -3037,7 +2379,6 @@ export type Database = {
           linked_contact_id: string | null
           linked_fund_id: string | null
           linked_investor_id: string | null
-          linked_loan_id: string | null
           match_status: string | null
           opened_at: string | null
           postmark_error: string | null
@@ -3076,7 +2417,6 @@ export type Database = {
           linked_contact_id?: string | null
           linked_fund_id?: string | null
           linked_investor_id?: string | null
-          linked_loan_id?: string | null
           match_status?: string | null
           opened_at?: string | null
           postmark_error?: string | null
@@ -3115,7 +2455,6 @@ export type Database = {
           linked_contact_id?: string | null
           linked_fund_id?: string | null
           linked_investor_id?: string | null
-          linked_loan_id?: string | null
           match_status?: string | null
           opened_at?: string | null
           postmark_error?: string | null
@@ -3218,20 +2557,6 @@ export type Database = {
             referencedRelation: "investors_safe"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "crm_emails_linked_loan_id_fkey"
-            columns: ["linked_loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_emails_linked_loan_id_fkey"
-            columns: ["linked_loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
         ]
       }
       crm_event_attendees: {
@@ -3331,7 +2656,6 @@ export type Database = {
           google_synced_at: string | null
           id: string
           is_all_day: boolean | null
-          loan_id: string | null
           location: string | null
           start_at: string
           subject: string
@@ -3354,7 +2678,6 @@ export type Database = {
           google_synced_at?: string | null
           id?: string
           is_all_day?: boolean | null
-          loan_id?: string | null
           location?: string | null
           start_at: string
           subject: string
@@ -3377,7 +2700,6 @@ export type Database = {
           google_synced_at?: string | null
           id?: string
           is_all_day?: boolean | null
-          loan_id?: string | null
           location?: string | null
           start_at?: string
           subject?: string
@@ -3424,20 +2746,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_events_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_events_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
         ]
@@ -3856,6 +3164,63 @@ export type Database = {
           },
           {
             foreignKeyName: "deal_borrowing_entities_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_budget_line_items: {
+        Row: {
+          budget_id: string
+          budgeted_amount: number
+          category: string
+          created_at: string
+          deal_id: string
+          description: string | null
+          funded_amount: number | null
+          id: string
+          remaining_amount: number | null
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          budgeted_amount?: number
+          category: string
+          created_at?: string
+          deal_id: string
+          description?: string | null
+          funded_amount?: number | null
+          id?: string
+          remaining_amount?: number | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          budgeted_amount?: number
+          category?: string
+          created_at?: string
+          deal_id?: string
+          description?: string | null
+          funded_amount?: number | null
+          id?: string
+          remaining_amount?: number | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_budget_line_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "deal_construction_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_budget_line_items_deal_id_fkey"
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "unified_deals"
@@ -4502,6 +3867,47 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_construction_budgets: {
+        Row: {
+          created_at: string
+          deal_id: string
+          id: string
+          name: string | null
+          status: string | null
+          total_budget: number | null
+          total_funded: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id: string
+          id?: string
+          name?: string | null
+          status?: string | null
+          total_budget?: number | null
+          total_funded?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string
+          id?: string
+          name?: string | null
+          status?: string | null
+          total_budget?: number | null
+          total_funded?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_construction_budgets_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_contact_preferences: {
         Row: {
           contact_id: string
@@ -4833,6 +4239,119 @@ export type Database = {
           },
         ]
       }
+      deal_draw_requests: {
+        Row: {
+          amount_approved: number | null
+          amount_requested: number
+          borrower_notes: string | null
+          completion_pct: number | null
+          construction_budget_id: string | null
+          created_at: string
+          deal_id: string
+          description: string | null
+          document_urls: string[] | null
+          draw_number: number
+          funded_at: string | null
+          id: string
+          inspection_completed_date: string | null
+          inspection_ordered_date: string | null
+          inspection_type: string | null
+          inspector_id: string | null
+          inspector_name: string | null
+          internal_notes: string | null
+          rejection_reason: string | null
+          request_date: string | null
+          request_number: string | null
+          requested_by: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          wire_amount: number | null
+          wire_confirmation_number: string | null
+          wire_date: string | null
+          wire_initiated_by: string | null
+        }
+        Insert: {
+          amount_approved?: number | null
+          amount_requested: number
+          borrower_notes?: string | null
+          completion_pct?: number | null
+          construction_budget_id?: string | null
+          created_at?: string
+          deal_id: string
+          description?: string | null
+          document_urls?: string[] | null
+          draw_number: number
+          funded_at?: string | null
+          id?: string
+          inspection_completed_date?: string | null
+          inspection_ordered_date?: string | null
+          inspection_type?: string | null
+          inspector_id?: string | null
+          inspector_name?: string | null
+          internal_notes?: string | null
+          rejection_reason?: string | null
+          request_date?: string | null
+          request_number?: string | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          wire_amount?: number | null
+          wire_confirmation_number?: string | null
+          wire_date?: string | null
+          wire_initiated_by?: string | null
+        }
+        Update: {
+          amount_approved?: number | null
+          amount_requested?: number
+          borrower_notes?: string | null
+          completion_pct?: number | null
+          construction_budget_id?: string | null
+          created_at?: string
+          deal_id?: string
+          description?: string | null
+          document_urls?: string[] | null
+          draw_number?: number
+          funded_at?: string | null
+          id?: string
+          inspection_completed_date?: string | null
+          inspection_ordered_date?: string | null
+          inspection_type?: string | null
+          inspector_id?: string | null
+          inspector_name?: string | null
+          internal_notes?: string | null
+          rejection_reason?: string | null
+          request_date?: string | null
+          request_number?: string | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          wire_amount?: number | null
+          wire_confirmation_number?: string | null
+          wire_date?: string | null
+          wire_initiated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_draw_requests_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_existing_loans: {
         Row: {
           created_at: string | null
@@ -5119,6 +4638,118 @@ export type Database = {
           },
         ]
       }
+      deal_payments: {
+        Row: {
+          amount_due: number
+          amount_paid: number | null
+          created_at: string
+          days_past_due: number | null
+          deal_id: string
+          due_date: string
+          escrow_due: number | null
+          id: string
+          interest_due: number | null
+          late_fee: number | null
+          notes: string | null
+          paid_date: string | null
+          payment_method: string | null
+          payment_number: number
+          principal_due: number | null
+          reference_number: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number | null
+          created_at?: string
+          days_past_due?: number | null
+          deal_id: string
+          due_date: string
+          escrow_due?: number | null
+          id?: string
+          interest_due?: number | null
+          late_fee?: number | null
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_number: number
+          principal_due?: number | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number | null
+          created_at?: string
+          days_past_due?: number | null
+          deal_id?: string
+          due_date?: string
+          escrow_due?: number | null
+          id?: string
+          interest_due?: number | null
+          late_fee?: number | null
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_number?: number
+          principal_due?: number | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_payments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_servicing_events: {
+        Row: {
+          amount: number | null
+          created_at: string
+          created_by: string | null
+          deal_id: string
+          description: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          deal_id: string
+          description?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_servicing_events_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_team_contacts: {
         Row: {
           company_id: string | null
@@ -5306,13 +4937,6 @@ export type Database = {
             referencedRelation: "servicing_loans"
             referencedColumns: ["loan_id"]
           },
-          {
-            foreignKeyName: "delinquency_records_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
-            referencedColumns: ["loan_id"]
-          },
         ]
       }
       dialer_call_groups: {
@@ -5359,7 +4983,6 @@ export type Database = {
           duration_seconds: number | null
           ended_at: string | null
           id: string
-          loan_id: string | null
           notes: string | null
           performed_by: string | null
           recording_url: string | null
@@ -5374,7 +4997,6 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
-          loan_id?: string | null
           notes?: string | null
           performed_by?: string | null
           recording_url?: string | null
@@ -5389,7 +5011,6 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
-          loan_id?: string | null
           notes?: string | null
           performed_by?: string | null
           recording_url?: string | null
@@ -5424,20 +5045,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_duplicate_candidates"
             referencedColumns: ["potential_duplicate_id"]
-          },
-          {
-            foreignKeyName: "dialer_calls_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dialer_calls_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "dialer_calls_performed_by_fkey"
@@ -6023,7 +5630,6 @@ export type Database = {
           google_drive_file_id: string | null
           google_drive_url: string | null
           id: string
-          loan_id: string | null
           mime_type: string | null
           owner_id: string | null
           source: string | null
@@ -6045,7 +5651,6 @@ export type Database = {
           google_drive_file_id?: string | null
           google_drive_url?: string | null
           id?: string
-          loan_id?: string | null
           mime_type?: string | null
           owner_id?: string | null
           source?: string | null
@@ -6067,7 +5672,6 @@ export type Database = {
           google_drive_file_id?: string | null
           google_drive_url?: string | null
           id?: string
-          loan_id?: string | null
           mime_type?: string | null
           owner_id?: string | null
           source?: string | null
@@ -6091,20 +5695,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "documents_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
@@ -6116,92 +5706,6 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      draw_documents: {
-        Row: {
-          budget_line_item_id: string | null
-          document_type: Database["public"]["Enums"]["draw_document_type"]
-          draw_request_id: string
-          file_name: string
-          file_path: string
-          file_size_bytes: number | null
-          geolocation_lat: number | null
-          geolocation_lng: number | null
-          id: string
-          is_geotagged: boolean
-          loan_id: string
-          mime_type: string | null
-          notes: string | null
-          photo_taken_at: string | null
-          uploaded_at: string
-          uploaded_by: string
-        }
-        Insert: {
-          budget_line_item_id?: string | null
-          document_type: Database["public"]["Enums"]["draw_document_type"]
-          draw_request_id: string
-          file_name: string
-          file_path: string
-          file_size_bytes?: number | null
-          geolocation_lat?: number | null
-          geolocation_lng?: number | null
-          id?: string
-          is_geotagged?: boolean
-          loan_id: string
-          mime_type?: string | null
-          notes?: string | null
-          photo_taken_at?: string | null
-          uploaded_at?: string
-          uploaded_by: string
-        }
-        Update: {
-          budget_line_item_id?: string | null
-          document_type?: Database["public"]["Enums"]["draw_document_type"]
-          draw_request_id?: string
-          file_name?: string
-          file_path?: string
-          file_size_bytes?: number | null
-          geolocation_lat?: number | null
-          geolocation_lng?: number | null
-          id?: string
-          is_geotagged?: boolean
-          loan_id?: string
-          mime_type?: string | null
-          notes?: string | null
-          photo_taken_at?: string | null
-          uploaded_at?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "draw_documents_budget_line_item_id_fkey"
-            columns: ["budget_line_item_id"]
-            isOneToOne: false
-            referencedRelation: "budget_line_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "draw_documents_draw_request_id_fkey"
-            columns: ["draw_request_id"]
-            isOneToOne: false
-            referencedRelation: "draw_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "draw_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "draw_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
         ]
@@ -6249,185 +5753,7 @@ export type Database = {
           requested_amount?: number
           requires_change_order?: boolean
         }
-        Relationships: [
-          {
-            foreignKeyName: "draw_request_line_items_budget_line_item_id_fkey"
-            columns: ["budget_line_item_id"]
-            isOneToOne: false
-            referencedRelation: "budget_line_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "draw_request_line_items_draw_request_id_fkey"
-            columns: ["draw_request_id"]
-            isOneToOne: false
-            referencedRelation: "draw_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_draw_line_item_change_order"
-            columns: ["change_order_id"]
-            isOneToOne: false
-            referencedRelation: "budget_change_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      draw_requests: {
-        Row: {
-          amount_approved: number | null
-          amount_requested: number
-          borrower_id: string | null
-          borrower_notes: string | null
-          completion_pct: number | null
-          construction_budget_id: string | null
-          created_at: string
-          description: string | null
-          document_urls: string[] | null
-          draw_number: number
-          funded_at: string | null
-          id: string
-          inspection_completed_date: string | null
-          inspection_date: string | null
-          inspection_ordered_date: string | null
-          inspection_type:
-            | Database["public"]["Enums"]["inspection_method"]
-            | null
-          inspector_id: string | null
-          inspector_name: string | null
-          internal_notes: string | null
-          loan_event_id: string | null
-          loan_id: string
-          rejection_reason: string | null
-          request_date: string | null
-          request_number: string | null
-          requested_by: string | null
-          reviewed_at: string | null
-          reviewer_id: string | null
-          reviewer_notes: string | null
-          status: Database["public"]["Enums"]["draw_request_status"]
-          submitted_at: string | null
-          updated_at: string
-          wire_amount: number | null
-          wire_confirmation_number: string | null
-          wire_date: string | null
-          wire_initiated_by: string | null
-        }
-        Insert: {
-          amount_approved?: number | null
-          amount_requested: number
-          borrower_id?: string | null
-          borrower_notes?: string | null
-          completion_pct?: number | null
-          construction_budget_id?: string | null
-          created_at?: string
-          description?: string | null
-          document_urls?: string[] | null
-          draw_number: number
-          funded_at?: string | null
-          id?: string
-          inspection_completed_date?: string | null
-          inspection_date?: string | null
-          inspection_ordered_date?: string | null
-          inspection_type?:
-            | Database["public"]["Enums"]["inspection_method"]
-            | null
-          inspector_id?: string | null
-          inspector_name?: string | null
-          internal_notes?: string | null
-          loan_event_id?: string | null
-          loan_id: string
-          rejection_reason?: string | null
-          request_date?: string | null
-          request_number?: string | null
-          requested_by?: string | null
-          reviewed_at?: string | null
-          reviewer_id?: string | null
-          reviewer_notes?: string | null
-          status?: Database["public"]["Enums"]["draw_request_status"]
-          submitted_at?: string | null
-          updated_at?: string
-          wire_amount?: number | null
-          wire_confirmation_number?: string | null
-          wire_date?: string | null
-          wire_initiated_by?: string | null
-        }
-        Update: {
-          amount_approved?: number | null
-          amount_requested?: number
-          borrower_id?: string | null
-          borrower_notes?: string | null
-          completion_pct?: number | null
-          construction_budget_id?: string | null
-          created_at?: string
-          description?: string | null
-          document_urls?: string[] | null
-          draw_number?: number
-          funded_at?: string | null
-          id?: string
-          inspection_completed_date?: string | null
-          inspection_date?: string | null
-          inspection_ordered_date?: string | null
-          inspection_type?:
-            | Database["public"]["Enums"]["inspection_method"]
-            | null
-          inspector_id?: string | null
-          inspector_name?: string | null
-          internal_notes?: string | null
-          loan_event_id?: string | null
-          loan_id?: string
-          rejection_reason?: string | null
-          request_date?: string | null
-          request_number?: string | null
-          requested_by?: string | null
-          reviewed_at?: string | null
-          reviewer_id?: string | null
-          reviewer_notes?: string | null
-          status?: Database["public"]["Enums"]["draw_request_status"]
-          submitted_at?: string | null
-          updated_at?: string
-          wire_amount?: number | null
-          wire_confirmation_number?: string | null
-          wire_date?: string | null
-          wire_initiated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "draw_requests_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "draw_requests_construction_budget_id_fkey"
-            columns: ["construction_budget_id"]
-            isOneToOne: false
-            referencedRelation: "construction_budgets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "draw_requests_inspector_id_fkey"
-            columns: ["inspector_id"]
-            isOneToOne: false
-            referencedRelation: "inspectors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_draws_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_draws_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       dscr_base_rates: {
         Row: {
@@ -7054,200 +6380,6 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "dscr_lender_products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dscr_underwriting: {
-        Row: {
-          amortization_months: number | null
-          assumptions_json: Json | null
-          borrower_type: string | null
-          broker_comp: number | null
-          cash_on_cash: number | null
-          created_at: string | null
-          created_by: string | null
-          debt_yield: number | null
-          dscr_ratio: number | null
-          fico_score: number | null
-          id: string
-          income_doc_type: string | null
-          interest_rate: number | null
-          io_period_months: number | null
-          is_active: boolean
-          is_interest_only: boolean | null
-          is_short_term_rental: boolean | null
-          label: string | null
-          loan_amount: number | null
-          loan_id: string | null
-          loan_purpose: string | null
-          loan_term_months: number | null
-          lock_period_days: number | null
-          ltv: number | null
-          monthly_flood: number | null
-          monthly_hoa: number | null
-          monthly_insurance: number | null
-          monthly_pi: number | null
-          monthly_pitia: number | null
-          monthly_rent: number | null
-          monthly_taxes: number | null
-          notes: string | null
-          num_units: number | null
-          opportunity_id: string | null
-          prepayment_type: string | null
-          pricing_run_id: string | null
-          property_type: string | null
-          property_value: number | null
-          scenario_id: string | null
-          selected_lender: string | null
-          selected_price: number | null
-          selected_rate: number | null
-          status: string
-          updated_at: string | null
-          version_number: number
-        }
-        Insert: {
-          amortization_months?: number | null
-          assumptions_json?: Json | null
-          borrower_type?: string | null
-          broker_comp?: number | null
-          cash_on_cash?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          debt_yield?: number | null
-          dscr_ratio?: number | null
-          fico_score?: number | null
-          id?: string
-          income_doc_type?: string | null
-          interest_rate?: number | null
-          io_period_months?: number | null
-          is_active?: boolean
-          is_interest_only?: boolean | null
-          is_short_term_rental?: boolean | null
-          label?: string | null
-          loan_amount?: number | null
-          loan_id?: string | null
-          loan_purpose?: string | null
-          loan_term_months?: number | null
-          lock_period_days?: number | null
-          ltv?: number | null
-          monthly_flood?: number | null
-          monthly_hoa?: number | null
-          monthly_insurance?: number | null
-          monthly_pi?: number | null
-          monthly_pitia?: number | null
-          monthly_rent?: number | null
-          monthly_taxes?: number | null
-          notes?: string | null
-          num_units?: number | null
-          opportunity_id?: string | null
-          prepayment_type?: string | null
-          pricing_run_id?: string | null
-          property_type?: string | null
-          property_value?: number | null
-          scenario_id?: string | null
-          selected_lender?: string | null
-          selected_price?: number | null
-          selected_rate?: number | null
-          status?: string
-          updated_at?: string | null
-          version_number?: number
-        }
-        Update: {
-          amortization_months?: number | null
-          assumptions_json?: Json | null
-          borrower_type?: string | null
-          broker_comp?: number | null
-          cash_on_cash?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          debt_yield?: number | null
-          dscr_ratio?: number | null
-          fico_score?: number | null
-          id?: string
-          income_doc_type?: string | null
-          interest_rate?: number | null
-          io_period_months?: number | null
-          is_active?: boolean
-          is_interest_only?: boolean | null
-          is_short_term_rental?: boolean | null
-          label?: string | null
-          loan_amount?: number | null
-          loan_id?: string | null
-          loan_purpose?: string | null
-          loan_term_months?: number | null
-          lock_period_days?: number | null
-          ltv?: number | null
-          monthly_flood?: number | null
-          monthly_hoa?: number | null
-          monthly_insurance?: number | null
-          monthly_pi?: number | null
-          monthly_pitia?: number | null
-          monthly_rent?: number | null
-          monthly_taxes?: number | null
-          notes?: string | null
-          num_units?: number | null
-          opportunity_id?: string | null
-          prepayment_type?: string | null
-          pricing_run_id?: string | null
-          property_type?: string | null
-          property_value?: number | null
-          scenario_id?: string | null
-          selected_lender?: string | null
-          selected_price?: number | null
-          selected_rate?: number | null
-          status?: string
-          updated_at?: string | null
-          version_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dscr_underwriting_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dscr_underwriting_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dscr_underwriting_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dscr_underwriting_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dscr_underwriting_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dscr_underwriting_pricing_run_id_fkey"
-            columns: ["pricing_run_id"]
-            isOneToOne: false
-            referencedRelation: "dscr_pricing_runs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dscr_underwriting_scenario_id_fkey"
-            columns: ["scenario_id"]
-            isOneToOne: false
-            referencedRelation: "model_scenarios"
             referencedColumns: ["id"]
           },
         ]
@@ -8797,96 +7929,7 @@ export type Database = {
           notes?: string | null
           percent_complete?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "inspection_line_item_assessments_budget_line_item_id_fkey"
-            columns: ["budget_line_item_id"]
-            isOneToOne: false
-            referencedRelation: "budget_line_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inspection_line_item_assessments_inspection_report_id_fkey"
-            columns: ["inspection_report_id"]
-            isOneToOne: false
-            referencedRelation: "inspection_reports"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      inspection_reports: {
-        Row: {
-          created_at: string
-          draw_request_id: string
-          id: string
-          inspection_date: string
-          inspection_type: Database["public"]["Enums"]["inspection_report_type"]
-          inspector_id: string | null
-          loan_id: string
-          notes: string | null
-          overall_percent_complete: number
-          report_pdf_path: string | null
-          submitted_at: string
-          submitted_by: string
-        }
-        Insert: {
-          created_at?: string
-          draw_request_id: string
-          id?: string
-          inspection_date: string
-          inspection_type: Database["public"]["Enums"]["inspection_report_type"]
-          inspector_id?: string | null
-          loan_id: string
-          notes?: string | null
-          overall_percent_complete: number
-          report_pdf_path?: string | null
-          submitted_at?: string
-          submitted_by: string
-        }
-        Update: {
-          created_at?: string
-          draw_request_id?: string
-          id?: string
-          inspection_date?: string
-          inspection_type?: Database["public"]["Enums"]["inspection_report_type"]
-          inspector_id?: string | null
-          loan_id?: string
-          notes?: string | null
-          overall_percent_complete?: number
-          report_pdf_path?: string | null
-          submitted_at?: string
-          submitted_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inspection_reports_draw_request_id_fkey"
-            columns: ["draw_request_id"]
-            isOneToOne: false
-            referencedRelation: "draw_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inspection_reports_inspector_id_fkey"
-            columns: ["inspector_id"]
-            isOneToOne: false
-            referencedRelation: "inspectors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inspection_reports_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inspection_reports_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       inspectors: {
         Row: {
@@ -9320,51 +8363,6 @@ export type Database = {
           },
         ]
       }
-      loan_activity_log: {
-        Row: {
-          action: string
-          created_at: string
-          description: string
-          id: string
-          loan_id: string
-          metadata: Json | null
-          performed_by: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          description: string
-          id?: string
-          loan_id: string
-          metadata?: Json | null
-          performed_by?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          description?: string
-          id?: string
-          loan_id?: string
-          metadata?: Json | null
-          performed_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_activity_log_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_activity_log_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       loan_condition_templates: {
         Row: {
           applies_to_commercial: boolean | null
@@ -9443,179 +8441,6 @@ export type Database = {
         }
         Relationships: []
       }
-      loan_conditions: {
-        Row: {
-          approved_date: string | null
-          assigned_to: string | null
-          borrower_description: string | null
-          category: Database["public"]["Enums"]["condition_category"]
-          condition_name: string
-          created_at: string
-          critical_path_item: boolean | null
-          document_url: string | null
-          document_urls: string[] | null
-          due_date: string | null
-          id: string
-          internal_description: string | null
-          is_required: boolean | null
-          loan_id: string
-          notes: string | null
-          received_date: string | null
-          rejection_reason: string | null
-          required_stage: string
-          responsible_party: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          sort_order: number | null
-          status: Database["public"]["Enums"]["condition_status"]
-          submitted_at: string | null
-          template_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          approved_date?: string | null
-          assigned_to?: string | null
-          borrower_description?: string | null
-          category: Database["public"]["Enums"]["condition_category"]
-          condition_name: string
-          created_at?: string
-          critical_path_item?: boolean | null
-          document_url?: string | null
-          document_urls?: string[] | null
-          due_date?: string | null
-          id?: string
-          internal_description?: string | null
-          is_required?: boolean | null
-          loan_id: string
-          notes?: string | null
-          received_date?: string | null
-          rejection_reason?: string | null
-          required_stage?: string
-          responsible_party?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          sort_order?: number | null
-          status?: Database["public"]["Enums"]["condition_status"]
-          submitted_at?: string | null
-          template_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          approved_date?: string | null
-          assigned_to?: string | null
-          borrower_description?: string | null
-          category?: Database["public"]["Enums"]["condition_category"]
-          condition_name?: string
-          created_at?: string
-          critical_path_item?: boolean | null
-          document_url?: string | null
-          document_urls?: string[] | null
-          due_date?: string | null
-          id?: string
-          internal_description?: string | null
-          is_required?: boolean | null
-          loan_id?: string
-          notes?: string | null
-          received_date?: string | null
-          rejection_reason?: string | null
-          required_stage?: string
-          responsible_party?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          sort_order?: number | null
-          status?: Database["public"]["Enums"]["condition_status"]
-          submitted_at?: string | null
-          template_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_conditions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_conditions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_conditions_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "loan_condition_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      loan_documents: {
-        Row: {
-          condition_id: string | null
-          created_at: string
-          document_name: string
-          document_type: string | null
-          file_size_bytes: number | null
-          file_url: string
-          id: string
-          loan_id: string
-          mime_type: string | null
-          notes: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          condition_id?: string | null
-          created_at?: string
-          document_name: string
-          document_type?: string | null
-          file_size_bytes?: number | null
-          file_url: string
-          id?: string
-          loan_id: string
-          mime_type?: string | null
-          notes?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          condition_id?: string | null
-          created_at?: string
-          document_name?: string
-          document_type?: string | null
-          file_size_bytes?: number | null
-          file_url?: string
-          id?: string
-          loan_id?: string
-          mime_type?: string | null
-          notes?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_documents_condition_id_fkey"
-            columns: ["condition_id"]
-            isOneToOne: false
-            referencedRelation: "loan_conditions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       loan_events: {
         Row: {
           amount: number
@@ -9660,73 +8485,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "servicing_loans"
             referencedColumns: ["loan_id"]
-          },
-          {
-            foreignKeyName: "loan_events_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
-            referencedColumns: ["loan_id"]
-          },
-        ]
-      }
-      loan_payments: {
-        Row: {
-          amount: number
-          created_at: string
-          id: string
-          interest_amount: number | null
-          late_fee: number | null
-          loan_id: string
-          notes: string | null
-          payment_date: string
-          payment_method: string | null
-          principal_amount: number | null
-          reference_number: string | null
-          status: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          interest_amount?: number | null
-          late_fee?: number | null
-          loan_id: string
-          notes?: string | null
-          payment_date: string
-          payment_method?: string | null
-          principal_amount?: number | null
-          reference_number?: string | null
-          status?: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          interest_amount?: number | null
-          late_fee?: number | null
-          loan_id?: string
-          notes?: string | null
-          payment_date?: string
-          payment_method?: string | null
-          principal_amount?: number | null
-          reference_number?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_payments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_payments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -9802,682 +8560,6 @@ export type Database = {
         }
         Relationships: []
       }
-      loan_stage_history: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          duration_in_previous_stage: string | null
-          from_stage: string
-          id: string
-          loan_id: string
-          notes: string | null
-          to_stage: string
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          duration_in_previous_stage?: string | null
-          from_stage: string
-          id?: string
-          loan_id: string
-          notes?: string | null
-          to_stage: string
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          duration_in_previous_stage?: string | null
-          from_stage?: string
-          id?: string
-          loan_id?: string
-          notes?: string | null
-          to_stage?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_stage_history_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_stage_history_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      loan_underwriting_versions: {
-        Row: {
-          calculator_inputs: Json
-          calculator_outputs: Json
-          computation_status: string | null
-          created_at: string
-          created_by: string
-          id: string
-          input_completeness: Json | null
-          is_active: boolean
-          is_sandbox: boolean
-          label: string | null
-          loan_id: string | null
-          model_type: string
-          notes: string | null
-          opportunity_id: string | null
-          scenario_id: string | null
-          status: string
-          version_number: number
-        }
-        Insert: {
-          calculator_inputs?: Json
-          calculator_outputs?: Json
-          computation_status?: string | null
-          created_at?: string
-          created_by: string
-          id?: string
-          input_completeness?: Json | null
-          is_active?: boolean
-          is_sandbox?: boolean
-          label?: string | null
-          loan_id?: string | null
-          model_type?: string
-          notes?: string | null
-          opportunity_id?: string | null
-          scenario_id?: string | null
-          status?: string
-          version_number?: number
-        }
-        Update: {
-          calculator_inputs?: Json
-          calculator_outputs?: Json
-          computation_status?: string | null
-          created_at?: string
-          created_by?: string
-          id?: string
-          input_completeness?: Json | null
-          is_active?: boolean
-          is_sandbox?: boolean
-          label?: string | null
-          loan_id?: string | null
-          model_type?: string
-          notes?: string | null
-          opportunity_id?: string | null
-          scenario_id?: string | null
-          status?: string
-          version_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_underwriting_versions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_underwriting_versions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_underwriting_versions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_underwriting_versions_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_underwriting_versions_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_underwriting_versions_scenario_id_fkey"
-            columns: ["scenario_id"]
-            isOneToOne: false
-            referencedRelation: "model_scenarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      loans: {
-        Row: {
-          ach_autopull_active: boolean | null
-          actual_close_date: string | null
-          after_repair_value: number | null
-          application_date: string | null
-          appraised_value: number | null
-          approval_date: string | null
-          approval_decided_at: string | null
-          approval_decided_by: string | null
-          approval_notes: string | null
-          approval_requested_at: string | null
-          approval_requested_by: string | null
-          approval_status: string | null
-          approval_type: string | null
-          arv: number | null
-          as_is_value: number | null
-          borrower_entity_id: string | null
-          borrower_id: string | null
-          broker_contact_id: string | null
-          broker_fee_amount: number | null
-          broker_fee_pct: number | null
-          broker_sourced: boolean | null
-          capital_partner: string | null
-          cash_to_close: number | null
-          clear_to_close_date: string | null
-          closer_id: string | null
-          closing_attorney_name: string | null
-          closing_date: string | null
-          co_borrower_name: string | null
-          combined_liquidity: number | null
-          combined_net_worth: number | null
-          construction_budget_id: string | null
-          created_at: string
-          deal_programs: string[] | null
-          debt_tranche: string | null
-          default_rate: number | null
-          deleted_at: string | null
-          draw_count: number
-          dscr_ratio: number | null
-          escrow_holdback: number | null
-          expected_close_date: string | null
-          extension_fee_pct: number | null
-          extension_maturity_date: string | null
-          extension_options: string | null
-          extension_term_months: number | null
-          file_complete_date: string | null
-          first_payment_date: string | null
-          flood_zone_type: string | null
-          funding_channel: string | null
-          funding_date: string | null
-          funding_source: string | null
-          has_co_borrower: boolean | null
-          id: string
-          insurance_agent_contact: string | null
-          insurance_agent_email: string | null
-          insurance_agent_phone: string | null
-          insurance_company_name: string | null
-          interest_rate: number | null
-          interest_reserve: number | null
-          internal_notes: string | null
-          investment_strategy: string | null
-          is_in_flood_zone: boolean | null
-          is_short_term_rental: boolean | null
-          lease_type: string | null
-          legal_fee: number | null
-          loan_amount: number | null
-          loan_number: string | null
-          loan_term_months: number | null
-          loan_type_interest: string[] | null
-          loss_reason: string | null
-          ltarv: number | null
-          ltv: number | null
-          maturity_date: string | null
-          monthly_payment: number | null
-          next_action: string | null
-          note_rate: number | null
-          note_sold: boolean | null
-          note_sold_date: string | null
-          note_sold_to: string | null
-          notes: string | null
-          number_of_units: number | null
-          occupancy_pct: number | null
-          opportunity_id: string | null
-          origination_date: string | null
-          origination_fee: number | null
-          origination_fee_amount: number | null
-          origination_fee_pct: number | null
-          originator: string | null
-          originator_id: string | null
-          parcel_id: string | null
-          payoff_date: string | null
-          points: number | null
-          prepayment_penalty_months: number | null
-          prepayment_penalty_pct: number | null
-          prepayment_penalty_type: string | null
-          prepayment_terms: string | null
-          priority: string | null
-          processing_fee: number | null
-          processor: string | null
-          processor_id: string | null
-          property_address: string | null
-          property_address_line1: string | null
-          property_address_line2: string | null
-          property_city: string | null
-          property_county: string | null
-          property_id: string | null
-          property_state: string | null
-          property_type: Database["public"]["Enums"]["property_type"] | null
-          property_zip: string | null
-          purchase_price: number | null
-          purpose: Database["public"]["Enums"]["loan_purpose"]
-          rehab_budget: number | null
-          rehab_holdback: number | null
-          rental_status: string | null
-          salesforce_opportunity_id: string | null
-          secondary_liens: boolean | null
-          servicing_platform: string | null
-          source_of_funds: string | null
-          stage: Database["public"]["Enums"]["loan_status"]
-          stage_history: Json | null
-          stage_updated_at: string | null
-          status: Database["public"]["Enums"]["loan_status"]
-          title_company_contact: string | null
-          title_company_email: string | null
-          title_company_name: string | null
-          title_company_phone: string | null
-          total_draws_funded: number
-          total_loan_amount: number | null
-          type: Database["public"]["Enums"]["loan_type"]
-          underwriter: string | null
-          underwriter_id: string | null
-          updated_at: string
-          value_method: string | null
-        }
-        Insert: {
-          ach_autopull_active?: boolean | null
-          actual_close_date?: string | null
-          after_repair_value?: number | null
-          application_date?: string | null
-          appraised_value?: number | null
-          approval_date?: string | null
-          approval_decided_at?: string | null
-          approval_decided_by?: string | null
-          approval_notes?: string | null
-          approval_requested_at?: string | null
-          approval_requested_by?: string | null
-          approval_status?: string | null
-          approval_type?: string | null
-          arv?: number | null
-          as_is_value?: number | null
-          borrower_entity_id?: string | null
-          borrower_id?: string | null
-          broker_contact_id?: string | null
-          broker_fee_amount?: number | null
-          broker_fee_pct?: number | null
-          broker_sourced?: boolean | null
-          capital_partner?: string | null
-          cash_to_close?: number | null
-          clear_to_close_date?: string | null
-          closer_id?: string | null
-          closing_attorney_name?: string | null
-          closing_date?: string | null
-          co_borrower_name?: string | null
-          combined_liquidity?: number | null
-          combined_net_worth?: number | null
-          construction_budget_id?: string | null
-          created_at?: string
-          deal_programs?: string[] | null
-          debt_tranche?: string | null
-          default_rate?: number | null
-          deleted_at?: string | null
-          draw_count?: number
-          dscr_ratio?: number | null
-          escrow_holdback?: number | null
-          expected_close_date?: string | null
-          extension_fee_pct?: number | null
-          extension_maturity_date?: string | null
-          extension_options?: string | null
-          extension_term_months?: number | null
-          file_complete_date?: string | null
-          first_payment_date?: string | null
-          flood_zone_type?: string | null
-          funding_channel?: string | null
-          funding_date?: string | null
-          funding_source?: string | null
-          has_co_borrower?: boolean | null
-          id?: string
-          insurance_agent_contact?: string | null
-          insurance_agent_email?: string | null
-          insurance_agent_phone?: string | null
-          insurance_company_name?: string | null
-          interest_rate?: number | null
-          interest_reserve?: number | null
-          internal_notes?: string | null
-          investment_strategy?: string | null
-          is_in_flood_zone?: boolean | null
-          is_short_term_rental?: boolean | null
-          lease_type?: string | null
-          legal_fee?: number | null
-          loan_amount?: number | null
-          loan_number?: string | null
-          loan_term_months?: number | null
-          loan_type_interest?: string[] | null
-          loss_reason?: string | null
-          ltarv?: number | null
-          ltv?: number | null
-          maturity_date?: string | null
-          monthly_payment?: number | null
-          next_action?: string | null
-          note_rate?: number | null
-          note_sold?: boolean | null
-          note_sold_date?: string | null
-          note_sold_to?: string | null
-          notes?: string | null
-          number_of_units?: number | null
-          occupancy_pct?: number | null
-          opportunity_id?: string | null
-          origination_date?: string | null
-          origination_fee?: number | null
-          origination_fee_amount?: number | null
-          origination_fee_pct?: number | null
-          originator?: string | null
-          originator_id?: string | null
-          parcel_id?: string | null
-          payoff_date?: string | null
-          points?: number | null
-          prepayment_penalty_months?: number | null
-          prepayment_penalty_pct?: number | null
-          prepayment_penalty_type?: string | null
-          prepayment_terms?: string | null
-          priority?: string | null
-          processing_fee?: number | null
-          processor?: string | null
-          processor_id?: string | null
-          property_address?: string | null
-          property_address_line1?: string | null
-          property_address_line2?: string | null
-          property_city?: string | null
-          property_county?: string | null
-          property_id?: string | null
-          property_state?: string | null
-          property_type?: Database["public"]["Enums"]["property_type"] | null
-          property_zip?: string | null
-          purchase_price?: number | null
-          purpose?: Database["public"]["Enums"]["loan_purpose"]
-          rehab_budget?: number | null
-          rehab_holdback?: number | null
-          rental_status?: string | null
-          salesforce_opportunity_id?: string | null
-          secondary_liens?: boolean | null
-          servicing_platform?: string | null
-          source_of_funds?: string | null
-          stage?: Database["public"]["Enums"]["loan_status"]
-          stage_history?: Json | null
-          stage_updated_at?: string | null
-          status?: Database["public"]["Enums"]["loan_status"]
-          title_company_contact?: string | null
-          title_company_email?: string | null
-          title_company_name?: string | null
-          title_company_phone?: string | null
-          total_draws_funded?: number
-          total_loan_amount?: number | null
-          type?: Database["public"]["Enums"]["loan_type"]
-          underwriter?: string | null
-          underwriter_id?: string | null
-          updated_at?: string
-          value_method?: string | null
-        }
-        Update: {
-          ach_autopull_active?: boolean | null
-          actual_close_date?: string | null
-          after_repair_value?: number | null
-          application_date?: string | null
-          appraised_value?: number | null
-          approval_date?: string | null
-          approval_decided_at?: string | null
-          approval_decided_by?: string | null
-          approval_notes?: string | null
-          approval_requested_at?: string | null
-          approval_requested_by?: string | null
-          approval_status?: string | null
-          approval_type?: string | null
-          arv?: number | null
-          as_is_value?: number | null
-          borrower_entity_id?: string | null
-          borrower_id?: string | null
-          broker_contact_id?: string | null
-          broker_fee_amount?: number | null
-          broker_fee_pct?: number | null
-          broker_sourced?: boolean | null
-          capital_partner?: string | null
-          cash_to_close?: number | null
-          clear_to_close_date?: string | null
-          closer_id?: string | null
-          closing_attorney_name?: string | null
-          closing_date?: string | null
-          co_borrower_name?: string | null
-          combined_liquidity?: number | null
-          combined_net_worth?: number | null
-          construction_budget_id?: string | null
-          created_at?: string
-          deal_programs?: string[] | null
-          debt_tranche?: string | null
-          default_rate?: number | null
-          deleted_at?: string | null
-          draw_count?: number
-          dscr_ratio?: number | null
-          escrow_holdback?: number | null
-          expected_close_date?: string | null
-          extension_fee_pct?: number | null
-          extension_maturity_date?: string | null
-          extension_options?: string | null
-          extension_term_months?: number | null
-          file_complete_date?: string | null
-          first_payment_date?: string | null
-          flood_zone_type?: string | null
-          funding_channel?: string | null
-          funding_date?: string | null
-          funding_source?: string | null
-          has_co_borrower?: boolean | null
-          id?: string
-          insurance_agent_contact?: string | null
-          insurance_agent_email?: string | null
-          insurance_agent_phone?: string | null
-          insurance_company_name?: string | null
-          interest_rate?: number | null
-          interest_reserve?: number | null
-          internal_notes?: string | null
-          investment_strategy?: string | null
-          is_in_flood_zone?: boolean | null
-          is_short_term_rental?: boolean | null
-          lease_type?: string | null
-          legal_fee?: number | null
-          loan_amount?: number | null
-          loan_number?: string | null
-          loan_term_months?: number | null
-          loan_type_interest?: string[] | null
-          loss_reason?: string | null
-          ltarv?: number | null
-          ltv?: number | null
-          maturity_date?: string | null
-          monthly_payment?: number | null
-          next_action?: string | null
-          note_rate?: number | null
-          note_sold?: boolean | null
-          note_sold_date?: string | null
-          note_sold_to?: string | null
-          notes?: string | null
-          number_of_units?: number | null
-          occupancy_pct?: number | null
-          opportunity_id?: string | null
-          origination_date?: string | null
-          origination_fee?: number | null
-          origination_fee_amount?: number | null
-          origination_fee_pct?: number | null
-          originator?: string | null
-          originator_id?: string | null
-          parcel_id?: string | null
-          payoff_date?: string | null
-          points?: number | null
-          prepayment_penalty_months?: number | null
-          prepayment_penalty_pct?: number | null
-          prepayment_penalty_type?: string | null
-          prepayment_terms?: string | null
-          priority?: string | null
-          processing_fee?: number | null
-          processor?: string | null
-          processor_id?: string | null
-          property_address?: string | null
-          property_address_line1?: string | null
-          property_address_line2?: string | null
-          property_city?: string | null
-          property_county?: string | null
-          property_id?: string | null
-          property_state?: string | null
-          property_type?: Database["public"]["Enums"]["property_type"] | null
-          property_zip?: string | null
-          purchase_price?: number | null
-          purpose?: Database["public"]["Enums"]["loan_purpose"]
-          rehab_budget?: number | null
-          rehab_holdback?: number | null
-          rental_status?: string | null
-          salesforce_opportunity_id?: string | null
-          secondary_liens?: boolean | null
-          servicing_platform?: string | null
-          source_of_funds?: string | null
-          stage?: Database["public"]["Enums"]["loan_status"]
-          stage_history?: Json | null
-          stage_updated_at?: string | null
-          status?: Database["public"]["Enums"]["loan_status"]
-          title_company_contact?: string | null
-          title_company_email?: string | null
-          title_company_name?: string | null
-          title_company_phone?: string | null
-          total_draws_funded?: number
-          total_loan_amount?: number | null
-          type?: Database["public"]["Enums"]["loan_type"]
-          underwriter?: string | null
-          underwriter_id?: string | null
-          updated_at?: string
-          value_method?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loans_borrower_entity_id_fkey"
-            columns: ["borrower_entity_id"]
-            isOneToOne: false
-            referencedRelation: "borrower_entities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_borrower_entity_id_fkey"
-            columns: ["borrower_entity_id"]
-            isOneToOne: false
-            referencedRelation: "borrower_entities_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers_portal"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_broker_contact_id_fkey"
-            columns: ["broker_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_broker_contact_id_fkey"
-            columns: ["broker_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts_active"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_broker_contact_id_fkey"
-            columns: ["broker_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["contact_id"]
-          },
-          {
-            foreignKeyName: "loans_broker_contact_id_fkey"
-            columns: ["broker_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["potential_duplicate_id"]
-          },
-          {
-            foreignKeyName: "loans_closer_id_fkey"
-            columns: ["closer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_construction_budget_id_fkey"
-            columns: ["construction_budget_id"]
-            isOneToOne: false
-            referencedRelation: "construction_budgets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_originator_id_fkey"
-            columns: ["originator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_processor_id_fkey"
-            columns: ["processor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_underwriter_id_fkey"
-            columns: ["underwriter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       members: {
         Row: {
           avatar_url: string | null
@@ -10504,94 +8586,6 @@ export type Database = {
           name?: string
         }
         Relationships: []
-      }
-      model_scenarios: {
-        Row: {
-          active_version_id: string | null
-          created_at: string
-          created_by: string
-          deleted_at: string | null
-          description: string | null
-          id: string
-          loan_id: string | null
-          model_type: string
-          name: string
-          opportunity_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          active_version_id?: string | null
-          created_at?: string
-          created_by: string
-          deleted_at?: string | null
-          description?: string | null
-          id?: string
-          loan_id?: string | null
-          model_type: string
-          name: string
-          opportunity_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          active_version_id?: string | null
-          created_at?: string
-          created_by?: string
-          deleted_at?: string | null
-          description?: string | null
-          id?: string
-          loan_id?: string | null
-          model_type?: string
-          name?: string
-          opportunity_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_active_version"
-            columns: ["active_version_id"]
-            isOneToOne: false
-            referencedRelation: "loan_underwriting_versions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       modules: {
         Row: {
@@ -10762,7 +8756,6 @@ export type Database = {
           is_edited: boolean | null
           is_internal: boolean
           is_pinned: boolean | null
-          loan_id: string | null
           mentions: string[] | null
           opportunity_id: string | null
           parent_note_id: string | null
@@ -10789,7 +8782,6 @@ export type Database = {
           is_edited?: boolean | null
           is_internal?: boolean
           is_pinned?: boolean | null
-          loan_id?: string | null
           mentions?: string[] | null
           opportunity_id?: string | null
           parent_note_id?: string | null
@@ -10816,7 +8808,6 @@ export type Database = {
           is_edited?: boolean | null
           is_internal?: boolean
           is_pinned?: boolean | null
-          loan_id?: string | null
           mentions?: string[] | null
           opportunity_id?: string | null
           parent_note_id?: string | null
@@ -10847,13 +8838,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_condition_id_fkey"
-            columns: ["condition_id"]
-            isOneToOne: false
-            referencedRelation: "loan_conditions"
             referencedColumns: ["id"]
           },
           {
@@ -10889,20 +8873,6 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "unified_deals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
           {
@@ -11350,7 +9320,6 @@ export type Database = {
           internal_notes: string | null
           investment_strategy: string | null
           lease_type: string | null
-          loan_id: string | null
           loan_purpose: string | null
           loan_type: string | null
           loan_type_interest: string[] | null
@@ -11404,7 +9373,6 @@ export type Database = {
           internal_notes?: string | null
           investment_strategy?: string | null
           lease_type?: string | null
-          loan_id?: string | null
           loan_purpose?: string | null
           loan_type?: string | null
           loan_type_interest?: string[] | null
@@ -11458,7 +9426,6 @@ export type Database = {
           internal_notes?: string | null
           investment_strategy?: string | null
           lease_type?: string | null
-          loan_id?: string | null
           loan_purpose?: string | null
           loan_type?: string | null
           loan_type_interest?: string[] | null
@@ -11500,20 +9467,6 @@ export type Database = {
             columns: ["borrower_entity_id"]
             isOneToOne: false
             referencedRelation: "borrower_entities_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
           {
@@ -13854,13 +11807,6 @@ export type Database = {
             referencedRelation: "servicing_loans"
             referencedColumns: ["loan_id"]
           },
-          {
-            foreignKeyName: "servicing_construction_budgets_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
-            referencedColumns: ["loan_id"]
-          },
         ]
       }
       servicing_draws: {
@@ -13921,13 +11867,6 @@ export type Database = {
             columns: ["loan_id"]
             isOneToOne: false
             referencedRelation: "servicing_loans"
-            referencedColumns: ["loan_id"]
-          },
-          {
-            foreignKeyName: "servicing_draws_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
             referencedColumns: ["loan_id"]
           },
         ]
@@ -14231,13 +12170,6 @@ export type Database = {
             referencedColumns: ["loan_id"]
           },
           {
-            foreignKeyName: "servicing_payments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
-            referencedColumns: ["loan_id"]
-          },
-          {
             foreignKeyName: "servicing_payments_reversal_of_fkey"
             columns: ["reversal_of"]
             isOneToOne: false
@@ -14301,13 +12233,6 @@ export type Database = {
             columns: ["loan_id"]
             isOneToOne: false
             referencedRelation: "servicing_loans"
-            referencedColumns: ["loan_id"]
-          },
-          {
-            foreignKeyName: "servicing_pending_actions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "servicing_maturity_schedule"
             referencedColumns: ["loan_id"]
           },
         ]
@@ -15251,13 +13176,6 @@ export type Database = {
             referencedRelation: "t12_line_items"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "t12_field_mappings_t12_upload_id_fkey"
-            columns: ["t12_upload_id"]
-            isOneToOne: false
-            referencedRelation: "t12_uploads"
-            referencedColumns: ["id"]
-          },
         ]
       }
       t12_line_items: {
@@ -15327,15 +13245,7 @@ export type Database = {
           sort_order?: number | null
           t12_upload_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "t12_line_items_t12_upload_id_fkey"
-            columns: ["t12_upload_id"]
-            isOneToOne: false
-            referencedRelation: "t12_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       t12_mapping_suggestions: {
         Row: {
@@ -15389,130 +13299,7 @@ export type Database = {
           t12_upload_id?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "t12_overrides_t12_upload_id_fkey"
-            columns: ["t12_upload_id"]
-            isOneToOne: false
-            referencedRelation: "t12_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      t12_uploads: {
-        Row: {
-          created_at: string | null
-          file_name: string
-          file_url: string
-          id: string
-          loan_id: string
-          notes: string | null
-          period_end: string
-          period_start: string
-          source_label: string | null
-          status: string | null
-          updated_at: string | null
-          upload_date: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          file_name: string
-          file_url?: string
-          id?: string
-          loan_id: string
-          notes?: string | null
-          period_end: string
-          period_start: string
-          source_label?: string | null
-          status?: string | null
-          updated_at?: string | null
-          upload_date?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          file_name?: string
-          file_url?: string
-          id?: string
-          loan_id?: string
-          notes?: string | null
-          period_end?: string
-          period_start?: string
-          source_label?: string | null
-          status?: string | null
-          updated_at?: string | null
-          upload_date?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "t12_uploads_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "t12_uploads_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      t12_versions: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          loan_id: string
-          t12_upload_id: string
-          version_label: string | null
-          version_number: number
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          loan_id: string
-          t12_upload_id: string
-          version_label?: string | null
-          version_number: number
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          loan_id?: string
-          t12_upload_id?: string
-          version_label?: string | null
-          version_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "t12_versions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "t12_versions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "t12_versions_t12_upload_id_fkey"
-            columns: ["t12_upload_id"]
-            isOneToOne: false
-            referencedRelation: "t12_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       task_approvals: {
         Row: {
@@ -16385,8 +14172,13 @@ export type Database = {
           company_id: string | null
           created_at: string
           created_by: string | null
+          current_maturity_date: string | null
           deal_number: string | null
+          draw_count: number | null
           expected_close_date: string | null
+          extension_count: number | null
+          first_payment_date: string | null
+          funding_date: string | null
           fundraise_amount_options: Json | null
           fundraise_deck_url: string | null
           fundraise_description: string | null
@@ -16404,12 +14196,18 @@ export type Database = {
           is_priority: boolean
           loan_type: string | null
           loss_reason: string | null
+          maturity_date: string | null
           name: string
+          note_sale_date: string | null
+          note_sale_price: number | null
+          note_sold_to: string | null
           notes: string | null
+          payoff_date: string | null
           primary_contact_id: string | null
           probability: number | null
           property_data: Json | null
           property_id: string | null
+          servicing_status: string | null
           sort_order: number | null
           source: string | null
           source_detail: string | null
@@ -16417,6 +14215,7 @@ export type Database = {
           stage_entered_at: string
           status: string
           tags: string[] | null
+          total_draws_funded: number | null
           updated_at: string
           uw_data: Json | null
           uw_grid_overrides: Json | null
@@ -16434,8 +14233,13 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          current_maturity_date?: string | null
           deal_number?: string | null
+          draw_count?: number | null
           expected_close_date?: string | null
+          extension_count?: number | null
+          first_payment_date?: string | null
+          funding_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
@@ -16453,12 +14257,18 @@ export type Database = {
           is_priority?: boolean
           loan_type?: string | null
           loss_reason?: string | null
+          maturity_date?: string | null
           name: string
+          note_sale_date?: string | null
+          note_sale_price?: number | null
+          note_sold_to?: string | null
           notes?: string | null
+          payoff_date?: string | null
           primary_contact_id?: string | null
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          servicing_status?: string | null
           sort_order?: number | null
           source?: string | null
           source_detail?: string | null
@@ -16466,6 +14276,7 @@ export type Database = {
           stage_entered_at?: string
           status?: string
           tags?: string[] | null
+          total_draws_funded?: number | null
           updated_at?: string
           uw_data?: Json | null
           uw_grid_overrides?: Json | null
@@ -16483,8 +14294,13 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           created_by?: string | null
+          current_maturity_date?: string | null
           deal_number?: string | null
+          draw_count?: number | null
           expected_close_date?: string | null
+          extension_count?: number | null
+          first_payment_date?: string | null
+          funding_date?: string | null
           fundraise_amount_options?: Json | null
           fundraise_deck_url?: string | null
           fundraise_description?: string | null
@@ -16502,12 +14318,18 @@ export type Database = {
           is_priority?: boolean
           loan_type?: string | null
           loss_reason?: string | null
+          maturity_date?: string | null
           name?: string
+          note_sale_date?: string | null
+          note_sale_price?: number | null
+          note_sold_to?: string | null
           notes?: string | null
+          payoff_date?: string | null
           primary_contact_id?: string | null
           probability?: number | null
           property_data?: Json | null
           property_id?: string | null
+          servicing_status?: string | null
           sort_order?: number | null
           source?: string | null
           source_detail?: string | null
@@ -16515,6 +14337,7 @@ export type Database = {
           stage_entered_at?: string
           status?: string
           tags?: string[] | null
+          total_draws_funded?: number | null
           updated_at?: string
           uw_data?: Json | null
           uw_grid_overrides?: Json | null
@@ -17285,40 +15108,6 @@ export type Database = {
           },
         ]
       }
-      borrower_requests_view: {
-        Row: {
-          borrower_name: string | null
-          created_at: string | null
-          days_since_sent: number | null
-          description: string | null
-          follow_up_count: number | null
-          id: string | null
-          last_follow_up_at: string | null
-          loan_id: string | null
-          loan_name: string | null
-          loan_number: string | null
-          requested_by: string | null
-          resolved_at: string | null
-          sent_at: string | null
-          status: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "borrower_requests_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "borrower_requests_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       borrowers_portal: {
         Row: {
           address_line1: string | null
@@ -17477,7 +15266,6 @@ export type Database = {
             | null
           lifecycle_updated_at: string | null
           linked_investor_id: string | null
-          linked_loan_id: string | null
           marketing_consent: boolean | null
           name: string | null
           next_follow_up_date: string | null
@@ -17516,7 +15304,6 @@ export type Database = {
             | null
           lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
-          linked_loan_id?: string | null
           marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
@@ -17555,7 +15342,6 @@ export type Database = {
             | null
           lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
-          linked_loan_id?: string | null
           marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
@@ -17625,20 +15411,6 @@ export type Database = {
             columns: ["linked_investor_id"]
             isOneToOne: false
             referencedRelation: "investors_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_contacts_linked_loan_id_fkey"
-            columns: ["linked_loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_contacts_linked_loan_id_fkey"
-            columns: ["linked_loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
           {
@@ -17982,37 +15754,6 @@ export type Database = {
           },
         ]
       }
-      loan_pipeline: {
-        Row: {
-          approval_status: string | null
-          approved_conditions: number | null
-          borrower_name: string | null
-          closing_date: string | null
-          created_at: string | null
-          entity_name: string | null
-          funding_channel: string | null
-          funding_source: string | null
-          id: string | null
-          interest_rate: number | null
-          loan_amount: number | null
-          loan_number: string | null
-          loan_purpose: string | null
-          loan_stage: string | null
-          loan_term_months: number | null
-          loan_type: string | null
-          ltv: number | null
-          maturity_date: string | null
-          originator: string | null
-          pending_conditions: number | null
-          priority: string | null
-          processor: string | null
-          property_address: string | null
-          stage_updated_at: string | null
-          total_conditions: number | null
-          updated_at: string | null
-        }
-        Relationships: []
-      }
       opportunity_pipeline: {
         Row: {
           approval_status: string | null
@@ -18029,7 +15770,6 @@ export type Database = {
           funding_channel: string | null
           id: string | null
           internal_notes: string | null
-          loan_id: string | null
           loan_purpose: string | null
           loan_type: string | null
           number_of_units: number | null
@@ -18047,74 +15787,6 @@ export type Database = {
           stage: string | null
           stage_changed_at: string | null
           updated_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunities_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      search_index: {
-        Row: {
-          entity_type: string | null
-          id: string | null
-          metadata: Json | null
-          owner_ref: string | null
-          search_text: string | null
-          updated_at: string | null
-        }
-        Relationships: []
-      }
-      servicing_maturity_schedule: {
-        Row: {
-          borrower_name: string | null
-          current_balance: number | null
-          days_until_maturity: number | null
-          loan_id: string | null
-          maturity_date: string | null
-          maturity_status: string | null
-          property_address: string | null
-        }
-        Insert: {
-          borrower_name?: string | null
-          current_balance?: number | null
-          days_until_maturity?: never
-          loan_id?: string | null
-          maturity_date?: string | null
-          maturity_status?: never
-          property_address?: string | null
-        }
-        Update: {
-          borrower_name?: string | null
-          current_balance?: number | null
-          days_until_maturity?: never
-          loan_id?: string | null
-          maturity_date?: string | null
-          maturity_status?: never
-          property_address?: string | null
-        }
-        Relationships: []
-      }
-      servicing_portfolio_summary: {
-        Row: {
-          average_loan_size: number | null
-          commercial_active_count: number | null
-          commercial_outstanding_balance: number | null
-          rtl_active_count: number | null
-          rtl_outstanding_balance: number | null
-          total_active_loans: number | null
-          total_outstanding_balance: number | null
         }
         Relationships: []
       }
@@ -18155,16 +15827,6 @@ export type Database = {
         }
         Returns: Json
       }
-      apply_payment: {
-        Args: {
-          p_amount_received: number
-          p_applied_by: string
-          p_loan_id: string
-          p_payment_date: string
-          p_reference_number: string
-        }
-        Returns: Json
-      }
       approve_budget_change_request: {
         Args: { p_approved_by: string; p_request_id: string }
         Returns: Json
@@ -18200,10 +15862,6 @@ export type Database = {
         Args: { p_as_of_date: string; p_loan_id: string }
         Returns: number
       }
-      calculate_interest_for_period: {
-        Args: { p_billing_month: string; p_loan_id: string }
-        Returns: Json
-      }
       calculate_next_due_date: {
         Args: {
           p_anchor_day: number
@@ -18226,10 +15884,6 @@ export type Database = {
         Returns: boolean
       }
       complete_recurring_task: { Args: { p_task_id: string }; Returns: Json }
-      create_construction_budget: {
-        Args: { p_created_by: string; p_line_items: Json; p_loan_id: string }
-        Returns: string
-      }
       create_notification: {
         Args: {
           p_action_url?: string
@@ -18247,7 +15901,6 @@ export type Database = {
       daitch_mokotoff: { Args: { "": string }; Returns: string[] }
       dmetaphone: { Args: { "": string }; Returns: string }
       dmetaphone_alt: { Args: { "": string }; Returns: string }
-      evaluate_auto_approval: { Args: { p_loan_id: string }; Returns: string }
       exec_ddl: { Args: { sql: string }; Returns: undefined }
       execute_workflow_trigger: {
         Args: {
@@ -18270,32 +15923,9 @@ export type Database = {
           match_type: string
         }[]
       }
-      fund_draw_request: {
-        Args: {
-          p_draw_request_id: string
-          p_funded_by: string
-          p_wire_amount: number
-          p_wire_confirmation_number: string
-          p_wire_date: string
-        }
-        Returns: Json
-      }
-      generate_billing_cycle: {
-        Args: { p_billing_month: string; p_created_by: string }
-        Returns: string
-      }
       generate_daily_digest: { Args: never; Returns: Json }
-      generate_loan_conditions: { Args: { p_loan_id: string }; Returns: number }
-      generate_nacha_file: {
-        Args: { p_billing_cycle_id: string }
-        Returns: string
-      }
       generate_next_recurring_task: {
         Args: { p_task_id: string }
-        Returns: Json
-      }
-      generate_payoff_quote: {
-        Args: { p_loan_id: string; p_payoff_date: string }
         Returns: Json
       }
       generate_personal_task_briefings: { Args: never; Returns: Json }
@@ -18306,7 +15936,6 @@ export type Database = {
         Returns: number
       }
       get_deal_cost_basis: { Args: { p_deal_id: string }; Returns: Json }
-      get_draw_summary: { Args: { p_loan_id: string }; Returns: Json }
       get_my_roles: {
         Args: never
         Returns: {
@@ -18319,7 +15948,6 @@ export type Database = {
         }[]
       }
       get_portal_context: { Args: never; Returns: Json }
-      get_portfolio_draw_dashboard: { Args: never; Returns: Json }
       get_unread_notification_count: { Args: never; Returns: number }
       grant_all_modules: {
         Args: { granter_id: string; target_user_id: string }
@@ -18375,7 +16003,6 @@ export type Database = {
         Args: { p_loan_id: string }
         Returns: undefined
       }
-      refresh_delinquency_records: { Args: never; Returns: Json }
       refresh_search_index: { Args: never; Returns: undefined }
       revoke_role: {
         Args: {
@@ -18385,10 +16012,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      run_reconciliation_checks: {
-        Args: { p_billing_cycle_id: string }
-        Returns: Json
       }
       search_portal: {
         Args: {
@@ -18448,16 +16071,6 @@ export type Database = {
         }
         Returns: Json
       }
-      submit_draw_request: {
-        Args: {
-          p_borrower_notes: string
-          p_line_item_draws: Json
-          p_loan_id: string
-          p_requested_by: string
-        }
-        Returns: Json
-      }
-      test_servicing_infrastructure: { Args: never; Returns: Json }
       text_soundex: { Args: { "": string }; Returns: string }
       unaccent: { Args: { "": string }; Returns: string }
       unarchive_notification: {
@@ -19349,3 +16962,4 @@ export const Constants = {
     },
   },
 } as const
+

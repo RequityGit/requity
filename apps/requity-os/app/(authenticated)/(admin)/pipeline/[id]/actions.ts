@@ -2064,7 +2064,7 @@ export async function requestConditionRevision(
         },
       }).then((result) => {
         if (result.queued) {
-          console.log(`[settling-period] Queued revision for condition ${conditionId}`);
+          console.log(`[pipeline:settling-period] Queued revision for condition ${conditionId}`);
         }
       }).catch((err) => {
         console.error("[settling-period] Queue failed:", err);
