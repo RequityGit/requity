@@ -10,7 +10,9 @@
  * handles Sentry for root-layout failures.
  */
 
+import { useEffect } from "react";
 import { ErrorFallback } from "@/components/shared/ErrorFallback";
+import { isChunkLoadError, handleChunkLoadError } from "@/lib/chunk-error";
 
 export default function RootError({
   error,
@@ -19,6 +21,12 @@ export default function RootError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    if (isChunkLoadError(error)) {
+      handleChunkLoadError();
+    }
+  }, [error]);
+
   return (
     <ErrorFallback
       title="Something went wrong"

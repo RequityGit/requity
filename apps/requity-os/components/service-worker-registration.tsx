@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
+import { clearChunkErrorFlag } from "@/lib/chunk-error";
 
 export function ServiceWorkerRegistration() {
   useEffect(() => {
+    // Clear chunk error reload flag on successful page load
+    clearChunkErrorFlag();
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")

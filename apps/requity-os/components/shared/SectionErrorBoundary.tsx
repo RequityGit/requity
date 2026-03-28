@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode, type ErrorInfo } from "react";
 import { ErrorFallback } from "./ErrorFallback";
+import { isChunkLoadError, handleChunkLoadError } from "@/lib/chunk-error";
 
 interface Props {
   children: ReactNode;
@@ -25,6 +26,11 @@ export class SectionErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // Auto-reload on ChunkLoadError (stale deployment chunks)
+    if (isChunkLoadError(error)) {
+      handleChunkLoadError();
+      return;
+    }
     console.error("SectionErrorBoundary caught:", error, info.componentStack);
   }
 
