@@ -59,7 +59,7 @@ interface PipelineState {
   // Actions
   hydrate: (data: PipelineHydratePayload) => void;
   setDraggingDealId: (id: string | null) => void;
-  moveDeal: (dealId: string, newStage: UnifiedStage) => void;
+  moveDeal: (dealId: string, newStage: UnifiedStage, sortOrder?: number) => void;
   moveAndReorderDeal: (dealId: string, newStage: UnifiedStage, orderedIds: string[]) => void;
   reorderDeal: (orderedIds: string[], stage: UnifiedStage) => void;
   updateDeal: (dealId: string, patch: Partial<UnifiedDeal>) => void;
@@ -107,13 +107,14 @@ export const usePipelineStore = create<PipelineState>()(
         state.dealsVersion++;
       }),
 
-    moveDeal: (dealId, newStage) =>
+    moveDeal: (dealId, newStage, sortOrder) =>
       set((state) => {
         const deal = state.deals.get(dealId);
         if (deal) {
           state.deals.set(dealId, {
             ...deal,
             stage: newStage,
+            sort_order: sortOrder ?? deal.sort_order,
             stage_entered_at: new Date().toISOString(),
           });
           state.dealsVersion++; // Stage change is structural
