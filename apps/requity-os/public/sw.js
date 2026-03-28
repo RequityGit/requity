@@ -73,8 +73,13 @@ self.addEventListener('fetch', (event) => {
 
           // If it's a navigation request, show offline page
           if (event.request.mode === 'navigate') {
-            return caches.match('/offline.html');
+            return caches.match('/offline.html').then((offlinePage) => {
+              return offlinePage || new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+            });
           }
+
+          // Always return a valid Response to avoid "Failed to convert value to 'Response'" errors
+          return new Response('', { status: 503, statusText: 'Service Unavailable' });
         });
       })
   );
