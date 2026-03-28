@@ -1397,80 +1397,7 @@ function DealHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* D. Separator */}
-        <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
-
-        {/* E. Metrics (inline-editable) */}
-        <TooltipProvider>
-        <div className="hidden md:flex items-center gap-4 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex flex-col items-center min-w-fit">
-                <InlineField
-                  type="select"
-                  value={HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? ""}
-                  options={HEADER_AC_LABELS}
-                  onSave={(v) => onMetricSave("property_type", HEADER_AC_LABEL_TO_KEY[v] ?? v)}
-                  className="items-center text-center font-semibold"
-                />
-                <span className="rq-micro-label">Asset</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              {HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? "Not Set"}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex flex-col items-center min-w-fit">
-                <InlineField
-                  type="currency"
-                  value={loanAmount}
-                  formatValue={(v) => formatCompactCurrency(Number(v) || null)}
-                  onSave={(v) => onMetricSave("loan_amount", v)}
-                  className="items-center text-center font-semibold"
-                />
-                <span className="rq-micro-label">Loan</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              {loanAmount ? formatCompactCurrency(Number(loanAmount) || null) : "Not Set"}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex flex-col items-center min-w-fit">
-                <InlineField
-                  type="date"
-                  value={expectedClose ? String(expectedClose).split("T")[0] : null}
-                  onSave={(v) => onMetricSave("close_date", v)}
-                  formatValue={(v) => {
-                    if (!v) return "—";
-                    const [y, m, d] = String(v).split("-");
-                    const dt = new Date(Number(y), Number(m) - 1, Number(d));
-                    return formatDateShort(dt.toISOString());
-                  }}
-                  placeholder="—"
-                  className="items-center text-center font-semibold"
-                />
-                <span className="rq-micro-label">Close</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              {expectedClose ? (() => {
-                const [y, m, d] = String(expectedClose).split("T")[0].split("-");
-                const dt = new Date(Number(y), Number(m) - 1, Number(d));
-                return formatDateShort(dt.toISOString());
-              })() : "Not Set"}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        </TooltipProvider>
-
-        {/* F. Separator + Contact Selection Bar */}
-        <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
-
-        {/* G. Actions (ml-auto pushes to right) */}
+        {/* D. Actions (ml-auto pushes to right) */}
         <div className="flex items-center gap-2 ml-auto shrink-0">
           {/* Contact Selection Bar + Team Management */}
           <div className="flex items-center gap-1.5">
@@ -1951,6 +1878,82 @@ function DealHeader({
           </DropdownMenu>
 
         </div>
+      </div>
+
+      {/* ── ROW 2: Metrics Bar ── */}
+      <div className="hidden md:flex items-center gap-6 px-3 md:px-6 py-2 border-b flex-shrink-0 bg-muted/20">
+        <TooltipProvider>
+          {/* Asset Type */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Asset</span>
+                <InlineField
+                  type="select"
+                  value={HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? ""}
+                  options={HEADER_AC_LABELS}
+                  onSave={(v) => onMetricSave("property_type", HEADER_AC_LABEL_TO_KEY[v] ?? v)}
+                  className="font-semibold"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {HEADER_AC_KEY_TO_LABEL[assetClassKey ?? ""] ?? assetClass ?? "Not Set"}
+            </TooltipContent>
+          </Tooltip>
+
+          <div className="w-px h-4 bg-border shrink-0" />
+
+          {/* Loan Amount */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Loan</span>
+                <InlineField
+                  type="currency"
+                  value={loanAmount}
+                  formatValue={(v) => formatCompactCurrency(Number(v) || null)}
+                  onSave={(v) => onMetricSave("loan_amount", v)}
+                  className="font-semibold"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {loanAmount ? formatCompactCurrency(Number(loanAmount) || null) : "Not Set"}
+            </TooltipContent>
+          </Tooltip>
+
+          <div className="w-px h-4 bg-border shrink-0" />
+
+          {/* Close Date */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Close</span>
+                <InlineField
+                  type="date"
+                  value={expectedClose ? String(expectedClose).split("T")[0] : null}
+                  onSave={(v) => onMetricSave("close_date", v)}
+                  formatValue={(v) => {
+                    if (!v) return "—";
+                    const [y, m, d] = String(v).split("-");
+                    const dt = new Date(Number(y), Number(m) - 1, Number(d));
+                    return formatDateShort(dt.toISOString());
+                  }}
+                  placeholder="—"
+                  className="font-semibold"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {expectedClose ? (() => {
+                const [y, m, d] = String(expectedClose).split("T")[0].split("-");
+                const dt = new Date(Number(y), Number(m) - 1, Number(d));
+                return formatDateShort(dt.toISOString());
+              })() : "Not Set"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* ── Dialogs (rendered outside header layout, triggered by dropdown) ── */}
