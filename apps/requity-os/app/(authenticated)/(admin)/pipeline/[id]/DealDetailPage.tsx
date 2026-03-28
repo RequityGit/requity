@@ -95,6 +95,12 @@ import {
   type UnifiedStage,
   type StageConfig,
   STAGES,
+  ORIGINATION_STAGES,
+  SERVICING_STAGES,
+  isServicingStage,
+  isClosedStage,
+  showServicingUI,
+  getStageLabel,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
   ACTIVE_ASSET_CLASS_OPTIONS,
@@ -117,6 +123,8 @@ import { useSoftphoneMaybe } from "@/lib/twilio/softphone-context";
 
 const ActionCenterTab = lazy(() => import("@/components/pipeline/tabs/ActionCenterTab").then(m => ({ default: m.ActionCenterTab })));
 const FundraisingTab = lazy(() => import("@/components/fundraising/FundraisingTab").then(m => ({ default: m.FundraisingTab })));
+const ServicingTab = lazy(() => import("@/components/pipeline/tabs/ServicingTab").then(m => ({ default: m.ServicingTab })));
+const PaymentsTab = lazy(() => import("@/components/pipeline/tabs/PaymentsTab").then(m => ({ default: m.PaymentsTab })));
 import {
   logQuickActionV2,
   addDealTeamMember,
@@ -231,7 +239,8 @@ function DealDetailPageInner({
   isSuperAdmin = false,
   approvalInfo,
 }: DealDetailPageProps) {
-  const showFundraisingTab = deal.stage === "execution" || deal.stage === "closed";
+  const showFundraisingTab = deal.stage === "execution" || isClosedStage(deal.stage);
+  const showServicingTabs = showServicingUI(deal.stage);
   const hasAssetClass = !!deal.asset_class;
   const isResidential = normalizeAssetClass(deal.asset_class) === "residential_1_4";
   const showAnalysisTab = hasAssetClass && isResidential;
@@ -243,6 +252,8 @@ function DealDetailPageInner({
     "Property",
     ...(showAnalysisTab ? ["Analysis"] : []),
     ...(showUnderwritingTab ? ["Underwriting"] : []),
+    ...(showServicingTabs ? ["Servicing"] : []),
+    ...(showServicingTabs ? ["Payments"] : []),
     "Documents",
     ...(showFundraisingTab ? ["Fundraising"] : []),
   ] as const;
@@ -338,9 +349,12 @@ function DealDetailPageInner({
       if (targetStage === optimisticStage) return;
 
       const previousStage = optimisticStage;
-      const currentIdx = STAGES.findIndex((s) => s.key === previousStage);
-      const targetIdx = STAGES.findIndex((s) => s.key === targetStage);
-      const label = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+      const label = getStageLabel(targetStage);
+
+      // Use ALL_STAGES order for advance/regress detection
+      const stageOrder: string[] = [...ORIGINATION_STAGES.map(s => s.key), ...SERVICING_STAGES.map(s => s.key)];
+      const currentIdx = stageOrder.indexOf(previousStage);
+      const targetIdx = stageOrder.indexOf(targetStage);
 
       setOptimisticStage(targetStage as UnifiedStage);
 
@@ -360,7 +374,11 @@ function DealDetailPageInner({
 
   // Derive metrics for condensed header
   const currentStageIndex = STAGES.findIndex((s) => s.key === optimisticStage);
-  const currentStageName = optimisticStage === "closed" ? "Closed Won" : (STAGES[currentStageIndex]?.label ?? optimisticStage);
+  const currentStageName = (() => {
+    if (optimisticStage === "closed") return "Closed Won";
+    if (optimisticStage === "closed_lost") return "Closed Lost";
+    return getStageLabel(optimisticStage);
+  })();
   const uwData = deal.uw_data as Record<string, unknown> | null;
 
   // Optimistic header metrics state
@@ -422,6 +440,7 @@ function DealDetailPageInner({
           isSuperAdmin={isSuperAdmin}
           displayId={displayId}
           dealLabel={dealConfig.label}
+          effectiveStage={optimisticStage}
           currentStageIndex={currentStageIndex}
           currentStageName={currentStageName}
           stageJumping={stageJumping}
@@ -654,6 +673,24 @@ function DealDetailPageInner({
               </SectionErrorBoundary>
             </div>
           )}
+          {showServicingTabs && loadedTabs.has("Servicing") && (
+            <div className={activeTab !== "Servicing" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load servicing">
+                <Suspense fallback={<TabLoadingFallback />}>
+                  <ServicingTab deal={deal} />
+                </Suspense>
+              </SectionErrorBoundary>
+            </div>
+          )}
+          {showServicingTabs && loadedTabs.has("Payments") && (
+            <div className={activeTab !== "Payments" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load payments">
+                <Suspense fallback={<TabLoadingFallback />}>
+                  <PaymentsTab dealId={deal.id} />
+                </Suspense>
+              </SectionErrorBoundary>
+            </div>
+          )}
           {loadedTabs.has("People") && (
             <div className={activeTab !== "People" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load people">
@@ -746,6 +783,7 @@ function DealHeader({
   isSuperAdmin,
   displayId,
   dealLabel,
+  effectiveStage,
   currentStageIndex,
   currentStageName,
   stageJumping,
@@ -767,6 +805,7 @@ function DealHeader({
   isSuperAdmin: boolean;
   displayId: string;
   dealLabel: string;
+  effectiveStage: string;
   currentStageIndex: number;
   currentStageName: string;
   stageJumping: boolean;
@@ -1275,44 +1314,86 @@ function DealHeader({
               }
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            {STAGES.map((stage, i) => {
-              const isCurrent = i === currentStageIndex;
-              const isCompleted = i < currentStageIndex;
-              const isFuture = i > currentStageIndex;
-              const isClosed = stage.key === "closed";
+          <DropdownMenuContent align="start" className="w-52">
+            {(() => {
+              // Show servicing stages when deal is in execution or any closed_* stage
+              const dealStage = deal.stage;
+              const showServicing = dealStage === "execution" || isClosedStage(dealStage) || isServicingStage(dealStage);
+              const allStageOrder: string[] = [...ORIGINATION_STAGES.map(s => s.key), ...SERVICING_STAGES.map(s => s.key)];
+              const currentOrderIdx = allStageOrder.indexOf(effectiveStage);
+
               return (
-                <DropdownMenuItem
-                  key={stage.key}
-                  disabled={isCurrent || stageJumping}
-                  onSelect={() => onStageChange(stage.key)}
-                  className={cn(
-                    "gap-2",
-                    isCurrent && "font-semibold bg-muted/50",
-                    isClosed && "text-emerald-600 dark:text-emerald-400"
+                <>
+                  {/* Origination stages */}
+                  {ORIGINATION_STAGES.map((stage) => {
+                    const orderIdx = allStageOrder.indexOf(stage.key);
+                    const isCurrent = stage.key === effectiveStage;
+                    const isCompleted = orderIdx < currentOrderIdx;
+                    return (
+                      <DropdownMenuItem
+                        key={stage.key}
+                        disabled={isCurrent || stageJumping}
+                        onSelect={() => onStageChange(stage.key)}
+                        className={cn("gap-2", isCurrent && "font-semibold bg-muted/50")}
+                      >
+                        <div className={cn(
+                          "h-2 w-2 rounded-full shrink-0",
+                          isCompleted && "bg-emerald-500",
+                          isCurrent && "bg-foreground ring-2 ring-foreground/15",
+                          !isCompleted && !isCurrent && "bg-muted border border-border"
+                        )} />
+                        {stage.label}
+                        {isCurrent && <Check className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+
+                  {/* Servicing stages (shown conditionally) */}
+                  {showServicing && (
+                    <>
+                      <DropdownMenuSeparator />
+                      {SERVICING_STAGES.map((stage) => {
+                        const isCurrent = stage.key === effectiveStage;
+                        const orderIdx = allStageOrder.indexOf(stage.key);
+                        const isCompleted = orderIdx < currentOrderIdx;
+                        return (
+                          <DropdownMenuItem
+                            key={stage.key}
+                            disabled={isCurrent || stageJumping}
+                            onSelect={() => onStageChange(stage.key)}
+                            className={cn(
+                              "gap-2",
+                              isCurrent && "font-semibold bg-muted/50",
+                              !isCurrent && "text-emerald-600 dark:text-emerald-400"
+                            )}
+                          >
+                            <div className={cn(
+                              "h-2 w-2 rounded-full shrink-0",
+                              isCompleted && "bg-emerald-500",
+                              isCurrent && "bg-foreground ring-2 ring-foreground/15",
+                              !isCompleted && !isCurrent && "bg-emerald-500/40 border border-emerald-500/60"
+                            )} />
+                            Closed - {stage.label}
+                            {isCurrent && <Check className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </>
                   )}
-                >
-                  <div className={cn(
-                    "h-2 w-2 rounded-full shrink-0",
-                    isCompleted && "bg-emerald-500",
-                    isCurrent && "bg-foreground ring-2 ring-foreground/15",
-                    isFuture && !isClosed && "bg-muted border border-border",
-                    isClosed && !isCompleted && !isCurrent && "bg-emerald-500/40 border border-emerald-500/60"
-                  )} />
-                  {isClosed ? "Closed Won" : stage.label}
-                  {isCurrent && <Check className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
-                </DropdownMenuItem>
+
+                  {/* Closed Lost */}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={stageJumping || deal.status === "lost"}
+                    onSelect={() => setClosedLostOpen(true)}
+                    className="gap-2 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-500/10"
+                  >
+                    <div className="h-2 w-2 rounded-full shrink-0 bg-red-500/40 border border-red-500/60" />
+                    Closed Lost
+                  </DropdownMenuItem>
+                </>
               );
-            })}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              disabled={stageJumping || deal.status === "lost"}
-              onSelect={() => setClosedLostOpen(true)}
-              className="gap-2 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-500/10"
-            >
-              <div className="h-2 w-2 rounded-full shrink-0 bg-red-500/40 border border-red-500/60" />
-              Closed Lost
-            </DropdownMenuItem>
+            })()}
           </DropdownMenuContent>
         </DropdownMenu>
 

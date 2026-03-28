@@ -12,7 +12,10 @@ import {
 } from "@/lib/format";
 
 export type CapitalSide = "debt" | "equity";
-export type UnifiedStage = "lead" | "analysis" | "negotiation" | "execution" | "closed";
+export type OriginationStage = "lead" | "analysis" | "negotiation" | "execution";
+export type ServicingStage = "closed_brokered" | "closed_active" | "closed_pre_sale" | "closed_sold" | "closed_paid_off";
+export type TerminalStage = "closed_lost";
+export type UnifiedStage = OriginationStage | ServicingStage | TerminalStage | "closed";
 export type DealStatus = "active" | "won" | "lost" | "on_hold";
 export type AlertLevel = "normal" | "warn" | "alert";
 
@@ -140,6 +143,19 @@ export interface UnifiedDeal {
   approval_status?: "pending" | "approved" | "changes_requested" | "declined" | null;
   approval_requested_at?: string | null;
   approval_requested_by?: string | null;
+  // Servicing fields
+  maturity_date?: string | null;
+  current_maturity_date?: string | null;
+  funding_date?: string | null;
+  first_payment_date?: string | null;
+  payoff_date?: string | null;
+  note_sold_to?: string | null;
+  note_sale_date?: string | null;
+  note_sale_price?: number | null;
+  servicing_status?: string | null;
+  extension_count?: number | null;
+  total_draws_funded?: number | null;
+  draw_count?: number | null;
   // Computed client-side
   days_in_stage?: number;
   alert_level?: AlertLevel;
@@ -220,13 +236,58 @@ export interface DealTask {
 
 // ─── Constants ───
 
-export const STAGES: { key: UnifiedStage; label: string }[] = [
+/** Origination-only stages (board default, pre-close dropdown) */
+export const ORIGINATION_STAGES: { key: UnifiedStage; label: string }[] = [
   { key: "lead", label: "Intake" },
   { key: "analysis", label: "Analysis" },
   { key: "negotiation", label: "Negotiation" },
   { key: "execution", label: "Execution" },
+];
+
+/** Post-close / servicing stages */
+export const SERVICING_STAGES: { key: ServicingStage; label: string }[] = [
+  { key: "closed_brokered", label: "Brokered" },
+  { key: "closed_active", label: "Active" },
+  { key: "closed_pre_sale", label: "Pre-Sale" },
+  { key: "closed_sold", label: "Sold" },
+  { key: "closed_paid_off", label: "Paid Off" },
+];
+
+/** All stages including servicing (for lifecycle view) */
+export const ALL_STAGES: { key: UnifiedStage; label: string }[] = [
+  ...ORIGINATION_STAGES,
+  ...SERVICING_STAGES,
+];
+
+/** Default board stages (origination + rolled-up "Closed") */
+export const STAGES: { key: UnifiedStage; label: string }[] = [
+  ...ORIGINATION_STAGES,
   { key: "closed", label: "Closed" },
 ];
+
+/** Check if a stage is a servicing (post-close) stage */
+export function isServicingStage(stage: string): stage is ServicingStage {
+  return stage.startsWith("closed_") && stage !== "closed_lost";
+}
+
+/** Check if a stage is a closed stage (any closed_* or legacy "closed") */
+export function isClosedStage(stage: string): boolean {
+  return stage === "closed" || stage.startsWith("closed_");
+}
+
+/** Check if a deal should show servicing tabs (closed_* except brokered) */
+export function showServicingUI(stage: string): boolean {
+  return isServicingStage(stage) && stage !== "closed_brokered";
+}
+
+/** Get stage label from any stage key */
+export function getStageLabel(stage: string): string {
+  const found = ALL_STAGES.find((s) => s.key === stage);
+  if (found) return found.label;
+  if (stage === "closed") return "Closed";
+  if (stage === "closed_lost") return "Closed Lost";
+  return stage;
+}
 
 /** Stage groups for the grouped table view — ordered top to bottom like a deal lifecycle */
 export interface StageGroup {

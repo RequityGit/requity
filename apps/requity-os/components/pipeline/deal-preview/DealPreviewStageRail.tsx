@@ -15,7 +15,7 @@ const STAGES: { key: UnifiedStage; label: string }[] = [
   { key: "closed", label: "Closed" },
 ];
 
-const STAGE_COLORS: Record<UnifiedStage, { dot: string; activeBg: string; activeFg: string; line: string }> = {
+const STAGE_COLORS: Partial<Record<UnifiedStage, { dot: string; activeBg: string; activeFg: string; line: string }>> = {
   lead:        { dot: "bg-zinc-400",   activeBg: "bg-zinc-700",   activeFg: "text-white", line: "bg-zinc-300" },
   analysis:    { dot: "bg-blue-600",   activeBg: "bg-blue-600",   activeFg: "text-white", line: "bg-blue-300" },
   negotiation: { dot: "bg-amber-600",  activeBg: "bg-amber-600",  activeFg: "text-white", line: "bg-amber-300" },
@@ -78,7 +78,7 @@ export function DealPreviewStageRail({
         {/* Stage dots */}
         <div className="flex flex-1 items-center justify-center gap-0">
           {STAGES.map((stage, i) => {
-            const colors = STAGE_COLORS[stage.key];
+            const colors = STAGE_COLORS[stage.key] ?? { dot: "bg-muted", activeBg: "bg-muted", activeFg: "text-foreground", line: "bg-border" };
             const isActive = stage.key === currentStage;
             const isPast = i < currentIdx;
 
@@ -127,7 +127,7 @@ export function DealPreviewStageRail({
           className={cn(
             "flex h-[26px] shrink-0 items-center justify-center gap-1 rounded-md border-none text-[11px] font-semibold rq-transition",
             canAdvance
-              ? cn("cursor-pointer px-2.5 text-white", STAGE_COLORS[nextStage!.key].activeBg, "hover:opacity-90")
+              ? cn("cursor-pointer px-2.5 text-white", STAGE_COLORS[nextStage!.key]?.activeBg ?? "bg-muted", "hover:opacity-90")
               : "px-1.5 text-muted-foreground/30 cursor-default"
           )}
           title={canAdvance ? `Advance to ${nextStage!.label}` : ""}
