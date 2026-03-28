@@ -363,7 +363,7 @@ function PropertyDetailsContent({
           showError(
             "Could not enrich property",
             is404
-              ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+              ? `No match for "${searchedAddr}". Try using the full street name without abbreviations (e.g., "Mount" instead of "Mt", "Road" instead of "Rd"). You can also enter details manually below.`
               : errorMsg
           );
           showInfo(
