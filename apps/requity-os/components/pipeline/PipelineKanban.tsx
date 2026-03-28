@@ -53,8 +53,12 @@ const STAGE_KEY_SET = new Set<string>(STAGES.map((s) => s.key));
  * stage-column droppables so within-column reorders resolve correctly.
  */
 const kanbanCollisionDetection: CollisionDetection = (args) => {
+  const activeId = String(args.active.id);
+
   // 1. Find all droppables whose rect contains the pointer
-  const pointerCollisions = pointerWithin(args);
+  const pointerCollisions = pointerWithin(args).filter(
+    (collision) => String(collision.id) !== activeId
+  );
 
   if (pointerCollisions.length > 0) {
     // 2. Prefer card-level droppables (IDs NOT in STAGE_KEY_SET)
@@ -77,7 +81,9 @@ const kanbanCollisionDetection: CollisionDetection = (args) => {
   }
 
   // 3. Fallback for fast pointer movement: use rect intersection
-  const rectHits = rectIntersection(args);
+  const rectHits = rectIntersection(args).filter(
+    (collision) => String(collision.id) !== activeId
+  );
   if (rectHits.length > 0) return rectHits;
 
   // 4. Last resort: closestCenter across stage columns only
