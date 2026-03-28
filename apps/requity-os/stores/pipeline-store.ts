@@ -123,11 +123,12 @@ export const usePipelineStore = create<PipelineState>()(
       set((state) => {
         orderedIds.forEach((id, index) => {
           const deal = state.deals.get(id);
-          if (deal && deal.stage === stage) {
+          if (deal && deal.stage === stage && deal.sort_order !== index) {
             state.deals.set(id, { ...deal, sort_order: index });
           }
         });
-        state.dealsVersion++;
+        // Do NOT increment dealsVersion — sort-order-only changes
+        // should not trigger expensive array rebuilds
       }),
 
     updateDeal: (dealId, patch) =>
