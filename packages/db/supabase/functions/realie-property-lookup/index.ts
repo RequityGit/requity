@@ -202,6 +202,71 @@ function stateToAbbreviation(stateName: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Street address normalization for RealIE exact matching
+// RealIE stores full street names (e.g. "Mount Pleasant Road" not "Mt Pleasant Rd")
+// Their API does exact matching — abbreviations cause 404s
+// ---------------------------------------------------------------------------
+
+const STREET_SUFFIX_MAP: Record<string, string> = {
+  "Rd": "Road", "Rd.": "Road",
+  "St": "Street", "St.": "Street",
+  "Dr": "Drive", "Dr.": "Drive",
+  "Ave": "Avenue", "Ave.": "Avenue",
+  "Blvd": "Boulevard", "Blvd.": "Boulevard",
+  "Ln": "Lane", "Ln.": "Lane",
+  "Ct": "Court", "Ct.": "Court",
+  "Pl": "Place", "Pl.": "Place",
+  "Cir": "Circle", "Cir.": "Circle",
+  "Pkwy": "Parkway", "Hwy": "Highway",
+  "Trl": "Trail", "Trce": "Trace",
+  "Xing": "Crossing", "Holw": "Hollow",
+  "Cv": "Cove", "Pt": "Point",
+  "Brg": "Bridge", "Aly": "Alley",
+  "Ter": "Terrace",
+};
+
+const DIRECTIONAL_MAP: Record<string, string> = {
+  "N": "North", "S": "South", "E": "East", "W": "West",
+  "NE": "Northeast", "NW": "Northwest",
+  "SE": "Southeast", "SW": "Southwest",
+};
+
+const NAME_PREFIX_MAP: Record<string, string> = {
+  "Mt": "Mount", "Mt.": "Mount",
+  "Ft": "Fort", "Ft.": "Fort",
+};
+
+function expandStreetAddress(street: string): string {
+  const words = street.split(/\s+/);
+  if (words.length < 2) return street;
+
+  // Expand last word if it's a known street suffix (Rd → Road, St → Street, etc.)
+  const lastWord = words[words.length - 1];
+  const cleanLast = lastWord.replace(/\.$/, "");
+  if (STREET_SUFFIX_MAP[lastWord]) {
+    words[words.length - 1] = STREET_SUFFIX_MAP[lastWord];
+  } else if (STREET_SUFFIX_MAP[cleanLast]) {
+    words[words.length - 1] = STREET_SUFFIX_MAP[cleanLast];
+  }
+
+  // Expand first word if it's a directional (N → North, etc.)
+  if (DIRECTIONAL_MAP[words[0]]) {
+    words[0] = DIRECTIONAL_MAP[words[0]];
+  }
+
+  // Expand name prefixes: Mt → Mount, Ft → Fort
+  // Do NOT expand "St" as "Saint" here — it conflicts with "Street" suffix handling
+  for (let i = 0; i < words.length - 1; i++) {
+    const clean = words[i].replace(/\.$/, "");
+    if (NAME_PREFIX_MAP[clean]) {
+      words[i] = NAME_PREFIX_MAP[clean];
+    }
+  }
+
+  return words.join(" ");
+}
+
+// ---------------------------------------------------------------------------
 // Address parsing
 // ---------------------------------------------------------------------------
 
@@ -698,7 +763,7 @@ Deno.serve(async (req) => {
     const { data: property, error: fetchError } = await admin
       .from("properties")
       .select(
-        "id, address_line1, address_line2, city, state, zip, county"
+        "id, address_line1, address_line2, city, state, zip, county, parcel_id"
       )
       .eq("id", body.property_id)
       .single();
@@ -728,6 +793,9 @@ Deno.serve(async (req) => {
     // Parse address
     const parsed = parseAddress(rawAddress, rawCity, rawState, rawZip, rawCounty);
 
+    // Expand abbreviations for RealIE exact matching
+    const expandedStreet = expandStreetAddress(parsed.street);
+
     if (!parsed.street || !parsed.state) {
       return new Response(
         JSON.stringify({
@@ -738,62 +806,135 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build RealIE API URL
-    const params = new URLSearchParams({
-      address: parsed.street,
+    // -----------------------------------------------------------------------
+    // Try address lookup with multiple strategies, fall back to parcel ID
+    // -----------------------------------------------------------------------
+
+    const REALIE_PARCEL_URL =
+      "https://app.realie.ai/api/public/property/parcelId/";
+
+    async function callRealie(url: string, apiKey: string): Promise<Response> {
+      let resp = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: apiKey },
+        signal: AbortSignal.timeout(12000),
+      });
+
+      // Retry with Bearer prefix if 400/401
+      if (
+        (resp.status === 400 || resp.status === 401) &&
+        !apiKey.startsWith("Bearer ")
+      ) {
+        resp = await fetch(url, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${apiKey}` },
+          signal: AbortSignal.timeout(12000),
+        });
+      }
+
+      return resp;
+    }
+
+    // Strategy 1: Expanded address with city + county (if both available)
+    const params1 = new URLSearchParams({
+      address: expandedStreet,
       state: parsed.state,
     });
-
-    // Only include city if county is also available
     if (parsed.city && parsed.county) {
-      params.set("city", parsed.city);
-      params.set("county", stripCountySuffix(parsed.county));
+      params1.set("city", parsed.city);
+      params1.set("county", stripCountySuffix(parsed.county));
     }
-
     if (parsed.unit) {
-      params.set("unitNumberStripped", parsed.unit);
+      params1.set("unitNumberStripped", parsed.unit);
     }
 
-    const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
+    let realieUrl = `${REALIE_BASE_URL}?${params1.toString()}`;
+    console.log(
+      `[realie-property-lookup] Strategy 1 (expanded+full): ${realieUrl}`
+    );
+    let response = await callRealie(realieUrl, REALIE_API_KEY);
 
-    // Call RealIE API
-    let response = await fetch(realieUrl, {
-      method: "GET",
-      headers: { Authorization: REALIE_API_KEY },
-      signal: AbortSignal.timeout(15000),
-    });
-
-    // Retry with Bearer prefix if 400/401
-    if (
-      (response.status === 400 || response.status === 401) &&
-      !REALIE_API_KEY.startsWith("Bearer ")
-    ) {
-      response = await fetch(realieUrl, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${REALIE_API_KEY}` },
-        signal: AbortSignal.timeout(15000),
+    // Strategy 2: Original (non-expanded) address — in case RealIE has the abbreviated form
+    if (response.status === 404 && expandedStreet !== parsed.street) {
+      const params2 = new URLSearchParams({
+        address: parsed.street,
+        state: parsed.state,
       });
+      if (parsed.city && parsed.county) {
+        params2.set("city", parsed.city);
+        params2.set("county", stripCountySuffix(parsed.county));
+      }
+      if (parsed.unit) {
+        params2.set("unitNumberStripped", parsed.unit);
+      }
+
+      realieUrl = `${REALIE_BASE_URL}?${params2.toString()}`;
+      console.log(
+        `[realie-property-lookup] Strategy 2 (original+full): ${realieUrl}`
+      );
+      response = await callRealie(realieUrl, REALIE_API_KEY);
+    }
+
+    // Strategy 3: Expanded address WITHOUT city/county — sometimes fewer params = better match
+    if (response.status === 404) {
+      const params3 = new URLSearchParams({
+        address: expandedStreet,
+        state: parsed.state,
+      });
+      if (parsed.unit) {
+        params3.set("unitNumberStripped", parsed.unit);
+      }
+
+      realieUrl = `${REALIE_BASE_URL}?${params3.toString()}`;
+      console.log(
+        `[realie-property-lookup] Strategy 3 (expanded+minimal): ${realieUrl}`
+      );
+      response = await callRealie(realieUrl, REALIE_API_KEY);
+    }
+
+    // Strategy 4: Parcel ID lookup (if parcel_id available in the property record)
+    if (
+      response.status === 404 &&
+      property.parcel_id &&
+      parsed.county &&
+      parsed.state
+    ) {
+      const parcelParams = new URLSearchParams({
+        state: parsed.state,
+        county: stripCountySuffix(parsed.county),
+        parcelId: property.parcel_id,
+      });
+
+      const parcelUrl = `${REALIE_PARCEL_URL}?${parcelParams.toString()}`;
+      console.log(
+        `[realie-property-lookup] Strategy 4 (parcel ID): ${parcelUrl}`
+      );
+      response = await callRealie(parcelUrl, REALIE_API_KEY);
     }
 
     // Handle 429 rate limit with retry
     if (response.status === 429) {
       console.log("[realie-property-lookup] Rate limited, retrying after 2s");
       await new Promise((r) => setTimeout(r, 2000));
-      response = await fetch(realieUrl, {
-        method: "GET",
-        headers: { Authorization: REALIE_API_KEY },
-        signal: AbortSignal.timeout(15000),
-      });
+      response = await callRealie(realieUrl, REALIE_API_KEY);
       if (response.status === 429) {
         return new Response(
           JSON.stringify({
             error: "RealIE rate limit exceeded. Try again in a minute.",
             realie_status: 429,
           }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
         );
       }
     }
+
+    // Log final result
+    console.log(
+      `[realie-property-lookup] Final response status: ${response.status}`
+    );
 
     // Handle error responses
     if (!response.ok) {
@@ -805,10 +946,10 @@ Deno.serve(async (req) => {
       );
 
       const errorMessages: Record<number, string> = {
-        400: "RealIE could not find this address. Check that the street address is correct.",
+        400: "RealIE could not parse this address. Check the street address format.",
         401: "RealIE API authentication failed. Check API key.",
         403: "RealIE API authentication failed. Check API key.",
-        404: "Property not found in RealIE database for this address.",
+        404: `Property not found in RealIE. Tried "${expandedStreet}, ${parsed.city ?? ""}, ${parsed.state}". The address may need to match county tax records exactly. You can enter property details manually.`,
       };
 
       const errorMsg =
