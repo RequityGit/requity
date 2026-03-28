@@ -14,6 +14,8 @@ import {
   formatCurrency,
   daysInStage,
   getAlertLevel,
+  isServicingStage,
+  showServicingUI,
 } from "./pipeline-types";
 import {
   getDealDisplayConfig,
@@ -106,7 +108,7 @@ export function getLoanTypeLabel(deal: UnifiedDeal): string | null {
 
 export function getAmountLabel(deal: UnifiedDeal): string {
   const isEquity = deal.capital_side === "equity";
-  const isClosed = deal.stage === "closed";
+  const isClosed = deal.stage === "closed" || isServicingStage(deal.stage);
   const isLateStage = deal.stage === "negotiation" || deal.stage === "execution";
 
   if (isClosed) return isEquity ? "Equity Committed" : "Funded";
@@ -132,6 +134,49 @@ function getConditionsBarColor(progress: { completed: number; total: number }): 
   if (progress.completed === progress.total) return "bg-emerald-500";
   const pct = (progress.completed / progress.total) * 100;
   return pct > 50 ? "bg-blue-500" : "bg-amber-500";
+}
+
+function getMaturityCountdown(deal: UnifiedDeal): { text: string; color: string } | null {
+  if (deal.stage === "closed_paid_off") {
+    return {
+      text: `Paid Off ${deal.payoff_date ? formatDateShort(deal.payoff_date) : ""}`.trim(),
+      color: "text-blue-600 dark:text-blue-400",
+    };
+  }
+  if (deal.stage === "closed_brokered") return null;
+
+  const maturityDate = deal.current_maturity_date ?? deal.maturity_date;
+  if (!maturityDate) return null;
+
+  const [y, m, d] = maturityDate.split("-").map(Number);
+  const maturity = new Date(y!, m! - 1, d!);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const daysRemaining = Math.floor((maturity.getTime() - now.getTime()) / 86400000);
+
+  let color = "text-emerald-600 dark:text-emerald-400";
+  if (daysRemaining < 30) color = "text-red-600 dark:text-red-400";
+  else if (daysRemaining < 90) color = "text-amber-600 dark:text-amber-400";
+
+  return {
+    text: `${formatDateShort(maturityDate)} (${daysRemaining}d)`,
+    color,
+  };
+}
+
+function getServicingBadge(status: string | null | undefined): { label: string; className: string } {
+  switch (status) {
+    case "current":
+      return { label: "Current", className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" };
+    case "late":
+      return { label: "Late", className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" };
+    case "default":
+      return { label: "Default", className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" };
+    case "paid_off":
+      return { label: "Paid Off", className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" };
+    default:
+      return { label: "—", className: "bg-muted text-muted-foreground border-border" };
+  }
 }
 
 // ─── Shared card content (used by both DealCard and DealCardOverlay) ───
@@ -160,12 +205,17 @@ function CardContent({
   const propertyName = deal.name;
   const displayAddress = address || (isCommercial ? "" : deal.name);
   const loanType = getLoanTypeLabel(deal);
-  const isClosed = deal.status === "won" || deal.status === "lost" || deal.stage === "closed";
+  const isClosed = deal.status === "won" || deal.status === "lost" || deal.stage === "closed" || isServicingStage(deal.stage);
   const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
   const condPct = conditionsProgress && conditionsProgress.total > 0
     ? Math.round((conditionsProgress.completed / conditionsProgress.total) * 100)
     : 0;
   const condAllDone = conditionsProgress != null && conditionsProgress.total > 0 && conditionsProgress.completed === conditionsProgress.total;
+
+  const isServicing = isServicingStage(deal.stage);
+  const isBrokered = deal.stage === "closed_brokered";
+  const maturityCountdown = isServicing ? getMaturityCountdown(deal) : null;
+  const servicingBadge = isServicing && !isBrokered ? getServicingBadge(deal.servicing_status) : null;
 
   return (
     <>
@@ -298,31 +348,55 @@ function CardContent({
           </div>
         </div>
 
-        {/* Row 5: Conditions progress bar */}
-        {conditionsProgress && conditionsProgress.total > 0 && (
-          <div className="mt-2.5 flex items-center gap-2">
-            <div className="flex-1">
-              <div className="w-full h-1 rounded-full bg-border overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full rq-transition",
-                    getConditionsBarColor(conditionsProgress)
-                  )}
-                  style={{ width: `${condPct}%` }}
-                />
-              </div>
-            </div>
-            <span
-              className={cn(
-                "text-[10px] font-semibold num whitespace-nowrap shrink-0",
-                condAllDone
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-muted-foreground"
-              )}
-            >
-              {conditionsProgress.completed}/{conditionsProgress.total}
+        {/* Row 5: Servicing maturity + status OR Conditions progress bar */}
+        {isServicing && !isBrokered ? (
+          <div className="mt-2.5 flex items-center justify-between gap-2">
+            {maturityCountdown && (
+              <span className={cn("text-[11px] font-semibold num", maturityCountdown.color)}>
+                Matures: {maturityCountdown.text}
+              </span>
+            )}
+            {servicingBadge && (
+              <span className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded border shrink-0",
+                servicingBadge.className
+              )}>
+                {servicingBadge.label}
+              </span>
+            )}
+          </div>
+        ) : isBrokered ? (
+          <div className="mt-2.5">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-muted text-muted-foreground border-border">
+              Brokered
             </span>
           </div>
+        ) : (
+          conditionsProgress && conditionsProgress.total > 0 && (
+            <div className="mt-2.5 flex items-center gap-2">
+              <div className="flex-1">
+                <div className="w-full h-1 rounded-full bg-border overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full rq-transition",
+                      getConditionsBarColor(conditionsProgress)
+                    )}
+                    style={{ width: `${condPct}%` }}
+                  />
+                </div>
+              </div>
+              <span
+                className={cn(
+                  "text-[10px] font-semibold num whitespace-nowrap shrink-0",
+                  condAllDone
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground"
+                )}
+              >
+                {conditionsProgress.completed}/{conditionsProgress.total}
+              </span>
+            </div>
+          )
         )}
       </div>
 
@@ -451,7 +525,7 @@ function DealCardInner({
     return { days: d, alertLevel: al };
   }, [deal.stage_entered_at, stageConfig]);
 
-  const isClosed = deal.status === "won" || deal.status === "lost";
+  const isClosed = deal.status === "won" || deal.status === "lost" || isServicingStage(deal.stage);
   const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
   const glowing = closeDateStatus === "urgent" || closeDateStatus === "overdue";
 
@@ -474,7 +548,7 @@ function DealCardInner({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSelected && "ring-2 ring-primary/40",
         isDragging && "opacity-50",
-        isClosed && "opacity-60",
+        isClosed && !isServicingStage(deal.stage) && "opacity-60",
         glowing && "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow"
       )}
     >
@@ -505,6 +579,10 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.sort_order === next.deal.sort_order &&
     prev.deal.primary_contact_id === next.deal.primary_contact_id &&
     prev.deal.broker_contact_id === next.deal.broker_contact_id &&
+    prev.deal.servicing_status === next.deal.servicing_status &&
+    prev.deal.current_maturity_date === next.deal.current_maturity_date &&
+    prev.deal.maturity_date === next.deal.maturity_date &&
+    prev.deal.payoff_date === next.deal.payoff_date &&
     prev.stageConfig?.stage === next.stageConfig?.stage &&
     prev.conditionsProgress?.completed === next.conditionsProgress?.completed &&
     prev.conditionsProgress?.total === next.conditionsProgress?.total &&
@@ -522,7 +600,7 @@ export function DealCardOverlay({
 }: Omit<DealCardProps, "onClick">) {
   const days = daysInStage(deal.stage_entered_at);
   const alertLevel = getAlertLevel(days, stageConfig);
-  const isClosed = deal.status === "won" || deal.status === "lost";
+  const isClosed = deal.status === "won" || deal.status === "lost" || isServicingStage(deal.stage);
   const closeDateStatus = isClosed ? "normal" : getCloseDateStatus(deal.close_date);
   const glowing = closeDateStatus === "urgent" || closeDateStatus === "overdue";
 
@@ -533,7 +611,7 @@ export function DealCardOverlay({
         glowing
           ? "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow cursor-grabbing"
           : "ring-2 ring-primary/50 cursor-grabbing",
-        isClosed && "opacity-60"
+        isClosed && !isServicingStage(deal.stage) && "opacity-60"
       )}
     >
       <CardContent

@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, LayoutGrid, List, Plus, Search, SlidersHorizontal, XCircle } from "lucide-react";
+import { ArrowLeftRight, Calendar, LayoutGrid, List, Plus, Search, SlidersHorizontal, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateAddedFilter } from "@/components/ui/date-added-filter";
 import { ACTIVE_ASSET_CLASS_OPTIONS, type CapitalSide } from "./pipeline-types";
@@ -40,6 +40,8 @@ interface DealFiltersProps {
   searchInputRef?: React.RefObject<HTMLInputElement | null>;
   showingLostDeals?: boolean;
   onToggleLostDeals?: () => void;
+  lifecycleView?: boolean;
+  onToggleLifecycle?: () => void;
 }
 
 export function DealFilters({
@@ -49,6 +51,8 @@ export function DealFilters({
   searchInputRef,
   showingLostDeals,
   onToggleLostDeals,
+  lifecycleView,
+  onToggleLifecycle,
 }: DealFiltersProps) {
   function update(partial: Partial<FilterState>) {
     onChange({ ...filters, ...partial });
@@ -291,6 +295,23 @@ export function DealFilters({
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Lifecycle toggle (kanban only) */}
+        {onToggleLifecycle && filters.view === "kanban" && !showingLostDeals && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToggleLifecycle}
+            className={cn(
+              "h-10 md:h-9 gap-1.5 hidden md:flex",
+              lifecycleView &&
+                "border-primary/50 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+            )}
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            <span>Lifecycle</span>
+          </Button>
+        )}
+
         {/* View toggle (hidden on mobile -- table view is forced) */}
         <div className="hidden md:flex rounded-md border">
           <button

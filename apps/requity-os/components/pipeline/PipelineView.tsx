@@ -12,7 +12,7 @@ import { PipelineTable } from "./PipelineTable";
 import { MobileDealList } from "./MobileDealList";
 import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
-import { STAGES, type UnifiedDeal } from "./pipeline-types";
+import { STAGES, ALL_STAGES, type UnifiedDeal } from "./pipeline-types";
 import { getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import {
   useAllDeals,
@@ -85,6 +85,7 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
   const effectiveView = isMobile || showingLostDeals ? "table" : filters.view;
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [reviewItem, setReviewItem] = useState<IntakeItem | null>(null);
+  const [lifecycleView, setLifecycleView] = useState(false);
 
   // Filter deals
   const filteredDeals = useMemo(() => {
@@ -125,14 +126,20 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
   // Build ordered deal IDs (stages left-to-right, amount within stage)
   const orderedDealIds = useMemo(() => {
     const ids: string[] = [];
-    for (const stage of STAGES) {
+    const stageList = lifecycleView ? ALL_STAGES : STAGES;
+    for (const stage of stageList) {
       const stageDeals = filteredDeals
-        .filter((d) => d.stage === stage.key)
+        .filter((d) => {
+          if (stage.key === "closed" && !lifecycleView) {
+            return d.stage === "closed" || (d.stage.startsWith("closed_") && d.stage !== "closed_lost");
+          }
+          return d.stage === stage.key;
+        })
         .sort(sortDeals);
       for (const d of stageDeals) ids.push(d.id);
     }
     return ids;
-  }, [filteredDeals]);
+  }, [filteredDeals, lifecycleView]);
 
   const { isOpen: isPreviewOpen } = useDealPreview();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -197,6 +204,8 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
         searchInputRef={searchInputRef}
         showingLostDeals={showingLostDeals}
         onToggleLostDeals={handleToggleLostDeals}
+        lifecycleView={lifecycleView}
+        onToggleLifecycle={() => setLifecycleView((v) => !v)}
       />
 
       {isMobile ? (
@@ -216,6 +225,7 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
           teamMembers={teamMembers}
           conditionsMap={conditionsMap}
           selectedDealId={selectedDealId}
+          lifecycleView={lifecycleView}
         />
       ) : (
         <PipelineTable

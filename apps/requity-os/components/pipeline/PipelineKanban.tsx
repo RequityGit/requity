@@ -38,6 +38,10 @@ import {
   type StageConfig,
   type UnifiedStage,
   STAGES,
+  ORIGINATION_STAGES,
+  SERVICING_STAGES,
+  isServicingStage,
+  getStageLabel,
 } from "./pipeline-types";
 import { formatCompactCurrency } from "@/lib/format";
 import { usePipelineStore } from "@/stores/pipeline-store";
@@ -46,8 +50,13 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Layers } from "lucide-react";
 import type { ConditionsProgress } from "@/stores/pipeline-store";
 
-// Static set of stage keys for collision detection (module-level, stable reference)
-const STAGE_KEY_SET = new Set<string>(STAGES.map((s) => s.key));
+// Static set of ALL possible stage keys for collision detection
+const ALL_STAGE_KEYS = new Set<string>([
+  ...STAGES.map((s) => s.key),
+  ...SERVICING_STAGES.map((s) => s.key),
+]);
+// Legacy alias used by collision detection
+const STAGE_KEY_SET = ALL_STAGE_KEYS;
 
 /**
  * Custom collision detection that prioritises card-level droppables over
@@ -111,6 +120,7 @@ interface PipelineKanbanProps {
   teamMembers: { id: string; full_name: string }[];
   conditionsMap: Map<string, ConditionsProgress>;
   selectedDealId?: string | null;
+  lifecycleView?: boolean;
 }
 
 function StageColumn({
@@ -145,6 +155,7 @@ export function PipelineKanban({
   teamMembers,
   conditionsMap,
   selectedDealId,
+  lifecycleView = false,
 }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -355,8 +366,7 @@ export function PipelineKanban({
               return;
             }
 
-            const stageLabel =
-              STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+            const stageLabel = getStageLabel(targetStage);
             showWarning(
               `${deal.name} moved to ${stageLabel}`,
               "Order could not be saved right now. Stage change was saved."
@@ -364,8 +374,7 @@ export function PipelineKanban({
             return;
           }
 
-          const stageLabel =
-            STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+          const stageLabel = getStageLabel(targetStage);
           showSuccess(`${deal.name} moved to ${stageLabel}`);
         }
       } finally {
@@ -388,17 +397,33 @@ export function PipelineKanban({
     ? deals.find((d) => d.id === activeId)
     : null;
 
+  // Determine columns based on lifecycle view
+  const boardColumns = useMemo(() => {
+    if (lifecycleView) {
+      return [
+        ...ORIGINATION_STAGES,
+        ...SERVICING_STAGES,
+      ];
+    }
+    return STAGES;
+  }, [lifecycleView]);
+
   // Memoize stage calculations — apply dragStageOverride so the dragged
   // card visually appears in the target column during drag.
   const stageData = useMemo(() => {
-    return STAGES.map((stage) => {
+    return boardColumns.map((stage) => {
       const stageDeals = deals
         .filter((d) => {
-          // During drag, use the override stage for the dragged card
-          if (dragStageOverride && d.id === dragStageOverride.dealId) {
-            return dragStageOverride.stage === stage.key;
+          // Get effective stage for the deal (considering drag override)
+          const effectiveStage = (dragStageOverride && d.id === dragStageOverride.dealId)
+            ? dragStageOverride.stage
+            : d.stage;
+
+          if (stage.key === "closed" && !lifecycleView) {
+            // In default view, "Closed" column collects all closed_* stages
+            return effectiveStage === "closed" || (effectiveStage.startsWith("closed_") && effectiveStage !== "closed_lost");
           }
-          return d.stage === stage.key;
+          return effectiveStage === stage.key;
         })
         .sort(
           (a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity)
@@ -411,10 +436,11 @@ export function PipelineKanban({
       const isLead = stage.key === "lead";
       const columnCount =
         stageDeals.length + (isLead ? intakeItems.length : 0);
+      const isActiveServicing = stage.key === "closed_active";
 
-      return { stage, stageDeals, totalAmount, isLead, columnCount };
+      return { stage, stageDeals, totalAmount, isLead, columnCount, isActiveServicing };
     });
-  }, [deals, intakeItems.length, dragStageOverride]);
+  }, [deals, intakeItems.length, dragStageOverride, boardColumns, lifecycleView]);
 
   return (
     <DndContext
@@ -428,15 +454,21 @@ export function PipelineKanban({
       <ScrollArea className="w-full">
         <div className="flex gap-4 pb-4 min-w-max">
           {stageData.map(
-            ({ stage, stageDeals, totalAmount, isLead, columnCount }) => {
+            ({ stage, stageDeals, totalAmount, isLead, columnCount, isActiveServicing }) => {
               const dealIds = stageDeals.map((d) => d.id);
 
               return (
                 <div key={stage.key} className="flex flex-col w-72 shrink-0">
                   {/* Column header */}
-                  <div className="flex items-center justify-between mb-3 px-1">
+                  <div className={cn(
+                    "flex items-center justify-between mb-3 px-1",
+                    isActiveServicing && "px-2 py-1 -mx-1 rounded-md bg-emerald-500/[0.06] border border-emerald-500/15"
+                  )}>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-medium">{stage.label}</h3>
+                      <h3 className={cn(
+                        "text-sm font-medium",
+                        isActiveServicing && "text-emerald-700 dark:text-emerald-400"
+                      )}>{stage.label}</h3>
                       <span className="text-xs text-muted-foreground num">
                         {columnCount}
                       </span>
