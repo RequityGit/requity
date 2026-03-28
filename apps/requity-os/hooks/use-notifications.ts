@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Notification } from "@/lib/notifications";
 import { nq } from "@/lib/notifications";
@@ -22,8 +22,8 @@ export function useNotifications(
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
-  const supabase = createClient();
-  const q = nq(supabase);
+  const supabase = useMemo(() => createClient(), []);
+  const q = useMemo(() => nq(supabase), [supabase]);
 
   const fetchNotifications = useCallback(
     async (pageNum = 0, append = false) => {
@@ -79,14 +79,19 @@ export function useNotifications(
       }
       setLoading(false);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, limit, category, priority, view, dateRange]
+    [userId, limit, category, priority, view, dateRange, q]
   );
+
+  const fetchRef = useRef(fetchNotifications);
+
+  useEffect(() => {
+    fetchRef.current = fetchNotifications;
+  }, [fetchNotifications]);
 
   useEffect(() => {
     setPage(0);
-    fetchNotifications(0);
-  }, [fetchNotifications]);
+    fetchRef.current(0);
+  }, [userId, limit, category, priority, view, dateRange]);
 
   // Subscribe to realtime new notifications (only for active view)
   useEffect(() => {
@@ -112,8 +117,7 @@ export function useNotifications(
     return () => {
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, view]);
+  }, [userId, view, supabase]);
 
   const loadMore = useCallback(() => {
     const nextPage = page + 1;
@@ -130,8 +134,7 @@ export function useNotifications(
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [q]
   );
 
   const archiveAll = useCallback(async () => {
@@ -139,8 +142,7 @@ export function useNotifications(
     if (!error) {
       setNotifications([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [q]);
 
   const markAsRead = useCallback(
     async (notificationId: string) => {
@@ -157,8 +159,7 @@ export function useNotifications(
         );
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [q]
   );
 
   const unarchiveNotification = useCallback(
@@ -170,8 +171,7 @@ export function useNotifications(
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [q]
   );
 
   return {

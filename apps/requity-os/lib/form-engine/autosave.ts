@@ -1,6 +1,7 @@
 // Auto-save logic: debounced save on step transitions and field blur
 
 import { createClient } from "@/lib/supabase/client";
+import type { Database, Json } from "@/lib/supabase/types";
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -9,12 +10,11 @@ export async function saveSubmission(
   data: Record<string, unknown>,
   currentStepId: string | null
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase: any = createClient();
+    const supabase = createClient();
   const { error } = await supabase
     .from("form_submissions")
     .update({
-      data,
+      data: data as Json,
       current_step_id: currentStepId,
     })
     .eq("id", submissionId);
@@ -51,14 +51,13 @@ export async function createSubmission(
   currentStepId: string | null,
   options?: { dealId?: string; dealApplicationLinkId?: string }
 ): Promise<{ id: string; session_token: string } | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase: any = createClient();
+    const supabase = createClient();
 
-  const insertData: Record<string, unknown> = {
+  const insertData: Database["public"]["Tables"]["form_submissions"]["Insert"] = {
     form_id: formId,
     status: "partial",
     type: "create",
-    data,
+    data: data as Json,
     current_step_id: currentStepId,
   };
 

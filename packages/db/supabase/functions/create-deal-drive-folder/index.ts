@@ -784,7 +784,7 @@ Deno.serve(async (req: Request) => {
             console.error(`Backfill failed for doc ${doc.id}:`, docErr);
           }
         }
-        console.log(`Backfill synced ${unsyncedDocs.length} documents`);
+        console.log(`[create-deal-drive-folder] Backfill synced ${unsyncedDocs.length} documents`);
       }
     } catch (backfillErr) {
       console.error("Document backfill error (non-fatal):", backfillErr);

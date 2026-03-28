@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/public/LanguageContext';
 import { LanguageToggle } from '@/components/public/LanguageToggle';
 import translations from '@/lib/translations';
+import { useNavToggle } from '@/hooks/useNavToggle';
 
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
@@ -22,6 +23,8 @@ export default function RequestAccessPage() {
   const t = translations.requestAccess[lang];
   const nav = translations.nav[lang];
   const f = translations.footer[lang];
+
+  useNavToggle();
   // Step: 'form' → 'profile' → 'complete'
   const [step, setStep] = useState<'form' | 'profile' | 'complete'>('form');
 
@@ -61,12 +64,6 @@ export default function RequestAccessPage() {
     );
     reveals.forEach(el => observer.observe(el));
 
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-    mobileToggle?.addEventListener('click', () => navLinks?.classList.toggle('open'));
-    navLinks?.querySelectorAll('a').forEach(l =>
-      l.addEventListener('click', () => navLinks?.classList.remove('open'))
-    );
 
     return () => observer.disconnect();
   }, []);

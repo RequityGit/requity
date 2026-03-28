@@ -137,6 +137,7 @@ export async function POST(request: Request) {
     // Track if opportunity creation failed (for review queue)
     let opportunityCreationFailed = false;
     let opportunityError: string | null = null;
+    const warnings: string[] = [];
 
     // Track whether contact was newly created (for activity logging)
     let contactWasCreated = false;
@@ -307,6 +308,7 @@ export async function POST(request: Request) {
               if (!loanType || !firstName || !lastName || !loanAmount) {
                 opportunityCreationFailed = true;
                 opportunityError = "Missing required fields: loan_type, first_name, last_name, or loan_amount";
+                warnings.push("Opportunity creation failed. Submission queued for manual review.");
                 break;
               }
 
@@ -386,6 +388,7 @@ export async function POST(request: Request) {
               if (dealErr) {
                 opportunityCreationFailed = true;
                 opportunityError = dealErr.message;
+                warnings.push("Opportunity creation failed. Submission queued for manual review.");
               } else {
                 entityIds.unified_deal_id = dealData.id;
                 // Also set opportunity_id for backwards compatibility
@@ -495,6 +498,7 @@ export async function POST(request: Request) {
                 if (oppError) {
                   opportunityCreationFailed = true;
                   opportunityError = oppError.message;
+                  warnings.push("Opportunity creation failed. Submission queued for manual review.");
                 } else {
                   entityIds.opportunity_id = newOpp.id;
                 }
@@ -512,6 +516,7 @@ export async function POST(request: Request) {
         if (group.target_entity === "opportunity") {
           opportunityCreationFailed = true;
           opportunityError = entityErr instanceof Error ? entityErr.message : "Entity processing failed";
+          warnings.push("Opportunity creation failed. Submission queued for manual review.");
         } else {
           // For other entities, still throw to maintain data integrity
           return NextResponse.json(
@@ -591,6 +596,7 @@ export async function POST(request: Request) {
 
         if (scError) {
           console.error("Soft commitment record creation failed:", scError.message);
+          warnings.push("Soft commitment was not recorded. Please contact support.");
         } else if (scData) {
           entityIds.soft_commitment_id = (scData as { id: string }).id;
         }
@@ -620,6 +626,7 @@ export async function POST(request: Request) {
       } catch (scErr) {
         // Non-blocking: log but don't fail the submission
         console.error("Soft commitment processing failed:", scErr);
+        warnings.push("Soft commitment was not recorded. Please contact support.");
       }
     }
 
@@ -774,21 +781,12 @@ export async function POST(request: Request) {
       }
     }
 
-    // If opportunity creation failed, return success but with a warning
-    if (opportunityCreationFailed) {
-      return NextResponse.json({
-        success: true,
-        submission_id,
-        entity_ids: entityIds,
-        warning: "Submission saved but opportunity creation failed. This submission has been queued for manual review.",
-        requires_review: true,
-      });
-    }
-
     return NextResponse.json({
       success: true,
       submission_id,
       entity_ids: entityIds,
+      warnings: warnings.length > 0 ? Array.from(new Set(warnings)) : undefined,
+      requires_review: opportunityCreationFailed ? true : undefined,
     });
   } catch (err) {
     return NextResponse.json(

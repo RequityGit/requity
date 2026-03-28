@@ -755,7 +755,6 @@ Deno.serve(async (req) => {
     }
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
-    console.log("[RealIE] Calling:", realieUrl);
 
     // Call RealIE API
     let response = await fetch(realieUrl, {
@@ -769,7 +768,6 @@ Deno.serve(async (req) => {
       (response.status === 400 || response.status === 401) &&
       !REALIE_API_KEY.startsWith("Bearer ")
     ) {
-      console.log("[RealIE] Retrying with Bearer prefix");
       response = await fetch(realieUrl, {
         method: "GET",
         headers: { Authorization: `Bearer ${REALIE_API_KEY}` },
@@ -779,7 +777,7 @@ Deno.serve(async (req) => {
 
     // Handle 429 rate limit with retry
     if (response.status === 429) {
-      console.log("[RealIE] Rate limited, retrying after 2s");
+      console.log("[realie-property-lookup] Rate limited, retrying after 2s");
       await new Promise((r) => setTimeout(r, 2000));
       response = await fetch(realieUrl, {
         method: "GET",

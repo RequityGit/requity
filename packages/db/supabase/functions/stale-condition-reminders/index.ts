@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
 
     const result = await response.json();
 
-    console.log("[stale-condition-reminders] Result:", JSON.stringify(result));
+    console.log("[cron:stale-condition-reminders] Result:", JSON.stringify(result));
 
     return new Response(JSON.stringify(result), {
       status: response.ok ? 200 : 500,

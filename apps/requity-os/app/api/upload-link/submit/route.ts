@@ -177,7 +177,7 @@ export async function POST(request: Request) {
         )
         .then((result) => {
           if (result.queued) {
-            console.log(`[settling-period] Queued submission confirm for ${conditionName}`);
+            console.log(`[upload-link:settling-period] Queued submission confirm for ${conditionName}`);
           }
         })
         .catch((err) => {

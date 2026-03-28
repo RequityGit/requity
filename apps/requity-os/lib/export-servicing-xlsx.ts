@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ExcelJS from "exceljs";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
 import { saveAs } from "file-saver";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -212,7 +214,7 @@ function setupLandscape(ws: ExcelJS.Worksheet) {
 // ── Main Export Function ───────────────────────────────────────────────
 
 export async function exportServicingWorkbook(
-  supabase: any,
+  supabase: SupabaseClient<Database>,
   loanId: string
 ): Promise<{ success: boolean; loanId: string }> {
   // 1. Fetch data
@@ -248,22 +250,30 @@ export async function exportServicingWorkbook(
 
 // ── Data Fetching ──────────────────────────────────────────────────────
 
-async function fetchLoanData(supabase: any, loanId: string): Promise<LoanData> {
+async function fetchLoanData(supabase: SupabaseClient<Database>, loanId: string): Promise<LoanData> {
   // Try servicing_loans first
-  const { data: servicingLoan } = await supabase
+  const { data: servicingLoan, error: servicingLoanError } = await supabase
     .from("servicing_loans")
     .select("*")
     .eq("loan_id", loanId)
     .single();
 
+  if (servicingLoanError && servicingLoanError.code !== "PGRST116") {
+    throw new Error(`Failed to fetch servicing loan: ${servicingLoanError.message}`);
+  }
+
   // Always try loans table for enrichment
-  const { data: pipelineLoan } = await supabase
+  const { data: pipelineLoan, error: pipelineLoanError } = await supabase
     .from("loans")
     .select(
       "loan_number, total_loan_amount, interest_rate, default_rate, loan_term_months, extension_term_months, extension_fee_pct, origination_date, maturity_date, first_payment_date, monthly_payment, escrow_holdback, interest_reserve, prepayment_penalty_type, prepayment_penalty_pct, property_address, type, purpose"
     )
     .eq("loan_number", loanId)
     .single();
+
+  if (pipelineLoanError && pipelineLoanError.code !== "PGRST116") {
+    throw new Error(`Failed to fetch pipeline loan: ${pipelineLoanError.message}`);
+  }
 
   if (servicingLoan) {
     return {
@@ -292,7 +302,7 @@ async function fetchLoanData(supabase: any, loanId: string): Promise<LoanData> {
       dutch_interest: servicingLoan.dutch_interest,
       loan_status: servicingLoan.loan_status,
       servicing_status: servicingLoan.servicing_status,
-      loan_type: servicingLoan.loan_type ?? pipelineLoan?.type,
+      loan_type: servicingLoan.loan_type ?? pipelineLoan?.type ?? null,
       payment_type: servicingLoan.payment_type,
       // Enrichment
       extension_term_months: pipelineLoan?.extension_term_months ?? null,
@@ -332,7 +342,7 @@ async function fetchLoanData(supabase: any, loanId: string): Promise<LoanData> {
       dutch_interest: false,
       loan_status: null,
       servicing_status: null,
-      loan_type: pipelineLoan.type,
+      loan_type: pipelineLoan.type ?? null,
       payment_type: null,
       extension_term_months: pipelineLoan.extension_term_months,
       extension_fee_pct: pipelineLoan.extension_fee_pct != null
@@ -351,14 +361,18 @@ async function fetchLoanData(supabase: any, loanId: string): Promise<LoanData> {
 }
 
 async function fetchPayments(
-  supabase: any,
+  supabase: SupabaseClient<Database>,
   loanId: string
 ): Promise<PaymentRecord[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("servicing_payments")
     .select("*")
     .eq("loan_id", loanId)
     .order("date", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to fetch servicing payments: ${error.message}`);
+  }
 
   return (data ?? []).map((p: any) => ({
     date: p.date,

@@ -6,6 +6,7 @@ import { useLanguage } from '@/components/public/LanguageContext';
 import { LanguageToggle } from '@/components/public/LanguageToggle';
 import { LoanIndexes } from '@/components/public/LoanIndexes';
 import translations from '@/lib/translations';
+import { useNavToggle } from '@/hooks/useNavToggle';
 
 const LOAN_PROGRAMS = [
   {
@@ -156,12 +157,6 @@ export default function LendingClient({ testimonials = [], loanIndexes = null }:
     );
     reveals.forEach(el => observer.observe(el));
 
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-    mobileToggle?.addEventListener('click', () => navLinks?.classList.toggle('open'));
-    navLinks?.querySelectorAll('a').forEach(l =>
-      l.addEventListener('click', () => navLinks?.classList.remove('open'))
-    );
 
     return () => observer.disconnect();
   }, []);
@@ -171,6 +166,8 @@ export default function LendingClient({ testimonials = [], loanIndexes = null }:
   const lp = translations.loanPrograms[lang];
   const nav = translations.nav[lang];
   const f = translations.footer[lang];
+
+  useNavToggle();
 
   const ArrowIcon = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
