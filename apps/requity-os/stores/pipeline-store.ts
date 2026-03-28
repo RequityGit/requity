@@ -156,18 +156,18 @@ export const usePipelineStore = create<PipelineState>()(
       set((state) => {
         // Skip realtime updates for the deal currently being dragged —
         // optimistic state takes priority until drag completes
-        if (state.draggingDealId === dealId) return;
-
-        const existing = state.deals.get(dealId);
-        if (existing) {
-          const stageChanged = newRecord.stage !== existing.stage;
-          // Shallow merge: realtime fields overwrite, but existing fields
-          // not present in the enrichment are preserved (e.g. broker_contact)
-          state.deals.set(dealId, { ...existing, ...newRecord });
-          if (stageChanged) state.dealsVersion++;
-        } else {
-          state.deals.set(dealId, newRecord);
-          state.dealsVersion++;
+        if (state.draggingDealId !== dealId) {
+          const existing = state.deals.get(dealId);
+          if (existing) {
+            const stageChanged = newRecord.stage !== existing.stage;
+            // Shallow merge: realtime fields overwrite, but existing fields
+            // not present in the enrichment are preserved (e.g. broker_contact)
+            state.deals.set(dealId, { ...existing, ...newRecord });
+            if (stageChanged) state.dealsVersion++;
+          } else {
+            state.deals.set(dealId, newRecord);
+            state.dealsVersion++;
+          }
         }
       }),
 
