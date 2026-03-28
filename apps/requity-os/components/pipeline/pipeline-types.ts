@@ -228,6 +228,21 @@ export const STAGES: { key: UnifiedStage; label: string }[] = [
   { key: "closed", label: "Closed" },
 ];
 
+/** Stage groups for the grouped table view — ordered top to bottom like a deal lifecycle */
+export interface StageGroup {
+  key: UnifiedStage;
+  label: string;
+  color: string;
+}
+
+export const PIPELINE_STAGE_GROUPS: StageGroup[] = [
+  { key: "lead", label: "Intake", color: "#6366f1" },
+  { key: "analysis", label: "Analysis", color: "#f59e0b" },
+  { key: "negotiation", label: "Negotiation", color: "#3b82f6" },
+  { key: "execution", label: "Execution", color: "#10b981" },
+  { key: "closed", label: "Closed", color: "#1a1a1a" },
+];
+
 export {
   ASSET_CLASS_LABELS,
   ASSET_CLASS_OPTIONS as ACTIVE_ASSET_CLASS_OPTIONS,
