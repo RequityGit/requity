@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { ErrorBoundary } from "react-error-boundary";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { storeDealOrder } from "@/hooks/useDealNavigation";
 import { cn } from "@/lib/utils";
@@ -228,41 +229,46 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
         onToggleLifecycle={() => setLifecycleView((v) => !v)}
       />
 
-      {isMobile ? (
-        <MobileDealList
-          deals={filteredDeals}
-          stageConfigs={stageConfigs}
-          onDealClick={handleDealClick}
-        />
-      ) : effectiveView === "kanban" ? (
-        <PipelineKanban
-          deals={filteredDeals}
-          stageConfigs={stageConfigs}
-          onDealClick={handleDealClick}
-          onDealHover={handleDealHover}
-          intakeItems={intakeItems}
-          onIntakeClick={handleIntakeClick}
-          teamMembers={teamMembers}
-          conditionsMap={conditionsMap}
-          selectedDealId={selectedDealId}
-          lifecycleView={lifecycleView}
-        />
-      ) : showingLostDeals ? (
-        <PipelineTable
-          deals={filteredDeals}
-          stageConfigs={stageConfigs}
-          onDealClick={handleDealClick}
-          showLossReason
-        />
-      ) : (
-        <PipelineGroupedTable
-          deals={filteredDeals}
-          stageConfigs={stageConfigs}
-          onDealClick={handleDealClick}
-          teamMembers={teamMembers}
-          lifecycleView={lifecycleView}
-        />
-      )}
+      <ErrorBoundary
+        FallbackComponent={PipelineFallback}
+        onReset={() => window.location.reload()}
+      >
+        {isMobile ? (
+          <MobileDealList
+            deals={filteredDeals}
+            stageConfigs={stageConfigs}
+            onDealClick={handleDealClick}
+          />
+        ) : effectiveView === "kanban" ? (
+          <PipelineKanban
+            deals={filteredDeals}
+            stageConfigs={stageConfigs}
+            onDealClick={handleDealClick}
+            onDealHover={handleDealHover}
+            intakeItems={intakeItems}
+            onIntakeClick={handleIntakeClick}
+            teamMembers={teamMembers}
+            conditionsMap={conditionsMap}
+            selectedDealId={selectedDealId}
+            lifecycleView={lifecycleView}
+          />
+        ) : showingLostDeals ? (
+          <PipelineTable
+            deals={filteredDeals}
+            stageConfigs={stageConfigs}
+            onDealClick={handleDealClick}
+            showLossReason
+          />
+        ) : (
+          <PipelineGroupedTable
+            deals={filteredDeals}
+            stageConfigs={stageConfigs}
+            onDealClick={handleDealClick}
+            teamMembers={teamMembers}
+            lifecycleView={lifecycleView}
+          />
+        )}
+      </ErrorBoundary>
 
       {/* Kanban keyboard hint bar */}
       {effectiveView === "kanban" && (
@@ -302,6 +308,22 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
           if (!open) setReviewItem(null);
         }}
       />
+    </div>
+  );
+}
+
+// ─── Pipeline Error Fallback ───
+
+function PipelineFallback({ resetErrorBoundary }: { resetErrorBoundary: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <p className="text-sm text-muted-foreground">Something went wrong loading the pipeline.</p>
+      <button
+        onClick={resetErrorBoundary}
+        className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+      >
+        Retry
+      </button>
     </div>
   );
 }
