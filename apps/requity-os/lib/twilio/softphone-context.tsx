@@ -63,7 +63,7 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
   const onCallConnectedRef = useRef<((callSid: string) => void) | undefined>(undefined);
   const onCallDisconnectedRef = useRef<(() => void) | undefined>(undefined);
   const errorCountRef = useRef(0);
-  const MAX_DEVICE_ERRORS = 5;
+  const MAX_DEVICE_ERRORS = 3;
 
   const setOnCallConnected = useCallback((cb: ((callSid: string) => void) | undefined) => {
     onCallConnectedRef.current = cb;

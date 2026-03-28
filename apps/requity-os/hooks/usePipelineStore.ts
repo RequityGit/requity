@@ -27,9 +27,9 @@ export function useAllDeals(): UnifiedDeal[] {
   }, [version]);
 }
 
-/** Deals for a specific stage, sorted by amount desc.
+/** Deals for a specific stage, sorted by sort_order ascending.
  *  Uses dealsVersion as the memo trigger (same pattern as useAllDeals)
- *  so sort-order-only changes don't cause column re-renders. */
+ *  so only intentional mutations cause column re-renders. */
 export function useStageDeals(stageKey: UnifiedStage): UnifiedDeal[] {
   const deals = usePipelineStore((s) => s.deals);
   const version = usePipelineStore((s) => s.dealsVersion);
@@ -43,7 +43,7 @@ export function useStageDeals(stageKey: UnifiedStage): UnifiedDeal[] {
         result.push(deal);
       }
     });
-    return result.sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
+    return result.sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version, stageKey]);
 }
