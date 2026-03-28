@@ -60,6 +60,7 @@ interface PipelineState {
   hydrate: (data: PipelineHydratePayload) => void;
   setDraggingDealId: (id: string | null) => void;
   moveDeal: (dealId: string, newStage: UnifiedStage) => void;
+  moveAndReorderDeal: (dealId: string, newStage: UnifiedStage, orderedIds: string[]) => void;
   reorderDeal: (orderedIds: string[], stage: UnifiedStage) => void;
   updateDeal: (dealId: string, patch: Partial<UnifiedDeal>) => void;
   addDeal: (deal: UnifiedDeal) => void;
@@ -119,6 +120,33 @@ export const usePipelineStore = create<PipelineState>()(
         }
       }),
 
+    // Atomic move + reorder in a single set() call — one version bump,
+    // one subscriber notification. Used for cross-column drag-and-drop.
+    moveAndReorderDeal: (dealId, newStage, orderedIds) =>
+      set((state) => {
+        // 1. Move the deal to the new stage
+        const deal = state.deals.get(dealId);
+        if (deal) {
+          state.deals.set(dealId, {
+            ...deal,
+            stage: newStage,
+            stage_entered_at: new Date().toISOString(),
+          });
+        }
+        // 2. Reorder all deals in the target stage
+        orderedIds.forEach((id, index) => {
+          const d = state.deals.get(id);
+          if (d) {
+            const effectiveStage = id === dealId ? newStage : d.stage;
+            if (effectiveStage === newStage && d.sort_order !== index) {
+              state.deals.set(id, { ...d, sort_order: index });
+            }
+          }
+        });
+        // ONE version bump for both operations
+        state.dealsVersion++;
+      }),
+
     reorderDeal: (orderedIds, stage) =>
       set((state) => {
         orderedIds.forEach((id, index) => {
@@ -152,34 +180,40 @@ export const usePipelineStore = create<PipelineState>()(
         state.dealsVersion++; // Remove is structural
       }),
 
-    // Realtime patches are authoritative (server truth)
+    // Realtime patches are authoritative (server truth).
+    // ALL realtime mutations are blocked while any drag is in progress to
+    // prevent cascading re-renders from realtime echoes (stage + sort_order
+    // changes) that arrive after the optimistic drag update.
     applyRealtimeInsert: (deal) =>
       set((state) => {
+        if (state.draggingDealId) return; // Block during drag
         state.deals.set(deal.id, deal);
         state.dealsVersion++;
       }),
 
     applyRealtimeUpdate: (dealId, newRecord) =>
       set((state) => {
-        // Skip realtime updates for the deal currently being dragged —
-        // optimistic state takes priority until drag completes
-        if (state.draggingDealId !== dealId) {
-          const existing = state.deals.get(dealId);
-          if (existing) {
-            const stageChanged = newRecord.stage !== existing.stage;
-            // Shallow merge: realtime fields overwrite, but existing fields
-            // not present in the enrichment are preserved (e.g. broker_contact)
-            state.deals.set(dealId, { ...existing, ...newRecord });
-            if (stageChanged) state.dealsVersion++;
-          } else {
-            state.deals.set(dealId, newRecord);
-            state.dealsVersion++;
-          }
+        // Block ALL realtime updates while any drag is in progress —
+        // optimistic state takes priority until drag completes.
+        // The subscription catches up naturally after draggingDealId is cleared.
+        if (state.draggingDealId) return;
+
+        const existing = state.deals.get(dealId);
+        if (existing) {
+          const stageChanged = newRecord.stage !== existing.stage;
+          // Shallow merge: realtime fields overwrite, but existing fields
+          // not present in the enrichment are preserved (e.g. broker_contact)
+          state.deals.set(dealId, { ...existing, ...newRecord });
+          if (stageChanged) state.dealsVersion++;
+        } else {
+          state.deals.set(dealId, newRecord);
+          state.dealsVersion++;
         }
       }),
 
     applyRealtimeDelete: (dealId) =>
       set((state) => {
+        if (state.draggingDealId) return; // Block during drag
         state.deals.delete(dealId);
         state.dealsVersion++;
       }),
