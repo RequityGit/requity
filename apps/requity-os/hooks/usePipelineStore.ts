@@ -27,9 +27,12 @@ export function useAllDeals(): UnifiedDeal[] {
   }, [version]);
 }
 
-/** Deals for a specific stage, sorted by amount desc */
+/** Deals for a specific stage, sorted by amount desc.
+ *  Uses dealsVersion as the memo trigger (same pattern as useAllDeals)
+ *  so sort-order-only changes don't cause column re-renders. */
 export function useStageDeals(stageKey: UnifiedStage): UnifiedDeal[] {
   const deals = usePipelineStore((s) => s.deals);
+  const version = usePipelineStore((s) => s.dealsVersion);
   return useMemo(() => {
     const result: UnifiedDeal[] = [];
     deals.forEach((deal) => {
@@ -41,7 +44,8 @@ export function useStageDeals(stageKey: UnifiedStage): UnifiedDeal[] {
       }
     });
     return result.sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
-  }, [deals, stageKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version, stageKey]);
 }
 
 /** Single deal by ID */
@@ -49,12 +53,14 @@ export function useDeal(dealId: string): UnifiedDeal | undefined {
   return usePipelineStore((s) => s.deals.get(dealId));
 }
 
-/** Stage totals for column headers */
+/** Stage totals for column headers.
+ *  Uses dealsVersion as memo trigger to avoid re-renders on sort-order-only changes. */
 export function useStageTotals(): Map<
   UnifiedStage,
   { count: number; amount: number }
 > {
   const deals = usePipelineStore((s) => s.deals);
+  const version = usePipelineStore((s) => s.dealsVersion);
   return useMemo(() => {
     const totals = new Map<UnifiedStage, { count: number; amount: number }>();
     deals.forEach((deal) => {
@@ -65,7 +71,8 @@ export function useStageTotals(): Map<
       totals.set(deal.stage, current);
     });
     return totals;
-  }, [deals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
 }
 
 /** Stage configs from store */
