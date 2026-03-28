@@ -43,6 +43,9 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
     teamResult,
     intakeResult,
     conditionsResult,
+    fundedDrawsResult,
+    activeBudgetsResult,
+    pendingDrawsResult,
   ] = await Promise.all([
     admin
       .from("unified_deals" as never)
@@ -76,6 +79,21 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
     admin
       .from("deal_conditions" as never)
       .select("deal_id, status" as never),
+    // Funded draw totals per deal (for UPB calculation)
+    admin
+      .from("deal_draw_requests" as never)
+      .select("deal_id, wire_amount" as never)
+      .eq("status" as never, "funded" as never),
+    // Active construction budgets per deal (for Remaining Draw calculation)
+    admin
+      .from("deal_construction_budgets" as never)
+      .select("deal_id, total_budget, total_funded" as never)
+      .eq("status" as never, "active" as never),
+    // Pending draw requests per deal (for flag badges)
+    admin
+      .from("deal_draw_requests" as never)
+      .select("deal_id, status" as never)
+      .in("status" as never, ["submitted", "under_review", "approved"] as never),
   ]);
 
   const stageConfigs = (stageConfigsResult.data ?? []) as unknown as StageConfig[];
@@ -147,6 +165,28 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
     brokerMap.set(br.id as string, br);
   }
 
+  // Build servicing enrichment maps
+  const drawsByDeal = new Map<string, number>();
+  for (const d of (fundedDrawsResult.data ?? []) as { deal_id: string; wire_amount: number | null }[]) {
+    drawsByDeal.set(d.deal_id, (drawsByDeal.get(d.deal_id) ?? 0) + (d.wire_amount ?? 0));
+  }
+
+  const budgetByDeal = new Map<string, { total_budget: number; total_funded: number }>();
+  for (const b of (activeBudgetsResult.data ?? []) as { deal_id: string; total_budget: number | null; total_funded: number | null }[]) {
+    const existing = budgetByDeal.get(b.deal_id);
+    if (existing) {
+      existing.total_budget += b.total_budget ?? 0;
+      existing.total_funded += b.total_funded ?? 0;
+    } else {
+      budgetByDeal.set(b.deal_id, { total_budget: b.total_budget ?? 0, total_funded: b.total_funded ?? 0 });
+    }
+  }
+
+  const pendingDrawDeals = new Set<string>();
+  for (const d of (pendingDrawsResult.data ?? []) as { deal_id: string; status: string }[]) {
+    pendingDrawDeals.add(d.deal_id);
+  }
+
   // Enrich deals with computed fields + resolved UW data
   const deals: UnifiedDeal[] = rawDeals.map((deal) => {
     const days = daysInStage(deal.stage_entered_at);
@@ -156,12 +196,20 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
     const brokerId = (deal as unknown as Record<string, unknown>).broker_contact_id as string | null;
     const broker = brokerId ? brokerMap.get(brokerId) ?? null : null;
 
+    // Compute servicing enrichment
+    const loanAmt = (deal as unknown as Record<string, unknown>).loan_amount as number | null;
+    const fundedDraws = drawsByDeal.get(deal.id) ?? 0;
+    const budget = budgetByDeal.get(deal.id);
+
     return {
       ...deal,
       uw_data: mergeUwData(deal.uw_data, property, borrower),
       broker_contact: broker as UnifiedDeal["broker_contact"],
       days_in_stage: days,
       alert_level: getAlertLevel(days, config),
+      _upb: (loanAmt ?? deal.amount ?? 0) + fundedDraws,
+      _remaining_draw: budget ? budget.total_budget - budget.total_funded : null,
+      _has_pending_draw: pendingDrawDeals.has(deal.id),
     };
   });
 
