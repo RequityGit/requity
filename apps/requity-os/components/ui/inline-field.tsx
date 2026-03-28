@@ -34,6 +34,8 @@ interface InlineFieldBaseProps {
   className?: string;
   /** Text alignment within the field */
   align?: "left" | "right" | "center";
+  /** Whether to truncate display text with ellipsis (default: false) */
+  truncate?: boolean;
 }
 
 interface InlineTextFieldProps extends InlineFieldBaseProps {
@@ -118,6 +120,7 @@ function InlineTextField({
   min,
   max,
   formatValue,
+  truncate: shouldTruncate,
 }: InlineTextFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -206,9 +209,9 @@ function InlineTextField({
           )}
         >
           {displayValue ? (
-            <span className="truncate">{displayValue}</span>
+            <span className={shouldTruncate ? "truncate" : ""}>{displayValue}</span>
           ) : (
-            <span className="text-muted-foreground/40 truncate">{placeholder}</span>
+            <span className={cn("text-muted-foreground/40", shouldTruncate && "truncate")}>{placeholder}</span>
           )}
           {justSaved && (
             <Check className="absolute right-1.5 h-3.5 w-3.5 text-green-500 animate-in fade-in duration-200" />
@@ -231,6 +234,7 @@ function InlineDateField({
   disabled,
   className,
   formatValue,
+  truncate: shouldTruncate,
 }: InlineDateFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -303,9 +307,9 @@ function InlineDateField({
           )}
         >
           {displayValue ? (
-            <span className="truncate">{displayValue}</span>
+            <span className={shouldTruncate ? "truncate" : ""}>{displayValue}</span>
           ) : (
-            <span className="text-muted-foreground/40 truncate">{placeholder}</span>
+            <span className={cn("text-muted-foreground/40", shouldTruncate && "truncate")}>{placeholder}</span>
           )}
           {justSaved && (
             <Check className="absolute right-1.5 h-3.5 w-3.5 text-green-500 animate-in fade-in duration-200" />
@@ -327,6 +331,7 @@ function InlineSelectField({
   onSave,
   disabled,
   className,
+  truncate: shouldTruncate,
 }: InlineSelectFieldProps) {
   const [editing, setEditing] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -383,9 +388,9 @@ function InlineSelectField({
           )}
         >
           {value ? (
-            <span className="truncate">{value}</span>
+            <span className={shouldTruncate ? "truncate" : ""}>{value}</span>
           ) : (
-            <span className="text-muted-foreground/40 truncate">{placeholder}</span>
+            <span className={cn("text-muted-foreground/40", shouldTruncate && "truncate")}>{placeholder}</span>
           )}
           {justSaved && (
             <Check className="absolute right-1.5 h-3.5 w-3.5 text-green-500 animate-in fade-in duration-200" />
