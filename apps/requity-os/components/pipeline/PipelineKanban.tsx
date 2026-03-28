@@ -53,13 +53,15 @@ const STAGE_KEY_SET = new Set<string>(STAGES.map((s) => s.key));
  * stage-column droppables so within-column reorders resolve correctly.
  */
 const kanbanCollisionDetection: CollisionDetection = (args) => {
+  const activeId = String(args.active.id);
   // 1. Find all droppables whose rect contains the pointer
   const pointerCollisions = pointerWithin(args);
 
   if (pointerCollisions.length > 0) {
-    // 2. Prefer card-level droppables (IDs NOT in STAGE_KEY_SET)
+    // 2. Prefer card-level droppables (IDs NOT in STAGE_KEY_SET),
+    // excluding the active card itself to avoid "self-collision" lock.
     const cardCollisions = pointerCollisions.filter(
-      (c) => !STAGE_KEY_SET.has(String(c.id))
+      (c) => !STAGE_KEY_SET.has(String(c.id)) && String(c.id) !== activeId
     );
 
     if (cardCollisions.length > 0) {
@@ -72,8 +74,9 @@ const kanbanCollisionDetection: CollisionDetection = (args) => {
       });
     }
 
-    // Only container-level hits (empty column or whitespace)
-    return pointerCollisions;
+    // Only container-level hits (empty column or whitespace). Remove active ID
+    // if it appears (defensive) so we can still target a stage.
+    return pointerCollisions.filter((c) => String(c.id) !== activeId);
   }
 
   // 3. Fallback for fast pointer movement: use rect intersection
@@ -260,10 +263,6 @@ export function PipelineKanban({
       const sameColumn = deal.stage === targetStage;
 
       // Dropped in same spot — no-op
-      if (sameColumn && !overDeal) {
-        setDraggingDealId(null);
-        return;
-      }
       if (sameColumn && dealId === overId) {
         setDraggingDealId(null);
         return;
@@ -280,7 +279,11 @@ export function PipelineKanban({
         if (sameColumn) {
           // ── Reorder within same column ──
           const oldIndex = stageDeals.findIndex((d) => d.id === dealId);
-          const newIndex = stageDeals.findIndex((d) => d.id === overId);
+          // Dropping on column whitespace means "move to end".
+          const newIndex = overDeal
+            ? stageDeals.findIndex((d) => d.id === overId)
+            : stageDeals.length - 1;
+
           if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
             return;
           }
