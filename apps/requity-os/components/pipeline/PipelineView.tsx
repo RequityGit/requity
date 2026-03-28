@@ -9,6 +9,7 @@ import { DealFilters, type FilterState, type ClosingDateFilter } from "./DealFil
 import { filterByDateAdded } from "@/components/ui/date-added-filter";
 import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
+import { PipelineGroupedTable } from "./PipelineGroupedTable";
 import { MobileDealList } from "./MobileDealList";
 import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
@@ -72,15 +73,34 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
   const currentUserId = useCurrentUserId();
   const conditionsMap = useConditionsMap();
 
-  const [filters, setFilters] = useState<FilterState>({
-    search: "",
-    capitalSide: "all",
-    dealFlavor: "all",
-    assetClass: "all",
-    dateAdded: "all",
-    closingDate: "all",
-    view: "kanban",
+  const [filters, setFilters] = useState<FilterState>(() => {
+    let savedView: "kanban" | "table" = "table";
+    try {
+      const stored = localStorage.getItem("pipeline-view-preference");
+      if (stored === "kanban" || stored === "table") savedView = stored;
+    } catch {
+      // SSR or localStorage unavailable
+    }
+    return {
+      search: "",
+      capitalSide: "all",
+      dealFlavor: "all",
+      assetClass: "all",
+      dateAdded: "all",
+      closingDate: "all",
+      view: savedView,
+    };
   });
+
+  // Persist view preference
+  const setFiltersWithPersist = useCallback((next: FilterState) => {
+    setFilters(next);
+    try {
+      localStorage.setItem("pipeline-view-preference", next.view);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const effectiveView = isMobile || showingLostDeals ? "table" : filters.view;
   const [newDealOpen, setNewDealOpen] = useState(false);
@@ -199,7 +219,7 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
     <div className="space-y-4">
       <DealFilters
         filters={filters}
-        onChange={setFilters}
+        onChange={setFiltersWithPersist}
         onNewDeal={handleOpenNewDeal}
         searchInputRef={searchInputRef}
         showingLostDeals={showingLostDeals}
@@ -227,12 +247,19 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
           selectedDealId={selectedDealId}
           lifecycleView={lifecycleView}
         />
-      ) : (
+      ) : showingLostDeals ? (
         <PipelineTable
           deals={filteredDeals}
           stageConfigs={stageConfigs}
           onDealClick={handleDealClick}
-          showLossReason={showingLostDeals}
+          showLossReason
+        />
+      ) : (
+        <PipelineGroupedTable
+          deals={filteredDeals}
+          stageConfigs={stageConfigs}
+          onDealClick={handleDealClick}
+          teamMembers={teamMembers}
         />
       )}
 
