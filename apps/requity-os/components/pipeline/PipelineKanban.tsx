@@ -170,6 +170,7 @@ export function PipelineKanban({
 
   // Store actions for optimistic updates
   const moveDeal = usePipelineStore((s) => s.moveDeal);
+  const moveAndReorderDeal = usePipelineStore((s) => s.moveAndReorderDeal);
   const reorderDeal = usePipelineStore((s) => s.reorderDeal);
   const setDraggingDealId = usePipelineStore((s) => s.setDraggingDealId);
 
@@ -338,9 +339,9 @@ export function PipelineKanban({
             .map((d) => d.id);
           targetIds.splice(insertIndex, 0, dealId);
 
-          // Optimistic update FIRST (synchronous, before any async call)
-          moveDeal(dealId, targetStage);
-          reorderDeal(targetIds, targetStage);
+          // Atomic optimistic update — single store mutation, one version bump,
+          // one subscriber notification (prevents cascading re-renders)
+          moveAndReorderDeal(dealId, targetStage, targetIds);
 
           // Persist stage + order in a single server action call
           const moveResult = await moveDealAndReorderAction(
@@ -382,7 +383,7 @@ export function PipelineKanban({
         setDraggingDealId(null);
       }
     },
-    [moveDeal, reorderDeal, setDraggingDealId]
+    [moveDeal, moveAndReorderDeal, reorderDeal, setDraggingDealId]
   );
 
   const handleDragCancel = useCallback(() => {
