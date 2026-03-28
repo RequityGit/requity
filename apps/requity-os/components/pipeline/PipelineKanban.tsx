@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { DealCard, DealCardOverlay } from "./DealCard";
 import { IntakeCard } from "./IntakeCard";
 import {
-  updateDealStageAction,
+  moveDealAndReorderAction,
   reorderDealsAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -330,32 +330,24 @@ export function PipelineKanban({
           moveDeal(dealId, targetStage);
           reorderDeal(targetIds, targetStage);
 
-          // Persist stage change — simple direct update, no gating
-          const stageResult = await updateDealStageAction(
+          // Persist stage + order in a single server action call
+          const moveResult = await moveDealAndReorderAction(
             dealId,
             targetStage,
+            targetIds,
             insertIndex
           );
 
-          if (stageResult.error) {
+          if (moveResult.error) {
             // Revert optimistic update
             moveDeal(dealId, originalStage);
-            showError("Could not move deal", stageResult.error);
+            showError("Could not move deal", moveResult.error);
             return;
           }
 
-          // Persist sort order for all cards in the target column
-          const orderResult = await reorderDealsAction(
-            targetIds,
-            targetStage
-          );
-          if (orderResult.error) {
-            showError("Deal moved but could not save order", orderResult.error);
-          } else {
-            const stageLabel =
-              STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
-            showSuccess(`${deal.name} moved to ${stageLabel}`);
-          }
+          const stageLabel =
+            STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+          showSuccess(`${deal.name} moved to ${stageLabel}`);
         }
       } finally {
         // Always clear the dragging guard so realtime resumes
