@@ -304,6 +304,19 @@ export const PIPELINE_STAGE_GROUPS: StageGroup[] = [
   { key: "closed", label: "Closed", color: "#1a1a1a" },
 ];
 
+/** Lifecycle stage groups for the grouped table view — expands "Closed" into servicing stages */
+export const PIPELINE_LIFECYCLE_STAGE_GROUPS: StageGroup[] = [
+  { key: "lead", label: "Intake", color: "#6366f1" },
+  { key: "analysis", label: "Analysis", color: "#f59e0b" },
+  { key: "negotiation", label: "Negotiation", color: "#3b82f6" },
+  { key: "execution", label: "Execution", color: "#10b981" },
+  { key: "closed_brokered", label: "Brokered", color: "#8b5cf6" },
+  { key: "closed_active", label: "Active", color: "#06b6d4" },
+  { key: "closed_pre_sale", label: "Pre-Sale", color: "#f97316" },
+  { key: "closed_sold", label: "Sold", color: "#64748b" },
+  { key: "closed_paid_off", label: "Paid Off", color: "#1a1a1a" },
+];
+
 export {
   ASSET_CLASS_LABELS,
   ASSET_CLASS_OPTIONS as ACTIVE_ASSET_CLASS_OPTIONS,

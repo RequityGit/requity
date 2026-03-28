@@ -11,6 +11,7 @@ import {
   type StageConfig,
   type UnifiedStage,
   PIPELINE_STAGE_GROUPS,
+  PIPELINE_LIFECYCLE_STAGE_GROUPS,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
   type AssetClass,
@@ -38,6 +39,7 @@ interface PipelineGroupedTableProps {
   onDealClick: (deal: UnifiedDeal) => void;
   showLossReason?: boolean;
   teamMembers: { id: string; full_name: string }[];
+  lifecycleView?: boolean;
 }
 
 // ─── Component ───
@@ -48,6 +50,7 @@ export function PipelineGroupedTable({
   onDealClick,
   showLossReason,
   teamMembers,
+  lifecycleView = false,
 }: PipelineGroupedTableProps) {
   const router = useRouter();
   const stageConfigMap = useMemo(
@@ -60,18 +63,26 @@ export function PipelineGroupedTable({
     return map;
   }, [teamMembers]);
 
+  const stageGroups = lifecycleView ? PIPELINE_LIFECYCLE_STAGE_GROUPS : PIPELINE_STAGE_GROUPS;
+
   // Group deals by stage
   const groupedDeals = useMemo(() => {
     const map = new Map<UnifiedStage, UnifiedDeal[]>();
-    for (const group of PIPELINE_STAGE_GROUPS) {
+    for (const group of stageGroups) {
       map.set(group.key, []);
     }
     for (const deal of deals) {
-      const arr = map.get(deal.stage);
-      if (arr) {
-        arr.push(deal);
+      if (!lifecycleView && deal.stage === "closed") {
+        // In default view, "closed" stage rolls up into the "closed" group
+        const arr = map.get("closed");
+        if (arr) arr.push(deal);
+      } else if (!lifecycleView && deal.stage.startsWith("closed_") && deal.stage !== "closed_lost") {
+        // In default view, all closed_* stages roll up into the "closed" group
+        const arr = map.get("closed");
+        if (arr) arr.push(deal);
       } else {
-        // Deal stage not in groups (e.g. future stages) — skip
+        const arr = map.get(deal.stage);
+        if (arr) arr.push(deal);
       }
     }
     // Sort each group by amount descending
@@ -79,17 +90,18 @@ export function PipelineGroupedTable({
       arr.sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
     }
     return map;
-  }, [deals]);
+  }, [deals, stageGroups, lifecycleView]);
 
-  // Collapsed state — empty groups default to collapsed
-  const [collapsed, setCollapsed] = useState<Set<UnifiedStage>>(() => {
-    const initial = new Set<UnifiedStage>();
-    for (const group of PIPELINE_STAGE_GROUPS) {
+  // Collapsed state — tracks user-toggled groups; empty groups auto-collapse
+  const [collapsed, setCollapsed] = useState<Set<UnifiedStage>>(new Set());
+  const effectiveCollapsed = useMemo(() => {
+    const set = new Set(collapsed);
+    for (const group of stageGroups) {
       const arr = groupedDeals.get(group.key);
-      if (!arr || arr.length === 0) initial.add(group.key);
+      if (!arr || arr.length === 0) set.add(group.key);
     }
-    return initial;
-  });
+    return set;
+  }, [collapsed, stageGroups, groupedDeals]);
 
   const toggleGroup = useCallback((key: UnifiedStage) => {
     setCollapsed((prev) => {
@@ -145,9 +157,9 @@ export function PipelineGroupedTable({
           </tr>
 
           {/* Stage groups */}
-          {PIPELINE_STAGE_GROUPS.map((group) => {
+          {stageGroups.map((group) => {
             const groupDeals = groupedDeals.get(group.key) ?? [];
-            const isCollapsed = collapsed.has(group.key);
+            const isCollapsed = effectiveCollapsed.has(group.key);
             const groupTotal = groupDeals.reduce((sum, d) => sum + (d.amount ?? 0), 0);
 
             return (
