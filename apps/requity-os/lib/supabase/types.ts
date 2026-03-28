@@ -7829,6 +7829,53 @@ export type Database = {
           },
         ]
       }
+      huddle_flags: {
+        Row: {
+          consumed: boolean
+          created_at: string
+          deal_name: string | null
+          description: string
+          flag_type: string
+          huddle_date: string
+          id: string
+          user_email: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          consumed?: boolean
+          created_at?: string
+          deal_name?: string | null
+          description: string
+          flag_type?: string
+          huddle_date?: string
+          id?: string
+          user_email: string
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          consumed?: boolean
+          created_at?: string
+          deal_name?: string | null
+          description?: string
+          flag_type?: string
+          huddle_date?: string
+          id?: string
+          user_email?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "huddle_flags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inbound_emails: {
         Row: {
           created_at: string
@@ -10337,6 +10384,7 @@ export type Database = {
           created_at: string
           hero_image_id: string | null
           id: string
+          layout_type: string | null
           slug: string
           title: string
           updated_at: string
@@ -10346,6 +10394,7 @@ export type Database = {
           created_at?: string
           hero_image_id?: string | null
           id?: string
+          layout_type?: string | null
           slug: string
           title: string
           updated_at?: string
@@ -10355,6 +10404,7 @@ export type Database = {
           created_at?: string
           hero_image_id?: string | null
           id?: string
+          layout_type?: string | null
           slug?: string
           title?: string
           updated_at?: string
@@ -10501,21 +10551,21 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "pm_communities_core_property_id_fkey"
+            foreignKeyName: "pm_properties_core_property_id_fkey"
             columns: ["core_property_id"]
             isOneToOne: false
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "pm_communities_featured_media_id_fkey"
+            foreignKeyName: "pm_properties_featured_media_id_fkey"
             columns: ["featured_media_id"]
             isOneToOne: false
             referencedRelation: "pm_media"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "pm_communities_region_id_fkey"
+            foreignKeyName: "pm_properties_region_id_fkey"
             columns: ["region_id"]
             isOneToOne: false
             referencedRelation: "pm_regions"
@@ -14166,16 +14216,29 @@ export type Database = {
           google_sheet_id: string | null
           google_sheet_url: string | null
           id: string
+          interest_rate: number | null
           is_priority: boolean
+          last_payment_date: string | null
+          late_charge_grace_days: number | null
+          late_charge_pct: number | null
+          loan_amount: number | null
+          loan_term_months: number | null
           loan_type: string | null
           loss_reason: string | null
           maturity_date: string | null
+          monthly_payment: number | null
           name: string
+          next_payment_due: string | null
           note_sale_date: string | null
           note_sale_price: number | null
           note_sold_to: string | null
           notes: string | null
+          origination_date: string | null
+          payment_frequency: string | null
+          payoff_amount: number | null
           payoff_date: string | null
+          payoff_good_through: string | null
+          per_diem_interest: number | null
           primary_contact_id: string | null
           probability: number | null
           property_data: Json | null
@@ -14227,16 +14290,29 @@ export type Database = {
           google_sheet_id?: string | null
           google_sheet_url?: string | null
           id?: string
+          interest_rate?: number | null
           is_priority?: boolean
+          last_payment_date?: string | null
+          late_charge_grace_days?: number | null
+          late_charge_pct?: number | null
+          loan_amount?: number | null
+          loan_term_months?: number | null
           loan_type?: string | null
           loss_reason?: string | null
           maturity_date?: string | null
+          monthly_payment?: number | null
           name: string
+          next_payment_due?: string | null
           note_sale_date?: string | null
           note_sale_price?: number | null
           note_sold_to?: string | null
           notes?: string | null
+          origination_date?: string | null
+          payment_frequency?: string | null
+          payoff_amount?: number | null
           payoff_date?: string | null
+          payoff_good_through?: string | null
+          per_diem_interest?: number | null
           primary_contact_id?: string | null
           probability?: number | null
           property_data?: Json | null
@@ -14288,16 +14364,29 @@ export type Database = {
           google_sheet_id?: string | null
           google_sheet_url?: string | null
           id?: string
+          interest_rate?: number | null
           is_priority?: boolean
+          last_payment_date?: string | null
+          late_charge_grace_days?: number | null
+          late_charge_pct?: number | null
+          loan_amount?: number | null
+          loan_term_months?: number | null
           loan_type?: string | null
           loss_reason?: string | null
           maturity_date?: string | null
+          monthly_payment?: number | null
           name?: string
+          next_payment_due?: string | null
           note_sale_date?: string | null
           note_sale_price?: number | null
           note_sold_to?: string | null
           notes?: string | null
+          origination_date?: string | null
+          payment_frequency?: string | null
+          payoff_amount?: number | null
           payoff_date?: string | null
+          payoff_good_through?: string | null
+          per_diem_interest?: number | null
           primary_contact_id?: string | null
           probability?: number | null
           property_data?: Json | null
@@ -15897,6 +15986,7 @@ export type Database = {
         }[]
       }
       generate_daily_digest: { Args: never; Returns: Json }
+      generate_huddle_briefing: { Args: never; Returns: Json }
       generate_next_recurring_task: {
         Args: { p_task_id: string }
         Returns: Json
@@ -16935,4 +17025,3 @@ export const Constants = {
     },
   },
 } as const
-
