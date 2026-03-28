@@ -297,17 +297,29 @@ function PropertyDetailsContent({
         }
       );
 
-      // If direct edge invocation fails at transport layer, retry via server API route
-      // to bypass browser->edge CORS/network edge cases.
-      const isTransportFailure =
-        !!invokeError &&
-        /Failed to send a request to the Edge Function|fetch/i.test(
-          invokeError.message ?? ""
-        );
+      // If the edge function failed for any reason, fall back to the server API route.
+      // FunctionsHttpError.context is a Response object (not { body: string }),
+      // so we extract the body properly and retry via the Next.js API route which
+      // bypasses edge function issues (stale deployment, env vars, CORS, etc.).
+      if (invokeError) {
+        // Extract error details from the edge function response if available
+        let edgeErrorBody: { error?: string; detail?: string; realie_status?: number } = {};
+        if (typeof invokeError === "object" && "context" in invokeError) {
+          const ctx = (invokeError as { context?: unknown }).context;
+          // context is a Response object for FunctionsHttpError/FunctionsRelayError
+          if (ctx && typeof ctx === "object" && "json" in ctx && typeof (ctx as Response).json === "function") {
+            try {
+              edgeErrorBody = await (ctx as Response).json();
+            } catch { /* body already consumed or not JSON */ }
+          } else if (ctx && typeof ctx === "object" && "body" in ctx) {
+            // Fallback for { body: string } shape (e.g. from our own retry logic)
+            try { edgeErrorBody = JSON.parse((ctx as { body: string }).body); } catch { /* ignore */ }
+          }
+        }
 
-      if (isTransportFailure) {
-        console.warn("[PropertyTab] Edge invoke transport failure; retrying via /api/properties/enrich", {
-          message: invokeError?.message,
+        console.warn("[PropertyTab] Edge function error; retrying via /api/properties/enrich", {
+          message: invokeError.message,
+          edgeErrorBody,
         });
 
         const fallbackRes = await fetch("/api/properties/enrich", {
@@ -336,45 +348,31 @@ function PropertyDetailsContent({
           data = fallbackJson;
           invokeError = null;
         } else {
-          invokeError = {
-            message: fallbackJson.error ?? `Fallback enrichment failed (${fallbackRes.status})`,
-            context: { body: JSON.stringify(fallbackJson) },
-          } as unknown as Error;
+          // Use the API route error details (more descriptive than edge function generic message)
+          const errorMsg = fallbackJson.error ?? edgeErrorBody.error ?? invokeError.message ?? "Enrichment failed";
+          const realie_status = fallbackJson.realie_status ?? edgeErrorBody.realie_status;
+          const addrParts = [
+            String(address).trim(),
+            city ? String(city).trim() : null,
+            String(state).trim(),
+            zip ? String(zip).trim() : null,
+          ].filter(Boolean);
+          const searchedAddr = addrParts.join(", ");
+          const is404 = realie_status === 404;
+
+          showError(
+            "Could not enrich property",
+            is404
+              ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+              : errorMsg
+          );
+          showInfo(
+            "Fields you can fill manually",
+            enrichableFieldLabels.slice(0, 15).join(", ") +
+              (enrichableFieldLabels.length > 15 ? `, and ${enrichableFieldLabels.length - 15} more` : "")
+          );
+          return;
         }
-      }
-
-      if (invokeError) {
-        // FunctionsHttpError contains the response body
-        const errorBody = typeof invokeError === "object" && "context" in invokeError
-          ? (invokeError as { context?: { body?: string } }).context?.body
-          : null;
-        let parsed: { error?: string; detail?: string; realie_status?: number } = {};
-        if (errorBody) {
-          try { parsed = JSON.parse(errorBody); } catch { /* ignore */ }
-        }
-
-        const errorMsg = parsed.error ?? invokeError.message ?? "Enrichment failed";
-        const addrParts = [
-          String(address).trim(),
-          city ? String(city).trim() : null,
-          String(state).trim(),
-          zip ? String(zip).trim() : null,
-        ].filter(Boolean);
-        const searchedAddr = addrParts.join(", ");
-        const is404 = parsed.realie_status === 404;
-
-        showError(
-          "Could not enrich property",
-          is404
-            ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
-            : errorMsg
-        );
-        showInfo(
-          "Fields you can fill manually",
-          enrichableFieldLabels.slice(0, 15).join(", ") +
-            (enrichableFieldLabels.length > 15 ? `, and ${enrichableFieldLabels.length - 15} more` : "")
-        );
-        return;
       }
 
       const enriched = data?.enriched as Record<string, unknown> | undefined;
