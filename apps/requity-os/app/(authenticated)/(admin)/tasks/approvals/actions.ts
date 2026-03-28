@@ -333,12 +333,6 @@ export async function saveApprovalFieldAction(
           .update({ amount: value as number })
           .eq("id", entityId);
         if (error) return { error: error.message };
-      } else if (entityType === "loan") {
-        const { error } = await admin
-          .from("loans")
-          .update({ loan_amount: value as number })
-          .eq("id", entityId);
-        if (error) return { error: error.message };
       }
       return { success: true };
     }
@@ -617,34 +611,6 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
       }
     }
 
-    // Update loan stage if entity_type is loan
-    if (approval.entity_type === "loan") {
-      const { error: loanErr } = await admin
-        .from("loans")
-        .update({
-          stage: "approved",
-          stage_updated_at: now,
-          updated_at: now,
-        })
-        .eq("id", approval.entity_id);
-
-      if (loanErr) {
-        console.error("Failed to update loan stage on approval:", loanErr);
-      }
-
-      // Log activity
-      const { error: logErr } = await admin.from("loan_activity_log").insert({
-        loan_id: approval.entity_id,
-        performed_by: auth.user.id,
-        action: "stage_change",
-        description: `Approval granted by Admin`,
-      });
-
-      if (logErr) {
-        console.error("Failed to insert loan activity log:", logErr);
-      }
-    }
-
     // Update condition status if entity_type is condition
     if (approval.entity_type === "condition") {
       const { error: condErr } = await admin
@@ -911,33 +877,6 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
 
       if (taskErr) {
         console.error("Failed to complete linked task on decline:", taskErr);
-      }
-    }
-
-    // Update loan stage if entity_type is loan
-    if (approval.entity_type === "loan") {
-      const { error: loanErr } = await admin
-        .from("loans")
-        .update({
-          stage: "denied",
-          stage_updated_at: now,
-          updated_at: now,
-        })
-        .eq("id", approval.entity_id);
-
-      if (loanErr) {
-        console.error("Failed to update loan stage on decline:", loanErr);
-      }
-
-      const { error: logErr } = await admin.from("loan_activity_log").insert({
-        loan_id: approval.entity_id,
-        performed_by: auth.user.id,
-        action: "stage_change",
-        description: `Declined by Admin: ${decisionNotes}`,
-      });
-
-      if (logErr) {
-        console.error("Failed to insert loan activity log on decline:", logErr);
       }
     }
 

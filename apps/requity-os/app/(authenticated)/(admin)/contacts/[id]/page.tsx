@@ -77,7 +77,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     countActivities,
     countEmails,
     countTasks,
-    countLoans,
     countPipeline,
     countInvestorCommitments,
   ] = await Promise.all([
@@ -135,13 +134,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .select("id", { count: "exact", head: true })
       .eq("linked_entity_type", "contact")
       .eq("linked_entity_id", contact.id),
-    contact.borrower_id
-      ? admin
-          .from("loans")
-          .select("id", { count: "exact", head: true })
-          .eq("borrower_id", contact.borrower_id)
-          .is("deleted_at", null)
-      : Promise.resolve({ count: 0 }),
     admin
       .from("deal_contacts")
       .select("id", { count: "exact", head: true })
@@ -158,7 +150,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     activities: countActivities.count ?? 0,
     emails: countEmails.count ?? 0,
     tasks: countTasks.count ?? 0,
-    loans: countLoans.count ?? 0,
+    loans: 0,
     pipelineDeals: countPipeline.count ?? 0,
     investorCommitments: countInvestorCommitments.count ?? 0,
   };

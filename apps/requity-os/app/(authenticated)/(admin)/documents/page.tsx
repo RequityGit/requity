@@ -34,13 +34,12 @@ export default async function AdminDocumentsPage() {
     dealDocsResult,
     profilesResult,
     fundsResult,
-    loansResult,
   ] = await Promise.all([
-    // Legacy loan/fund documents
+    // Legacy fund documents
     supabase
       .from("documents")
       .select(
-        "id, file_name, description, document_type, status, created_at, file_path, file_url, mime_type, profiles:uploaded_by(full_name, email), funds(name), loans(property_address)"
+        "id, file_name, description, document_type, status, created_at, file_path, file_url, mime_type, profiles:uploaded_by(full_name, email), funds(name)"
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -77,18 +76,13 @@ export default async function AdminDocumentsPage() {
       .in("role", ["investor", "borrower"])
       .order("full_name"),
     supabase.from("funds").select("id, name").order("name"),
-    supabase
-      .from("loans")
-      .select("id, property_address, borrower_id")
-      .order("property_address"),
   ]);
 
-  // Normalize loan/fund documents
+  // Normalize fund documents
   const loanDocRows = (documentsResult.data ?? []).map((doc) => {
     const p = doc as Record<string, unknown> & {
       profiles?: { full_name?: string; email?: string };
       funds?: { name?: string };
-      loans?: { property_address?: string };
     };
     return {
       id: doc.id,
@@ -96,7 +90,7 @@ export default async function AdminDocumentsPage() {
       description: doc.description,
       document_type: doc.document_type,
       owner_name: p.profiles?.full_name ?? p.profiles?.email ?? "—",
-      entity_name: p.funds?.name ?? p.loans?.property_address ?? null,
+      entity_name: p.funds?.name ?? null,
       source: "loan" as const,
       status: doc.status ?? "pending",
       created_at: doc.created_at,
@@ -241,7 +235,7 @@ export default async function AdminDocumentsPage() {
           <DocumentUploadForm
             profiles={profilesResult.data ?? []}
             funds={fundsResult.data ?? []}
-            loans={loansResult.data ?? []}
+            loans={[]}
           />
         }
         createAction={<CreateDocumentDialog />}

@@ -37,7 +37,8 @@ export default async function SandboxPage({
   const admin = createAdminClient();
 
   // Check for existing sandbox version for this user + model type
-  let { data: existingVersion } = await admin
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let { data: existingVersion } = await (admin as any)
     .from("loan_underwriting_versions")
     .select("*")
     .eq("is_sandbox", true)
@@ -58,7 +59,8 @@ export default async function SandboxPage({
       );
     }
 
-    const { data } = await admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (admin as any)
       .from("loan_underwriting_versions")
       .select("*")
       .eq("id", result.versionId)

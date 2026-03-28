@@ -102,19 +102,17 @@ Deno.serve(async (req: Request) => {
 
     const mergeData: Record<string, string> = {};
 
-    // 2. Resolve loan data
+    // 2. Resolve deal data (loan_id now refers to a unified_deals record)
     if (loan_id) {
-      const { data: loan, error: loanError } = await adminClient
-        .from("loans")
-        .select(
-          "*, borrowers(id, first_name, last_name, email, phone, user_id)"
-        )
+      const { data: deal, error: dealError } = await adminClient
+        .from("unified_deals")
+        .select("*")
         .eq("id", loan_id)
         .single();
 
-      if (loanError || !loan) {
+      if (dealError || !deal) {
         return new Response(
-          JSON.stringify({ error: "Loan not found" }),
+          JSON.stringify({ error: "Deal not found" }),
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -122,44 +120,47 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Loan fields
-      mergeData.loan_number = loan.loan_number ?? "";
-      mergeData.property_address = [
-        loan.property_address_line1,
-        loan.property_city,
-        loan.property_state,
-        loan.property_zip,
-      ]
-        .filter(Boolean)
-        .join(", ");
-      mergeData.property_address_short = loan.property_address_line1 ?? "";
-      mergeData.property_city = loan.property_city ?? "";
-      mergeData.property_state = loan.property_state ?? "";
-      mergeData.loan_amount = formatCurrency(loan.loan_amount);
-      mergeData.total_loan_amount = formatCurrency(
-        loan.total_loan_amount ?? loan.loan_amount
-      );
-      mergeData.interest_rate = loan.interest_rate
-        ? `${Number(loan.interest_rate).toFixed(2)}%`
-        : "";
-      mergeData.loan_term_months = loan.loan_term_months?.toString() ?? "";
-      mergeData.loan_type = toTitleCase(loan.type ?? "");
-      mergeData.loan_purpose = toTitleCase(loan.purpose ?? "");
-      mergeData.loan_status = toTitleCase(loan.stage ?? "");
-      mergeData.ltv = loan.ltv ? `${Number(loan.ltv).toFixed(0)}%` : "";
-      mergeData.purchase_price = formatCurrency(loan.purchase_price);
-      mergeData.as_is_value = formatCurrency(loan.as_is_value);
-      mergeData.after_repair_value = formatCurrency(loan.after_repair_value);
+      const dealRecord = deal as Record<string, unknown>;
+      const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+      const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
 
-      // Derive borrower info from loan if no contact_id
-      const borrower = loan.borrowers as Record<string, unknown> | null;
-      if (borrower && !contact_id) {
-        mergeData.borrower_first_name = (borrower.first_name as string) ?? "";
-        mergeData.borrower_last_name = (borrower.last_name as string) ?? "";
-        mergeData.borrower_full_name =
-          `${borrower.first_name ?? ""} ${borrower.last_name ?? ""}`.trim();
-        mergeData.borrower_email = (borrower.email as string) ?? "";
-        mergeData.borrower_phone = (borrower.phone as string) ?? "";
+      // Deal/loan fields
+      mergeData.loan_number = (dealRecord.deal_number as string) ?? "";
+      mergeData.property_address = (dealRecord.name as string) ?? "";
+      mergeData.property_address_short = (propertyData.address as string) ?? (dealRecord.name as string) ?? "";
+      mergeData.property_city = (propertyData.city as string) ?? "";
+      mergeData.property_state = (propertyData.state as string) ?? "";
+      mergeData.loan_amount = formatCurrency(dealRecord.amount as number | null);
+      mergeData.total_loan_amount = formatCurrency(
+        (uwData.total_loan_amount as number | null) ?? (dealRecord.amount as number | null)
+      );
+      mergeData.interest_rate = uwData.interest_rate
+        ? `${Number(uwData.interest_rate).toFixed(2)}%`
+        : "";
+      mergeData.loan_term_months = (uwData.loan_term_months as number)?.toString() ?? "";
+      mergeData.loan_type = toTitleCase((dealRecord.loan_type as string) ?? "");
+      mergeData.loan_purpose = toTitleCase((uwData.purpose as string) ?? "");
+      mergeData.loan_status = toTitleCase((dealRecord.stage as string) ?? "");
+      mergeData.ltv = uwData.ltv ? `${Number(uwData.ltv).toFixed(0)}%` : "";
+      mergeData.purchase_price = formatCurrency(uwData.purchase_price as number | null);
+      mergeData.as_is_value = formatCurrency(uwData.as_is_value as number | null);
+      mergeData.after_repair_value = formatCurrency(uwData.after_repair_value as number | null);
+
+      // Derive borrower info from deal's primary contact if no contact_id
+      if (!contact_id && dealRecord.primary_contact_id) {
+        const { data: borrowerContact } = await adminClient
+          .from("crm_contacts")
+          .select("first_name, last_name, email, phone")
+          .eq("id", dealRecord.primary_contact_id as string)
+          .single();
+        if (borrowerContact) {
+          mergeData.borrower_first_name = borrowerContact.first_name ?? "";
+          mergeData.borrower_last_name = borrowerContact.last_name ?? "";
+          mergeData.borrower_full_name =
+            `${borrowerContact.first_name ?? ""} ${borrowerContact.last_name ?? ""}`.trim();
+          mergeData.borrower_email = borrowerContact.email ?? "";
+          mergeData.borrower_phone = borrowerContact.phone ?? "";
+        }
       }
     }
 
@@ -182,15 +183,15 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 4. Resolve computed fields: outstanding conditions
-    let outstandingConditions: ConditionRow[] = [];
+    // 4. Resolve computed fields: outstanding conditions (from unified_deal_conditions)
+    const outstandingConditions: ConditionRow[] = [];
     if (loan_id) {
       const { data: conditions } = await adminClient
-        .from("loan_conditions")
+        .from("unified_deal_conditions")
         .select(
-          "id, condition_name, category, status, borrower_description, due_date, is_required, critical_path_item, sort_order"
+          "id, name, category, status, borrower_description, due_date, is_required, critical_path_item, sort_order"
         )
-        .eq("loan_id", loan_id)
+        .eq("deal_id", loan_id)
         .in("status", [
           "pending",
           "requested",
@@ -200,7 +201,19 @@ Deno.serve(async (req: Request) => {
         ])
         .order("sort_order", { ascending: true, nullsFirst: false });
 
-      outstandingConditions = (conditions ?? []) as ConditionRow[];
+      for (const c of conditions ?? []) {
+        outstandingConditions.push({
+          id: (c as Record<string, unknown>).id as string,
+          condition_name: ((c as Record<string, unknown>).name as string) ?? "",
+          category: ((c as Record<string, unknown>).category as string) ?? "",
+          status: ((c as Record<string, unknown>).status as string) ?? "",
+          borrower_description: (c as Record<string, unknown>).borrower_description as string | null,
+          due_date: (c as Record<string, unknown>).due_date as string | null,
+          is_required: ((c as Record<string, unknown>).is_required as boolean) ?? false,
+          critical_path_item: ((c as Record<string, unknown>).critical_path_item as boolean) ?? false,
+          sort_order: (c as Record<string, unknown>).sort_order as number | null,
+        });
+      }
 
       // Sort by status priority, then sort_order, then name
       const statusOrder: Record<string, number> = {

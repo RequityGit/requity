@@ -116,15 +116,6 @@ export default async function ScenarioEditorPage({
       .eq("id", scenario.opportunity_id)
       .single();
     linkedDealName = opp?.deal_name || "Unnamed Deal";
-  } else if (scenario.loan_id) {
-    linkedDealType = "loan";
-    linkedDealId = scenario.loan_id;
-    const { data: loan } = await admin
-      .from("loans")
-      .select("loan_number, property_address")
-      .eq("id", scenario.loan_id)
-      .single();
-    linkedDealName = loan?.property_address || loan?.loan_number || "Unnamed Loan";
   }
 
   // Fetch available deals for linking

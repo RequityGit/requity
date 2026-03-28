@@ -252,75 +252,48 @@ Deno.serve(async (req: Request) => {
     const sourceData: Record<string, Record<string, unknown>> = {};
 
     if (resolveType === "loan") {
-      const { data: loan } = await supabaseAdmin
-        .from("loans")
+      // "loan" record type now resolves via unified_deals
+      const { data: deal } = await supabaseAdmin
+        .from("unified_deals")
         .select("*")
         .eq("id", record_id)
         .single();
-
-      if (loan) {
-        sourceData["loans"] = enrichLoan(loan);
-        if (loan.borrower_contact_id) {
-          const { data: contact } = await supabaseAdmin
-            .from("crm_contacts")
-            .select("*")
-            .eq("id", loan.borrower_contact_id)
-            .single();
-          if (contact) {
-            sourceData["crm_contacts"] = enrichContact(contact);
-            if (contact.company_id) {
-              const { data: company } = await supabaseAdmin
-                .from("companies")
-                .select("*")
-                .eq("id", contact.company_id)
-                .single();
-              if (company) sourceData["companies"] = company;
-            }
-          }
-        }
-      } else {
-        const { data: deal } = await supabaseAdmin
-          .from("unified_deals")
+      if (!deal) {
+        return new Response(
+          JSON.stringify({ error: "Deal record not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const dealRecord = deal as Record<string, unknown>;
+      sourceData["unified_deals"] = dealRecord;
+      const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+      const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
+      sourceData["loans"] = enrichLoan({ ...dealRecord, ...uwData, ...propertyData });
+      if (dealRecord.primary_contact_id) {
+        const { data: contact } = await supabaseAdmin
+          .from("crm_contacts")
           .select("*")
-          .eq("id", record_id)
+          .eq("id", dealRecord.primary_contact_id as string)
           .single();
-        if (!deal) {
-          return new Response(
-            JSON.stringify({ error: "Loan or deal record not found" }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        const dealRecord = deal as Record<string, unknown>;
-        sourceData["unified_deals"] = dealRecord;
-        const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
-        const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
-        sourceData["loans"] = enrichLoan({ ...dealRecord, ...uwData, ...propertyData });
-        if (dealRecord.primary_contact_id) {
-          const { data: contact } = await supabaseAdmin
-            .from("crm_contacts")
-            .select("*")
-            .eq("id", dealRecord.primary_contact_id as string)
-            .single();
-          if (contact) {
-            sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
-            if ((contact as Record<string, unknown>).company_id) {
-              const { data: company } = await supabaseAdmin
-                .from("companies")
-                .select("*")
-                .eq("id", (contact as Record<string, unknown>).company_id as string)
-                .single();
-              if (company) sourceData["companies"] = company as Record<string, unknown>;
-            }
+        if (contact) {
+          sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
+          if ((contact as Record<string, unknown>).company_id) {
+            const { data: company } = await supabaseAdmin
+              .from("companies")
+              .select("*")
+              .eq("id", (contact as Record<string, unknown>).company_id as string)
+              .single();
+            if (company) sourceData["companies"] = company as Record<string, unknown>;
           }
         }
-        if (dealRecord.company_id && !sourceData["companies"]) {
-          const { data: company } = await supabaseAdmin
-            .from("companies")
-            .select("*")
-            .eq("id", dealRecord.company_id as string)
-            .single();
-          if (company) sourceData["companies"] = company as Record<string, unknown>;
-        }
+      }
+      if (dealRecord.company_id && !sourceData["companies"]) {
+        const { data: company } = await supabaseAdmin
+          .from("companies")
+          .select("*")
+          .eq("id", dealRecord.company_id as string)
+          .single();
+        if (company) sourceData["companies"] = company as Record<string, unknown>;
       }
     } else if (resolveType === "contact") {
       const { data: contact } = await supabaseAdmin
