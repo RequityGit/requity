@@ -296,7 +296,7 @@ export function DealFilters({
 
       <div className="flex items-center gap-2">
         {/* Lifecycle toggle (kanban only) */}
-        {onToggleLifecycle && filters.view === "kanban" && !showingLostDeals && (
+        {onToggleLifecycle && !showingLostDeals && (
           <Button
             variant="outline"
             size="sm"

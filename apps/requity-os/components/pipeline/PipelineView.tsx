@@ -260,6 +260,7 @@ export function PipelineView({ showingLostDeals = false }: PipelineViewProps) {
           stageConfigs={stageConfigs}
           onDealClick={handleDealClick}
           teamMembers={teamMembers}
+          lifecycleView={lifecycleView}
         />
       )}
 
