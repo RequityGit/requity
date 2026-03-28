@@ -1886,7 +1886,7 @@ function DealHeader({
           {/* Asset Type */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-nowrap">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Asset</span>
                 <InlineField
                   type="select"
@@ -1907,7 +1907,7 @@ function DealHeader({
           {/* Loan Amount */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-nowrap">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Loan</span>
                 <InlineField
                   type="currency"
@@ -1928,7 +1928,7 @@ function DealHeader({
           {/* Close Date */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-nowrap">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Close</span>
                 <InlineField
                   type="date"
