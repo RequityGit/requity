@@ -121,7 +121,8 @@ export default async function ModelTypePage({
 
   const totalScenarios = allScenarios?.length ?? 0;
 
-  const { data: totalVersions } = await admin
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: totalVersions } = await (admin as any)
     .from("loan_underwriting_versions")
     .select("id")
     .eq("model_type", type)

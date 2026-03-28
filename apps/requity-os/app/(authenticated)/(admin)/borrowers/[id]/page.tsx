@@ -63,14 +63,9 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   };
 
   // Fetch related data in parallel
-  const [entitiesResult, loansResult, emailsResult, profileResult] = await Promise.all([
+  const [entitiesResult, emailsResult, profileResult] = await Promise.all([
     admin
       .from("borrower_entities")
-      .select("*")
-      .eq("borrower_id", id)
-      .order("created_at", { ascending: false }),
-    admin
-      .from("loans")
       .select("*")
       .eq("borrower_id", id)
       .order("created_at", { ascending: false }),
@@ -87,7 +82,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   ]);
 
   const entities = entitiesResult.data ?? [];
-  const loans = loansResult.data ?? [];
+  const loans: never[] = [];
   const emails = (emailsResult.data ?? []).map((e: any) => ({
     id: e.id,
     created_at: e.created_at,

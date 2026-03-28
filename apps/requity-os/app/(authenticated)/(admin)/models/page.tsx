@@ -39,7 +39,8 @@ export default async function ModelsOverviewPage() {
   const admin = createAdminClient();
 
   // Fetch aggregate stats per model type
-  const { data: stats } = await admin
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: stats } = await (admin as any)
     .from("loan_underwriting_versions")
     .select("model_type, computation_status")
     .eq("is_sandbox", false)

@@ -148,11 +148,16 @@ export async function resolveTemplateData(
   const sourceData: Record<string, Record<string, unknown>> = {};
 
   if (resolveType === "loan") {
-    const { data: loan } = await supabase.from("loans").select("*").eq("id", recordId).single();
-    if (loan) {
-      sourceData["loans"] = enrichLoan(loan as Record<string, unknown>);
-      if ((loan as Record<string, unknown>).borrower_contact_id) {
-        const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", (loan as Record<string, unknown>).borrower_contact_id as string).single();
+    // "loan" record type now resolves via unified_deals
+    const { data: deal } = await supabase.from("unified_deals" as never).select("*").eq("id" as never, recordId as never).single();
+    if (deal) {
+      const dealRecord = deal as Record<string, unknown>;
+      sourceData["unified_deals"] = dealRecord;
+      const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+      const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
+      sourceData["loans"] = enrichLoan({ ...dealRecord, ...uwData, ...propertyData });
+      if (dealRecord.primary_contact_id) {
+        const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", dealRecord.primary_contact_id as string).single();
         if (contact) {
           sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
           if ((contact as Record<string, unknown>).company_id) {
@@ -161,29 +166,9 @@ export async function resolveTemplateData(
           }
         }
       }
-    } else {
-      // Fallback: record may be a unified_deals ID (loan template used from deal page)
-      const { data: deal } = await supabase.from("unified_deals" as never).select("*").eq("id" as never, recordId as never).single();
-      if (deal) {
-        const dealRecord = deal as Record<string, unknown>;
-        sourceData["unified_deals"] = dealRecord;
-        const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
-        const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
-        sourceData["loans"] = enrichLoan({ ...dealRecord, ...uwData, ...propertyData });
-        if (dealRecord.primary_contact_id) {
-          const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", dealRecord.primary_contact_id as string).single();
-          if (contact) {
-            sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
-            if ((contact as Record<string, unknown>).company_id) {
-              const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
-              if (company) sourceData["companies"] = company as Record<string, unknown>;
-            }
-          }
-        }
-        if (dealRecord.company_id && !sourceData["companies"]) {
-          const { data: company } = await supabase.from("companies").select("*").eq("id", dealRecord.company_id as string).single();
-          if (company) sourceData["companies"] = company as Record<string, unknown>;
-        }
+      if (dealRecord.company_id && !sourceData["companies"]) {
+        const { data: company } = await supabase.from("companies").select("*").eq("id", dealRecord.company_id as string).single();
+        if (company) sourceData["companies"] = company as Record<string, unknown>;
       }
     }
   } else if (resolveType === "contact") {
@@ -276,21 +261,22 @@ export async function searchRecords(
   const q = query.trim();
 
   if (recordType === "loan") {
+    // Loan records now resolved via unified_deals
     const { data } = await supabase
-      .from("loans")
-      .select("id, property_address")
+      .from("unified_deals" as never)
+      .select("id, name" as never)
       .or(
         q
-          ? `property_address.ilike.%${q}%`
+          ? `name.ilike.%${q}%`
           : "id.neq.00000000-0000-0000-0000-000000000000"
       )
-      .order("created_at", { ascending: false })
+      .order("created_at" as never, { ascending: false })
       .limit(20);
 
     return {
-      records: (data ?? []).map((r) => ({
+      records: ((data ?? []) as Array<{ id: string; name: string }>).map((r) => ({
         id: r.id,
-        label: r.property_address || r.id,
+        label: r.name || r.id,
       })),
     };
   }
@@ -376,18 +362,19 @@ export async function resolveRecipientForRecord(
   const empty: RecipientInfo = { email: null, name: null, contactId: null };
 
   if (recordType === "loan") {
-    const { data: loan } = await supabase
-      .from("loans")
-      .select("borrower_contact_id" as never)
-      .eq("id", recordId)
+    // Loan records now resolved via unified_deals
+    const { data: deal } = await supabase
+      .from("unified_deals" as never)
+      .select("primary_contact_id" as never)
+      .eq("id" as never, recordId as never)
       .single();
-    const loanRecord = loan as Record<string, unknown> | null;
-    if (!loanRecord?.borrower_contact_id) return empty;
+    const dealRecord = deal as Record<string, unknown> | null;
+    if (!dealRecord?.primary_contact_id) return empty;
 
     const { data: contact } = await supabase
       .from("crm_contacts")
       .select("id, first_name, last_name, email")
-      .eq("id", loanRecord.borrower_contact_id as string)
+      .eq("id", dealRecord.primary_contact_id as string)
       .single();
     if (!contact) return empty;
 

@@ -326,7 +326,6 @@ export function EmailComposeSheet({
         sent_by: currentUserId,
         sent_by_name: currentUserName || null,
         linked_contact_id: resolvedContactId,
-        linked_loan_id: linkedLoanId || null,
         linked_borrower_id: linkedBorrowerId || null,
         linked_investor_id: linkedInvestorId || null,
         attachments: attachmentMeta.length > 0 ? attachmentMeta : null,

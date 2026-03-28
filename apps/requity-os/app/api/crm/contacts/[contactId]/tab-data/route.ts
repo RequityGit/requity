@@ -241,36 +241,15 @@ export async function GET(
         return NextResponse.json({ loans: [], entities: [], primaryBorrowerEntity: null });
       }
 
-      const [borrowerLoansResult, borrowerEntitiesResult] = await Promise.all([
-        admin
-          .from("loans")
-          .select(
-            "id, loan_number, property_address, type, loan_amount, interest_rate, ltv, loan_term_months, stage, stage_updated_at, created_at"
-          )
-          .eq("borrower_id", c.borrower_id)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false }),
-        admin
-          .from("borrower_entities")
-          .select(
-            "id, entity_name, entity_type, ein, state_of_formation, formation_date, operating_agreement_url, articles_of_org_url, certificate_good_standing_url, ein_letter_url"
-          )
-          .eq("borrower_id", c.borrower_id),
-      ]);
+      const borrowerEntitiesResult = await admin
+        .from("borrower_entities")
+        .select(
+          "id, entity_name, entity_type, ein, state_of_formation, formation_date, operating_agreement_url, articles_of_org_url, certificate_good_standing_url, ein_letter_url"
+        )
+        .eq("borrower_id", c.borrower_id);
 
-      const loans = (borrowerLoansResult.data ?? []).map((l: Record<string, unknown>) => ({
-        id: l.id as string,
-        loan_number: l.loan_number as string | null,
-        property_address: l.property_address as string | null,
-        type: l.type as string | null,
-        loan_amount: l.loan_amount as number | null,
-        interest_rate: l.interest_rate as number | null,
-        ltv: l.ltv as number | null,
-        loan_term_months: l.loan_term_months as number | null,
-        stage: l.stage as string | null,
-        stage_updated_at: l.stage_updated_at as string | null,
-        created_at: l.created_at as string,
-      }));
+      // Loans table has been removed; return empty array for backward compat
+      const loans: Record<string, unknown>[] = [];
 
       const entities = (borrowerEntitiesResult.data ?? []).map((e: Record<string, unknown>) => ({
         id: e.id as string,

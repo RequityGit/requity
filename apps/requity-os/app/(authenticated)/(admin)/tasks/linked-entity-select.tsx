@@ -38,13 +38,7 @@ export function LinkedEntitySelect({
     if (loaded) return;
     const supabase = createClient();
 
-    const [loansRes, borrowersRes, fundsRes, dealsRes] = await Promise.all([
-      supabase
-        .from("loans")
-        .select("id, loan_number, property_address, loan_amount")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .limit(50),
+    const [borrowersRes, fundsRes, dealsRes] = await Promise.all([
       supabase
         .from("borrowers_portal" as never)
         .select("id, first_name, last_name" as never)
@@ -64,13 +58,6 @@ export function LinkedEntitySelect({
     ]);
 
     const opts: EntityOption[] = [];
-
-    (loansRes.data ?? []).forEach((l) => {
-      const lbl =
-        l.property_address ||
-        `Loan ${l.loan_number || l.id.slice(0, 8)}`;
-      opts.push({ type: "loan", id: l.id, label: lbl });
-    });
 
     (borrowersRes.data ?? []).forEach((b) => {
       opts.push({
@@ -115,7 +102,6 @@ export function LinkedEntitySelect({
     entityType && entityId ? `${entityType}:${entityId}` : "none";
 
   const groupedOptions = {
-    loan: options.filter((o) => o.type === "loan"),
     borrower: options.filter((o) => o.type === "borrower"),
     fund: options.filter((o) => o.type === "fund"),
     deal: options.filter((o) => o.type === "deal"),
@@ -132,16 +118,6 @@ export function LinkedEntitySelect({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="none">None</SelectItem>
-        {groupedOptions.loan.length > 0 && (
-          <SelectGroup>
-            <SelectLabel>Loans</SelectLabel>
-            {groupedOptions.loan.map((o) => (
-              <SelectItem key={o.id} value={`${o.type}:${o.id}`}>
-                <span className="truncate">{o.label}</span>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        )}
         {groupedOptions.borrower.length > 0 && (
           <SelectGroup>
             <SelectLabel>Borrowers</SelectLabel>
